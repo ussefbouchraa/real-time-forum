@@ -1,6 +1,5 @@
 real-time-forum/
-├── cmd/
-│   └── server/
+├── server/
 │       └── main.go
 ├── internal/
 │   ├── core/
@@ -22,7 +21,5 @@ real-time-forum/
 │       └── auth.go           // Session check
 ├── web/
 │   ├── index.html
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── app.js
+│   ├── style.css
+│   └── app.js
