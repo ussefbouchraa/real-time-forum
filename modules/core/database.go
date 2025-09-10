@@ -16,30 +16,60 @@ func InitDB(path string) {
         log.Fatal("Failed to connect database:", err)
     }
 
-    // createTables()
+    createTables()
 }
 
 func GetDB() *sql.DB {
 	return db
 }
 
-// Optional: migrations
+func createTables() {
+    createUserTable()
+    createCategoryTable()
+    createPostCategoryTable()
+}
 
-// func createTables() {
-//     query := `
-//     CREATE TABLE IF NOT EXISTS users (
-//         id INTEGER PRIMARY KEY AUTOINCREMENT,
-//         nickname TEXT UNIQUE,
-//         email TEXT UNIQUE,
-//         password TEXT,
-//         age INTEGER,
-//         gender TEXT,
-//         first_name TEXT,
-//         last_name TEXT
-//     );
-//     `
-//     _, err := db.Exec(query)
-//     if err != nil {
-//         log.Fatal("Failed to run migrations:", err)
-//     }
-// }
+func createUserTable(){
+    query := `
+    CREATE TABLE IF NOT EXISTS users (
+        user_id TEXT PRIMARY KEY,
+        first_name TEXT NOT NULL,
+        last_name TEXT NOT NULL,
+        nickname TEXT NOT NULL UNIQUE,
+        age INTEGER NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL
+    );`
+
+    _ , err := db.Exec(query)
+    if err != nil {
+        log.Fatalf("Failed to create users table: %v", err)
+    }
+}
+
+func createCategoryTable(){
+    query := `
+    CREATE TABLE IF NOT EXISTS category(
+        category_id TEXT PRIMARY KEY,
+        category_name TEXT NOT NULL,
+    );`
+
+    _ , err := db.Exec(query)
+    if err != nil {
+        log.Fatalf("Failed to create users table: %v", err)
+    }
+}
+
+func createPostCategoryTable(){
+    query := `
+    CREATE TABLE IF NOT EXISTS postcategory(
+        (post_id , category_id ) TEXT PRIMARY KEY,
+        FOREIGN KEY(post_id) REFERENCES post(post_id),
+        FOREIGN KEY(category_id) REFERENCES category(category_id),
+    ;)`
+
+    _ , err := db.Exec(query)
+    if err != nil {
+        log.Fatalf("Failed to create users table: %v", err)
+    }
+}
