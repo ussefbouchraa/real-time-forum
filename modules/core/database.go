@@ -15,14 +15,12 @@ func InitDB(path string) {
     if err != nil {
         log.Fatal("Failed to connect database:", err)
     }
-    createTables()
-}
 
-func GetDB() *sql.DB {
-	return db
-}
+    _, err = db.Exec("PRAGMA foreign_keys = ON")
+    if err != nil {
+        log.Fatal("Failed to enable foreign keys:", err)
+    }
 
-func createTables() {
     createUsersTable()
     createCategoryTable()
     createPostCategoryTable()
