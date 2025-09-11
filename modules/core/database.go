@@ -15,7 +15,6 @@ func InitDB(path string) {
     if err != nil {
         log.Fatal("Failed to connect database:", err)
     }
-
     createTables()
 }
 
@@ -24,12 +23,12 @@ func GetDB() *sql.DB {
 }
 
 func createTables() {
-    createUserTable()
+    createUsersTable()
     createCategoryTable()
     createPostCategoryTable()
 }
 
-func createUserTable(){
+func createUsersTable(){
     query := `
     CREATE TABLE IF NOT EXISTS users (
         user_id TEXT PRIMARY KEY,
@@ -51,25 +50,27 @@ func createCategoryTable(){
     query := `
     CREATE TABLE IF NOT EXISTS category(
         category_id TEXT PRIMARY KEY,
-        category_name TEXT NOT NULL,
+        category_name TEXT NOT NULL
     );`
 
     _ , err := db.Exec(query)
     if err != nil {
-        log.Fatalf("Failed to create users table: %v", err)
+        log.Fatalf("Failed to create category table: %v", err)
     }
 }
 
 func createPostCategoryTable(){
     query := `
     CREATE TABLE IF NOT EXISTS postcategory(
-        (post_id , category_id ) TEXT PRIMARY KEY,
-        FOREIGN KEY(post_id) REFERENCES post(post_id),
-        FOREIGN KEY(category_id) REFERENCES category(category_id),
-    ;)`
+        post_id TEXT,
+        category_id TEXT,
+        PRIMARY KEY (post_id , category_id ),
+        FOREIGN KEY (post_id) REFERENCES post(post_id),
+        FOREIGN KEY (category_id) REFERENCES category(category_id)
+    );`
 
     _ , err := db.Exec(query)
     if err != nil {
-        log.Fatalf("Failed to create users table: %v", err)
+        log.Fatalf("Failed to create postcategory table: %v", err)
     }
 }
