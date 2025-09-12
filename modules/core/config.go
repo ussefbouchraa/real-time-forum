@@ -5,8 +5,8 @@ type Config struct {
     DatabasePath string
 }
 
-func LoadConfig() Config {
-    return Config{
+func LoadConfig() *Config {
+    return &Config{
         ServerPort  : ":8080",
         DatabasePath: "./r-forum.db",
     }

@@ -7,16 +7,16 @@ import (
     "log"
 )
 
-var db *sql.DB
+var Db *sql.DB
 
 func InitDB(path string) {
     var err error
-    db, err = sql.Open("sqlite3", path)
+    Db, err = sql.Open("sqlite3", path)
     if err != nil {
         log.Fatal("Failed to connect database:", err)
     }
 
-    _, err = db.Exec("PRAGMA foreign_keys = ON")
+    _, err = Db.Exec("PRAGMA foreign_keys = ON")
     if err != nil {
         log.Fatal("Failed to enable foreign keys:", err)
     }
@@ -38,7 +38,7 @@ func createUsersTable(){
         password TEXT NOT NULL
     );`
 
-    _ , err := db.Exec(query)
+    _ , err := Db.Exec(query)
     if err != nil {
         log.Fatalf("Failed to create users table: %v", err)
     }
@@ -51,7 +51,7 @@ func createCategoryTable(){
         category_name TEXT NOT NULL
     );`
 
-    _ , err := db.Exec(query)
+    _ , err := Db.Exec(query)
     if err != nil {
         log.Fatalf("Failed to create category table: %v", err)
     }
@@ -67,7 +67,7 @@ func createPostCategoryTable(){
         FOREIGN KEY (category_id) REFERENCES category(category_id)
     );`
 
-    _ , err := db.Exec(query)
+    _ , err := Db.Exec(query)
     if err != nil {
         log.Fatalf("Failed to create postcategory table: %v", err)
     }
