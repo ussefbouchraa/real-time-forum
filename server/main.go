@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"real-time-forum/modules/auth"
 	"real-time-forum/modules/chat"
@@ -11,6 +12,8 @@ import (
 	"real-time-forum/modules/posts"
 	"real-time-forum/modules/templates"
 )
+
+var Db = core.Db
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
@@ -30,6 +33,15 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func StartSessionCleanup() {
+	go func() {
+		for {
+			time.Sleep(15 * time.Minute)
+			Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
+		}
+	}()
+}
+
 func main() {
 	templates.Init()
 
@@ -44,6 +56,10 @@ func main() {
 	http.HandleFunc("/ws", auth.WebSocketHandler)
 	http.HandleFunc("/posts", posts.PostsHandler)
 	http.HandleFunc("/ws/chat", chat.ChatWebSocketHandler)
+
+	// Start a background goroutine that periodically cleans up expired sessions
+	// using the indexed 'expires_at' column to keep the database search performant
+	StartSessionCleanup()
 
 	fmt.Println("Server started at http://localhost:8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

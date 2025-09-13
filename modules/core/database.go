@@ -161,4 +161,11 @@ func createSessionsTable() {
 	if err != nil {
 		log.Fatalf("Failed to create sessions table: %v", err)
 	}
+
+	indexQuery := `
+    CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);`
+	_, err = Db.Exec(indexQuery)
+	if err != nil {
+		log.Fatalf("Failed to create index on sessions: %v", err)
+	}
 }
