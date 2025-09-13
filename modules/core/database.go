@@ -2,32 +2,38 @@
 package core
 
 import (
-    "database/sql"
-    _ "github.com/mattn/go-sqlite3"
-    "log"
+	"database/sql"
+	"log"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var Db *sql.DB
 
 func InitDB(path string) {
-    var err error
-    Db, err = sql.Open("sqlite3", path)
-    if err != nil {
-        log.Fatal("Failed to connect database:", err)
-    }
+	var err error
+	Db, err = sql.Open("sqlite3", path)
+	if err != nil {
+		log.Fatal("Failed to connect database:", err)
+	}
 
-    _, err = Db.Exec("PRAGMA foreign_keys = ON")
-    if err != nil {
-        log.Fatal("Failed to enable foreign keys:", err)
-    }
+	_, err = Db.Exec("PRAGMA foreign_keys = ON")
+	if err != nil {
+		log.Fatal("Failed to enable foreign keys:", err)
+	}
 
-    createUsersTable()
-    createCategoryTable()
-    createPostCategoryTable()
+	createUsersTable()
+	createPostsTable()
+	createCommentsTable()
+	createCategoriesTable()
+	createPostsCategoriesTable()
+	createCommentsReactionsTable()
+	createPostsReactionsTable()
+	createSessionsTable()
 }
 
-func createUsersTable(){
-    query := `
+func createUsersTable() {
+	query := `
     CREATE TABLE IF NOT EXISTS users (
         user_id TEXT PRIMARY KEY,
         first_name TEXT NOT NULL,
@@ -38,37 +44,121 @@ func createUsersTable(){
         password TEXT NOT NULL
     );`
 
-    _ , err := Db.Exec(query)
-    if err != nil {
-        log.Fatalf("Failed to create users table: %v", err)
-    }
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create users table: %v", err)
+	}
 }
 
-func createCategoryTable(){
-    query := `
-    CREATE TABLE IF NOT EXISTS category(
+func createCategoriesTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS categories(
         category_id TEXT PRIMARY KEY,
         category_name TEXT NOT NULL
     );`
 
-    _ , err := Db.Exec(query)
-    if err != nil {
-        log.Fatalf("Failed to create category table: %v", err)
-    }
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create categories table: %v", err)
+	}
 }
 
-func createPostCategoryTable(){
-    query := `
-    CREATE TABLE IF NOT EXISTS postcategory(
-        post_id TEXT,
-        category_id TEXT,
-        PRIMARY KEY (post_id , category_id ),
-        FOREIGN KEY (post_id) REFERENCES post(post_id),
-        FOREIGN KEY (category_id) REFERENCES category(category_id)
+func createPostsCategoriesTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS posts_categories(
+        post_id TEXT NOT NULL,
+        category_id TEXT NOT NULL,
+        PRIMARY KEY (post_id , category_id),
+        FOREIGN KEY (post_id) REFERENCES posts(post_id),
+        FOREIGN KEY (category_id) REFERENCES categories(category_id)
     );`
 
-    _ , err := Db.Exec(query)
-    if err != nil {
-        log.Fatalf("Failed to create postcategory table: %v", err)
-    }
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create posts_categories table: %v", err)
+	}
+}
+
+func createPostsTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS posts(
+        post_id TEXT PRIMARY KEY,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        user_id TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );`
+
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create posts table: %v", err)
+	}
+}
+
+func createPostsReactionsTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS posts_reactions(
+        post_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        PRIMARY KEY (post_id, user_id),
+        reaction_type INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+        FOREIGN KEY (post_id) REFERENCES posts(post_id)              
+    );`
+
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create posts_reactions table: %v", err)
+	}
+}
+
+func createCommentsTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS comments(
+        comment_id TEXT PRIMARY KEY,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        user_id TEXT NOT NULL,
+        post_id TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id),
+        FOREIGN KEY (post_id) REFERENCES posts(post_id)
+    );`
+
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create comments table: %v", err)
+	}
+}
+
+func createCommentsReactionsTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS comments_reactions(
+        comment_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        PRIMARY KEY (comment_id, user_id),
+        reaction_type INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (comment_id) REFERENCES comments(comment_id),
+        FOREIGN KEY (user_id) REFERENCES users(user_id)               
+        );`
+
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create comments_reactions table: %v", err)
+	}
+}
+
+func createSessionsTable() {
+	query := `
+    CREATE TABLE IF NOT EXISTS sessions(
+        session_id TEXT PRIMARY KEY,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        expires_at DATETIME,
+        user_id TEXT NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+    );`
+
+	_, err := Db.Exec(query)
+	if err != nil {
+		log.Fatalf("Failed to create sessions table: %v", err)
+	}
 }
