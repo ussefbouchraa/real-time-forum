@@ -2,10 +2,14 @@ package auth
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"unicode"
 
 	"real-time-forum/modules/core"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var Db = core.Db
@@ -14,6 +18,9 @@ func RegisterUser(data RegisterData) error {
 	data.FirstName = strings.TrimSpace(data.FirstName)
 	data.LastName = strings.TrimSpace(data.LastName)
 	data.Nickname = strings.TrimSpace(data.Nickname)
+	if len(strings.TrimSpace(data.Password)) != len(data.Password) {
+		return fmt.Errorf("your password can't start or end with a blank space")
+	}
 
 	if err := AllFieldAreRequiredCheck(data); err != nil {
 		return err
@@ -35,6 +42,24 @@ func RegisterUser(data RegisterData) error {
 		return err
 	}
 
+	if err := IsValidEmail(data.Email); err != nil {
+		return err
+	}
+
+	// hash password
+	hashedPwd, err := HashPassword(data.Password)
+	if err != nil {
+		return err
+	}
+
+	// generate uuid
+	userID := uuid.New().String()
+
+	_, err = Db.Exec(`INSERT INTO users (user_id, first_name, last_name, nickname, age, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		userID, data.FirstName, data.LastName, data.Nickname, data.Age, data.Email, hashedPwd)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -82,7 +107,7 @@ func IsNicknameOrEmailTaken(data RegisterData) error {
 	if err == nil {
 		return fmt.Errorf("nickname is already taken")
 	}
-	
+
 	return nil
 }
 
@@ -125,4 +150,27 @@ func LengthCheck(data RegisterData) error {
 		return fmt.Errorf("password must be at least 6 characters")
 	}
 	return nil
+}
+
+func IsValidEmail(email string) error {
+	regex := `^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`
+	re := regexp.MustCompile(regex)
+
+	if !re.MatchString(email) {
+		return fmt.Errorf("invalid email format")
+	}
+	return nil
+}
+
+func HashPassword(password string) (string, error) {
+	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedBytes), nil
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }
