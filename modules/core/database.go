@@ -100,8 +100,8 @@ func createPostsReactionsTable() {
     CREATE TABLE IF NOT EXISTS posts_reactions(
         post_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        PRIMARY KEY (post_id, user_id),
         reaction_type INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (post_id, user_id),
         FOREIGN KEY (user_id) REFERENCES users(user_id),
         FOREIGN KEY (post_id) REFERENCES posts(post_id)              
     );`
@@ -135,8 +135,8 @@ func createCommentsReactionsTable() {
     CREATE TABLE IF NOT EXISTS comments_reactions(
         comment_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        PRIMARY KEY (comment_id, user_id),
         reaction_type INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (comment_id, user_id),
         FOREIGN KEY (comment_id) REFERENCES comments(comment_id),
         FOREIGN KEY (user_id) REFERENCES users(user_id)               
         );`
