@@ -1,3 +1,236 @@
-body{
-    background-color: red;
+/* Combined styles from your CSS files */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", sans-serif;
+    background: linear-gradient(25deg, #2f2f2f 0%, rgb(116, 132, 139) 50%, #4f4f4f 100%);
+    min-height: 100vh;
+}
+
+.container {
+    width: 100%;
+    position: absolute;
+    top: 30%;
+    text-align: center;
+    color: #343434;
+}
+
+.container h1 {
+    font-size: 120px;
+    margin: 0;
+    letter-spacing: 20px; 
+    background: linear-gradient(3deg, #450A40  40% ,#D34160 1% , #450A40 60% ,  #2d0047 1%);
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0.8;
+    color: transparent;
+    -webkit-background-clip: text;
+}
+
+.container a {
+    text-decoration: none;
+    background:#e55039aa;
+    color: #fff;
+    padding: 12px 24px;
+    display:inline-block;
+    border-radius: 25px;
+    font-size: 14px;
+    text-transform: uppercase;
+    transition: 0.4s;
+}
+
+.container a:hover {
+    background: #e55039;
+}
+
+.form-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.form-container h1 {
+    margin-bottom: 20px;
+    color: #4f4f4f;
+    font-size: 32px;
+    background: none;
+    color: #343434;
+    letter-spacing: normal;
+}
+
+.form-container label {
+    display: block;
+    text-align: left;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: bold;
+}
+
+.form-container input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+}
+
+.form-container input[type="submit"] {
+    background-color: #757575;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.form-container input[type="submit"]:hover {
+    background-color: #546E7A;
+}
+
+.form-links {
+    margin: 15px 0;
+    color: #666;
+}
+
+.form-links a {
+    color: #1976D2;
+    text-decoration: none;
+    background: none;
+    padding: 0;
+    text-transform: none;
+}
+
+.form-links a:hover {
+    text-decoration: underline;
+    background: none;
+}
+
+.navbar {
+    background: linear-gradient(135deg, #00BCD4, #4DD0E1);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+}
+
+.nav-links {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.posts-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.post {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #65676B;
+}
+
+.post-author {
+    font-weight: 600;
+    color: #00BCD4;
+}
+
+.post-content {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.post-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    border: none;
+    background: #F0F2F5;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.like-btn {
+    color: #00E676;
+}
+
+.like-btn:hover {
+    background: rgba(0, 230, 118, 0.1);
+}
+
+.comment-btn {
+    color: #00BCD4;
+}
+
+.comment-btn:hover {
+    background: rgba(0, 188, 212, 0.1);
+}
+
+.error {
+    color: #E74C3C;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    background: rgba(231, 76, 60, 0.1);
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .container h1 {
+        font-size: 100px;
+        letter-spacing: 10px;
+    }
+    
+    .navbar {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .form-container {
+        padding: 20px;
+        max-width: 90%;
+    }
 }

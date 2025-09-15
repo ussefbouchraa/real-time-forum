@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum SPA</title>
+    <style>
+        /* Reset & Base Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f5f7f9; 
+            color: #333; 
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.8rem; font-weight: bold; }
+        .nav-links { display: flex; gap: 1.5rem; }
+        .nav-links a { 
+            color: white; 
+            text-decoration: none; 
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        .nav-links a:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        /* Main Content */
+        main { padding: 2rem 0; min-height: calc(100vh - 180px); }
+        .view { display: none; }
+        .view.active { display: block; }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Forms */
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .form-group textarea { min-height: 150px; resize: vertical; }
+        button {
+            background: #6e8efb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+        button:hover { background: #5a7df9; }
+        
+        /* Posts */
+        .post { border-left: 4px solid #6e8efb; padding-left: 1.5rem; }
+        .post-header { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 1rem; 
+            color: #666;
+        }
+        .post-title { font-size: 1.4rem; margin-bottom: 1rem; color: #444; }
+        .post-footer { display: flex; gap: 1rem; color: #666; }
+        
+        /* Comments */
+        .comment { 
+            border-left: 2px solid #eee; 
+            padding-left: 1rem; 
+            margin: 1rem 0; 
+        }
+        
+        /* Footer */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <div class="logo">ForumApp</div>
+                <div class="nav-links">
+                    <a href="#" data-view="home">Home</a>
+                    <a href="#" data-view="profile">Profile</a>
+                    <a href="#" data-view="chat">Chat</a>
+                    <a href="#" data-view="login">Login</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Home View -->
+            <div id="home-view" class="view active">
+                <h1>Recent Posts</h1>
+                <div class="posts-list">
+                    <div class="card post">
+                        <div class="post-header">
+                            <span>JohnDoe</span>
+                            <span>2 hours ago</span>
+                        </div>
+                        <h2 class="post-title">What's your favorite programming language in 2023?</h2>
+                        <p>I've been working with JavaScript for years, but I'm curious what others are using these days.</p>
+                        <div class="post-footer">
+                            <span>👍 24 Likes</span>
+                            <span>💬 8 Comments</span>
+                            <a href="#" data-view="post">Read more</a>
+                        </div>
+                    </div>
+
+                    <div class="card post">
+                        <div class="post-header">
+                            <span>JaneSmith</span>
+                            <span>1 day ago</span>
+                        </div>
+                        <h2 class="post-title">Best practices for REST API authentication</h2>
+                        <p>I'm designing a new API and would love to hear about authentication approaches.</p>
+                        <div class="post-footer">
+                            <span>👍 42 Likes</span>
+                            <span>💬 12 Comments</span>
+                            <a href="#" data-view="post">Read more</a>
+                        </div>
+                    </div>
+                </div>
+                <button data-view="create-post">Create New Post</button>
+            </div>
+
+            <!-- Login View -->
+            <div id="login-view" class="view">
+                <div class="card">
+                    <h1>Login</h1>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="login-email">Email</label>
+                            <input type="email" id="login-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit">Login</button>
+                    </form>
+                    <p>Don't have an account? <a href="#" data-view="register">Register here</a></p>
+                </div>
+            </div>
+
+            <!-- Register View -->
+            <div id="register-view" class="view">
+                <div class="card">
+                    <h1>Create Account</h1>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="register-username">Username</label>
+                            <input type="text" id="register-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email</label>
+                            <input type="email" id="register-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" required>
+                        </div>
+                        <button type="submit">Register</button>
+                    </form>
+                    <p>Already have an account? <a href="#" data-view="login">Login here</a></p>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profile-view" class="view">
+                <div class="card">
+                    <h1>User Profile</h1>
+                    <div class="profile-info">
+                        <div class="form-group">
+                            <label>Username</label>
+                            <p>JohnDoe</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <p>john.doe@example.com</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Member since</label>
+                            <p>January 2022</p>
+                        </div>
+                    </div>
+                    <button>Edit Profile</button>
+                </div>
+            </div>
+
+            <!-- Post View -->
+            <div id="post-view" class="view">
+                <div class="card post">
+                    <div class="post-header">
+                        <span>JohnDoe</span>
+                        <span>2 hours ago</span>
+                    </div>
+                    <h2 class="post-title">What's your favorite programming language in 2023?</h2>
+                    <p>I've been working with JavaScript for years, but I'm curious what others are using these days. Has anyone tried Rust or Go for web development?</p>
+                    <div class="post-footer">
+                        <span>👍 24 Likes</span>
+                        <span>💬 8 Comments</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Comments</h3>
+                    <div class="comment">
+                        <div class="post-header">
+                            <span>JaneSmith</span>
+                            <span>1 hour ago</span>
+                        </div>
+                        <p>Great question! I've been using Go for microservices and it's been fantastic for performance.</p>
+                    </div>
+                    <div class="comment">
+                        <div class="post-header">
+                            <span>DevUser42</span>
+                            <span>45 minutes ago</span>
+                        </div>
+                        <p>TypeScript has been a game-changer for me.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comment-text">Add a comment</label>
+                        <textarea id="comment-text" placeholder="Write your comment here..."></textarea>
+                    </div>
+                    <button>Post Comment</button>
+                </div>
+            </div>
+
+            <!-- Create Post View -->
+            <div id="create-post-view" class="view">
+                <div class="card">
+                    <h1>Create New Post</h1>
+                    <form id="create-post-form">
+                        <div class="form-group">
+                            <label for="post-title">Title</label>
+                            <input type="text" id="post-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="post-content">Content</label>
+                            <textarea id="post-content" required></textarea>
+                        </div>
+                        <button type="submit">Publish Post</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Chat View -->
+            <div id="chat-view" class="view">
+                <h1>Chat with Users</h1>
+                <div class="card">
+                    <h3>Online Users</h3>
+                    <div class="user">JohnDoe (Online)</div>
+                    <div class="user">JaneSmith (Online)</div>
+                    
+                    <div class="chat-messages">
+                        <div class="message">
+                            <strong>JohnDoe:</strong> Hey there! How's the project going?
+                        </div>
+                        <div class="message">
+                            <strong>You:</strong> Pretty good! Just finished the API integration.
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <input type="text" placeholder="Type your message...">
+                    </div>
+                    <button>Send</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 ForumApp. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Simple Router
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all view links
+            const viewLinks = document.querySelectorAll('[data-view]');
+            
+            // Add click event to all view links
+            viewLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const viewName = this.getAttribute('data-view');
+                    showView(viewName);
+                });
+            });
+            
+            // Form submissions
+            const forms = ['login-form', 'register-form', 'create-post-form'];
+            forms.forEach(formId => {
+                const form = document.getElementById(formId);
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        alert('Form submitted! (This is a demo)');
+                        showView('home');
+                    });
+                }
+            });
+            
+            // Function to show a specific view
+            function showView(viewName) {
+                // Hide all views
+                document.querySelectorAll('.view').forEach(view => {
+                    view.classList.remove('active');
+                });
+                
+                // Show the requested view
+                document.getElementById(`${viewName}-view`).classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

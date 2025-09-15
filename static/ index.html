@@ -3,9 +3,582 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Forum SPA</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Inter", sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(25deg, #2f2f2f 0%, rgb(116, 132, 139) 50%, #4f4f4f 100%);
+            color: #343434;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header & Navigation */
+        header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Main Content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 180px);
+        }
+        
+        .view {
+            display: none;
+        }
+        
+        .view.active {
+            display: block;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+        
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #757575;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #546E7A;
+        }
+        
+        /* Posts */
+        .post {
+            border-left: 4px solid #6e8efb;
+            padding-left: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .post-author {
+            font-weight: 600;
+            color: #00BCD4;
+        }
+        
+        .post-title {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            color: #444;
+        }
+        
+        .post-content {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+        
+        .post-footer {
+            display: flex;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* Comments */
+        .comment {
+            border-left: 2px solid #eee;
+            padding-left: 1rem;
+            margin: 1rem 0;
+        }
+        
+        /* Links */
+        a {
+            color: #1976D2;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Lists */
+        ul {
+            list-style: none;
+            margin: 1rem 0;
+        }
+        
+        li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Error */
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .error-container h1 {
+            font-size: 120px;
+            margin: 0;
+            letter-spacing: 20px; 
+            background: linear-gradient(3deg, #450A40  40% ,#D34160 1% , #450A40 60% ,  #2d0047 1%);
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0.8;
+            color: transparent;
+            -webkit-background-clip: text;
+        }
+        
+        /* Footer */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+    </style>
 </head>
 <body>
-    <h1>hhhhhh</h1>
+    <header>
+        <div class="container">
+            <nav>
+                <a href="/" class="logo" data-link>Forum</a>
+                <div class="nav-links">
+                    <a href="/" data-link>Home</a>
+                    <a href="/profile" data-link>Profile</a>
+                    <a href="/chat" data-link>Chat</a>
+                    <a href="/login" data-link>Login</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="container" id="app">
+            <!-- Content will be rendered here -->
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Forum. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Pages.js - All page templates
+        const pages = {
+            Home: (posts = []) => `
+                <div class="view active">
+                    <h1>Forum Posts</h1>
+                    <div class="posts-list">
+                        ${posts.length > 0 ? 
+                            posts.map(post => `
+                                <div class="card post">
+                                    <div class="post-header">
+                                        <span class="post-author">${post.author}</span>
+                                        <span class="post-date">${new Date(post.createdAt).toLocaleString()}</span>
+                                    </div>
+                                    <h2 class="post-title">${post.title}</h2>
+                                    <div class="post-content">${post.content}</div>
+                                    <div class="post-footer">
+                                        <span>👍 ${post.likes || 0} Likes</span>
+                                        <span>💬 ${post.comments ? post.comments.length : 0} Comments</span>
+                                        <a href="/post/${post.id}" data-link>Read more</a>
+                                    </div>
+                                </div>
+                            `).join('') 
+                            : '<p>No posts available.</p>'
+                        }
+                    </div>
+                    <button onclick="navigate('/create')">+ New Post</button>
+                </div>
+            `,
+
+            Login: () => `
+                <div class="view active">
+                    <div class="card">
+                        <h1>Login</h1>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label for="username">Username or Email</label>
+                                <input type="text" id="username" name="username" placeholder="Username or Email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Password" required>
+                            </div>
+                            <button type="submit">Login</button>
+                        </form>
+                        <p>No account? <a href="/register" data-link>Register</a></p>
+                    </div>
+                </div>
+            `,
+
+            Register: () => `
+                <div class="view active">
+                    <div class="card">
+                        <h1>Register</h1>
+                        <form id="registerForm">
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" id="username" name="username" placeholder="Username" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" name="email" placeholder="Email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" placeholder="Password" required>
+                            </div>
+                            <button type="submit">Register</button>
+                        </form>
+                    </div>
+                </div>
+            `,
+
+            Profile: (user = {}) => `
+                <div class="view active">
+                    <div class="card">
+                        <h1>${user.username || "User"}'s Profile</h1>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <p>${user.email || "Not set"}</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Posts</label>
+                            <p>${user.postsCount || 0}</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+
+            Post: (post = {}) => `
+                <div class="view active">
+                    <div class="card post">
+                        <div class="post-header">
+                            <span class="post-author">${post.author || "Unknown"}</span>
+                            <span class="post-date">${post.createdAt ? new Date(post.createdAt).toLocaleString() : ""}</span>
+                        </div>
+                        <h1 class="post-title">${post.title || "Post Title"}</h1>
+                        <div class="post-content">
+                            <p>${post.content || ""}</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Comments</h3>
+                        <ul>
+                            ${(post.comments || []).map(comment => `
+                                <li class="comment">
+                                    <div class="post-header">
+                                        <span class="post-author">${comment.author}</span>
+                                        <span class="post-date">${new Date(comment.createdAt).toLocaleString()}</span>
+                                    </div>
+                                    <p>${comment.content}</p>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <form id="commentForm">
+                            <div class="form-group">
+                                <label for="comment">Add a comment</label>
+                                <textarea id="comment" name="comment" placeholder="Write a comment" required></textarea>
+                            </div>
+                            <button type="submit">Send</button>
+                        </form>
+                    </div>
+                </div>
+            `,
+
+            CreatePost: () => `
+                <div class="view active">
+                    <div class="card">
+                        <h1>Create New Post</h1>
+                        <form id="createPostForm">
+                            <div class="form-group">
+                                <label for="title">Title</label>
+                                <input type="text" id="title" name="title" placeholder="Title" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="content">Content</label>
+                                <textarea id="content" name="content" placeholder="Content" required></textarea>
+                            </div>
+                            <button type="submit">Publish</button>
+                        </form>
+                    </div>
+                </div>
+            `,
+
+            Chat: (messages = []) => `
+                <div class="view active">
+                    <div class="card">
+                        <h1>Chat</h1>
+                        <div id="chatBox">
+                            ${messages.map(msg => `
+                                <p><strong>${msg.user}:</strong> ${msg.text}</p>
+                            `).join('')}
+                        </div>
+                        <div class="form-group">
+                            <input type="text" id="chatInput" placeholder="Type a message">
+                        </div>
+                        <button id="sendBtn">Send</button>
+                    </div>
+                </div>
+            `,
+
+            Error: () => `
+                <div class="view active">
+                    <div class="error-container">
+                        <h1>404</h1>
+                        <p>The page you are looking for does not exist.</p>
+                        <a href="/" data-link>Go Home</a>
+                    </div>
+                </div>
+            `
+        };
+
+        // Router and App Logic
+        const router = {
+            currentPath: '/',
+            routes: {},
+            
+            init: function() {
+                // Define routes
+                this.routes = {
+                    '/': () => this.renderPage('Home', this.getPosts()),
+                    '/login': () => this.renderPage('Login'),
+                    '/register': () => this.renderPage('Register'),
+                    '/profile': () => this.renderPage('Profile', this.getCurrentUser()),
+                    '/post/:id': (params) => this.renderPage('Post', this.getPost(params.id)),
+                    '/create': () => this.renderPage('CreatePost'),
+                    '/chat': () => this.renderPage('Chat', this.getMessages())
+                };
+                
+                // Handle initial load
+                window.addEventListener('load', () => {
+                    this.navigate(window.location.pathname);
+                });
+                
+                // Handle back/forward navigation
+                window.addEventListener('popstate', () => {
+                    this.navigate(window.location.pathname);
+                });
+                
+                // Handle link clicks
+                document.addEventListener('click', (e) => {
+                    if (e.target.matches('[data-link]')) {
+                        e.preventDefault();
+                        this.navigate(e.target.getAttribute('href'));
+                    }
+                });
+                
+                // Handle form submissions
+                document.addEventListener('submit', (e) => {
+                    if (e.target.matches('form')) {
+                        e.preventDefault();
+                        alert('Form submitted! (This is a demo)');
+                        this.navigate('/');
+                    }
+                });
+            },
+            
+            navigate: function(path) {
+                this.currentPath = path;
+                window.history.pushState({}, path, window.location.origin + path);
+                this.matchRoute();
+            },
+            
+            matchRoute: function() {
+                const path = this.currentPath;
+                let matchedRoute = null;
+                let params = {};
+                
+                // Check if route exists
+                for (const route in this.routes) {
+                    if (route.includes(':')) {
+                        // Handle parameterized routes like /post/:id
+                        const routeParts = route.split('/');
+                        const pathParts = path.split('/');
+                        
+                        if (routeParts.length === pathParts.length) {
+                            let match = true;
+                            const currentParams = {};
+                            
+                            for (let i = 0; i < routeParts.length; i++) {
+                                if (routeParts[i].startsWith(':')) {
+                                    const paramName = routeParts[i].substring(1);
+                                    currentParams[paramName] = pathParts[i];
+                                } else if (routeParts[i] !== pathParts[i]) {
+                                    match = false;
+                                    break;
+                                }
+                            }
+                            
+                            if (match) {
+                                matchedRoute = this.routes[route];
+                                params = currentParams;
+                                break;
+                            }
+                        }
+                    } else if (route === path) {
+                        matchedRoute = this.routes[route];
+                        break;
+                    }
+                }
+                
+                if (matchedRoute) {
+                    matchedRoute(params);
+                } else {
+                    this.renderPage('Error');
+                }
+            },
+            
+            renderPage: function(pageName, data = null) {
+                const app = document.getElementById('app');
+                if (pages[pageName]) {
+                    app.innerHTML = pages[pageName](data);
+                } else {
+                    app.innerHTML = pages.Error();
+                }
+            },
+            
+            // Mock data functions
+            getPosts: function() {
+                return [
+                    { 
+                        id: 1, 
+                        author: 'JohnDoe', 
+                        title: 'What\'s your favorite programming language in 2023?',
+                        content: 'I\'ve been working with JavaScript for years, but I\'m curious what others are using these days. Has anyone tried Rust or Go for web development?',
+                        createdAt: new Date(),
+                        likes: 24,
+                        comments: [
+                            { author: 'JaneSmith', content: 'Great question! I\'ve been using Go for microservices.', createdAt: new Date() },
+                            { author: 'DevUser42', content: 'TypeScript has been a game-changer for me.', createdAt: new Date() }
+                        ]
+                    },
+                    { 
+                        id: 2, 
+                        author: 'JaneSmith', 
+                        title: 'Best practices for REST API authentication',
+                        content: 'I\'m designing a new API and would love to hear about authentication approaches that have worked well for others.',
+                        createdAt: new Date(Date.now() - 86400000), // 1 day ago
+                        likes: 42,
+                        comments: []
+                    }
+                ];
+            },
+            
+            getPost: function(id) {
+                const posts = this.getPosts();
+                return posts.find(post => post.id === parseInt(id)) || {};
+            },
+            
+            getCurrentUser: function() {
+                return { username: 'JohnDoe', email: 'john.doe@example.com', postsCount: 5 };
+            },
+            
+            getMessages: function() {
+                return [
+                    { user: 'JohnDoe', text: 'Hey there! How\'s the project going?' },
+                    { user: 'You', text: 'Pretty good! Just finished the API integration.' },
+                    { user: 'JohnDoe', text: 'That\'s great! Need any help with the frontend?' }
+                ];
+            }
+        };
+
+        // Initialize the router when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            router.init();
+            
+            // Make navigate function available globally
+            window.navigate = (path) => router.navigate(path);
+        });
+    </script>
 </body>
 </html>

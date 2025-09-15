@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum SPA</title>
+    <style>
+        /* All your CSS from the files combined would go here */
+        /* For brevity, I'll include just the layout.css as base */
+        :root {
+            --primary-color: #00BCD4;
+            --primary-light: #4DD0E1;
+            /* ... rest of your layout.css variables */
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Additional styles from your other CSS files would be included here */
+    </style>
+</head>
+<body>
+    <!-- Navigation will be handled by JavaScript -->
+    <div id="app"></div>
+
+    <script>
+        // Main SPA Router
+        class ForumSPA {
+            constructor() {
+                this.app = document.getElementById('app');
+                this.currentPage = 'home';
+                this.isAuthenticated = false; // Would be set based on auth status
+                this.init();
+            }
+            
+            init() {
+                // Set up event listeners
+                window.addEventListener('popstate', () => this.route());
+                
+                // Initial route
+                this.route();
+                
+                // Check authentication status (pseudo-code)
+                this.checkAuthStatus();
+            }
+            
+            async checkAuthStatus() {
+                // In a real app, you would check for a token or session
+                // For demo purposes, we'll assume not authenticated initially
+                this.isAuthenticated = false;
+            }
+            
+            route() {
+                const path = window.location.pathname;
+                
+                switch(path) {
+                    case '/':
+                    case '/home':
+                        this.showHome();
+                        break;
+                    case '/login':
+                        this.showLogin();
+                        break;
+                    case '/signup':
+                        this.showSignup();
+                        break;
+                    case '/posts':
+                        this.showPosts();
+                        break;
+                    default:
+                        this.showError(404, 'Page not found');
+                }
+            }
+            
+            async showHome() {
+                this.currentPage = 'home';
+                // Load home template (your layout.html content)
+                const html = `
+                    <header class="navbar">
+                        <!-- Your navbar content from layout.html -->
+                    </header>
+                    <main>
+                        <!-- Your main content from layout.html -->
+                        <div class="post-toggle-wrapper">
+                            <!-- Filter and post creation UI -->
+                        </div>
+                        <section class="posts-container">
+                            <!-- Posts will be loaded here -->
+                        </section>
+                    </main>
+                `;
+                
+                this.app.innerHTML = html;
+                
+                // Load posts
+                await this.loadPosts();
+                
+                // Set up event listeners for the home page
+                this.setupHomeEvents();
+            }
+            
+            async showLogin() {
+                this.currentPage = 'login';
+                // Load login template
+                const html = `
+                    <div class="login_container">
+                        <h1>Login</h1>
+                        <form id="login-form">
+                            <div id="login-error" class="error-popout" style="display: none;"></div>
+                            <label for="email_input">Email</label>
+                            <input type="text" id="email_input" name="email" placeholder="Enter your username or email">
+                            <label for="password_input">Password</label>
+                            <input type="password" id="password_input" name="password" placeholder="Enter your password">
+                            <div class="new_account_div">
+                                <b>don't have an account?</b>
+                                <a href="#" id="signup-link">create here!</a>
+                                <br>
+                                <a href="#" id="home-link" class="back-to-home">Back to Home Page</a>
+                            </div>
+                            <input type="submit" class="login_button" value="Sign In">
+                        </form>
+                    </div>
+                `;
+                
+                this.app.innerHTML = html;
+                
+                // Set up event listeners
+                document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
+                document.getElementById('signup-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.navigate('/signup');
+                });
+                document.getElementById('home-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.navigate('/');
+                });
+            }
+            
+            async showSignup() {
+                this.currentPage = 'signup';
+                // Similar structure to showLogin but for signup
+                // Implementation would mirror showLogin()
+            }
+            
+            async showPosts() {
+                // Implementation for posts page
+            }
+            
+            showError(statusCode, message) {
+                this.currentPage = 'error';
+                // Load error template
+                const html = `
+                    <div class="container">
+                        <h2>Oops!</h2>
+                        <h1>${statusCode}</h1>
+                        <p>${message}</p>
+                        <p><a href="#" id="error-home-link">Go back to home page</a></p>
+                    </div>
+                `;
+                
+                this.app.innerHTML = html;
+                
+                // Set up event listener
+                document.getElementById('error-home-link').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.navigate('/');
+                });
+            }
+            
+            async loadPosts() {
+                try {
+                    // In a real app, you would fetch from your API
+                    // const response = await fetch('/api/posts');
+                    // const posts = await response.json();
+                    
+                    // For demo, we'll use dummy data
+                    const posts = [
+                        { id: 1, author: 'User1', content: 'Sample post content' },
+                        { id: 2, author: 'User2', content: 'Another post' }
+                    ];
+                    
+                    this.renderPosts(posts);
+                } catch (error) {
+                    console.error('Error loading posts:', error);
+                }
+            }
+            
+            renderPosts(posts) {
+                const postsContainer = document.querySelector('.posts-container');
+                if (!postsContainer) return;
+                
+                if (posts.length === 0) {
+                    postsContainer.innerHTML = '<p>No posts available.</p>';
+                    return;
+                }
+                
+                let postsHTML = '<h2 class="posts-title">All Posts</h2>';
+                
+                posts.forEach(post => {
+                    postsHTML += `
+                        <article class="forum-post" data-post-id="${post.id}">
+                            <div class="post-header">
+                                <span class="post-author">Posted by ${post.author}</span>
+                                <span class="post-date">${new Date().toLocaleDateString()}</span>
+                            </div>
+                            <div class="post-content">${post.content}</div>
+                            <div class="post-footer">
+                                <!-- Like, comment buttons etc. -->
+                            </div>
+                        </article>
+                    `;
+                });
+                
+                postsContainer.innerHTML = postsHTML;
+                
+                // Set up event listeners for posts
+                this.setupPostEvents();
+            }
+            
+            setupHomeEvents() {
+                // Set up event listeners for filter form, post creation, etc.
+                const filterForm = document.querySelector('.filter-section form');
+                if (filterForm) {
+                    filterForm.addEventListener('submit', (e) => this.handleFilter(e));
+                }
+                
+                const createForm = document.querySelector('.create-section form');
+                if (createForm) {
+                    createForm.addEventListener('submit', (e) => this.handleCreatePost(e));
+                }
+                
+                // Set up tab switching
+                const filterTab = document.querySelector('label[for="show-filter"]');
+                const createTab = document.querySelector('label[for="show-create"]');
+                
+                if (filterTab) {
+                    filterTab.addEventListener('click', () => this.switchTab('filter'));
+                }
+                
+                if (createTab) {
+                    createTab.addEventListener('click', () => this.switchTab('create'));
+                }
+            }
+            
+            setupPostEvents() {
+                // Set up event listeners for like buttons, comment forms, etc.
+                const likeButtons = document.querySelectorAll('.like-btn');
+                likeButtons.forEach(button => {
+                    button.addEventListener('click', (e) => this.handleLike(e));
+                });
+                
+                // Similar for other interactive elements
+            }
+            
+            async handleLogin(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const email = formData.get('email');
+                const password = formData.get('password');
+                
+                try {
+                    // In a real app, you would send this to your server
+                    // const response = await fetch('/api/login', {
+                    //     method: 'POST',
+                    //     body: JSON.stringify({ email, password }),
+                    //     headers: { 'Content-Type': 'application/json' }
+                    // });
+                    
+                    // For demo, we'll simulate a successful login
+                    this.isAuthenticated = true;
+                    this.navigate('/');
+                } catch (error) {
+                    this.showError('Login failed', error.message);
+                }
+            }
+            
+            async handleFilter(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const categories = formData.getAll('category-filter');
+                const myPosts = formData.get('myPosts') === 'on';
+                const likedPosts = formData.get('likedPosts') === 'on';
+                
+                // Apply filters and reload posts
+                await this.loadFilteredPosts({ categories, myPosts, likedPosts });
+            }
+            
+            async handleCreatePost(e) {
+                e.preventDefault();
+                if (!this.isAuthenticated) {
+                    this.navigate('/login');
+                    return;
+                }
+                
+                const formData = new FormData(e.target);
+                const content = formData.get('content');
+                const categories = formData.getAll('categories');
+                
+                try {
+                    // In a real app, you would send this to your server
+                    // await fetch('/api/posts', {
+                    //     method: 'POST',
+                    //     body: JSON.stringify({ content, categories }),
+                    //     headers: { 'Content-Type': 'application/json' }
+                    // });
+                    
+                    // Clear form and reload posts
+                    e.target.reset();
+                    await this.loadPosts();
+                } catch (error) {
+                    this.showError('Post creation failed', error.message);
+                }
+            }
+            
+            navigate(path) {
+                window.history.pushState({}, '', path);
+                this.route();
+            }
+            
+            // Additional methods would be implemented here
+        }
+
+        // Initialize the SPA when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const forumApp = new ForumSPA();
+        });
+    </script>
+</body>
+</html>
