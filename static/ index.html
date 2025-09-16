@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forum SPA</title>
+    <title>Real-Time Forum</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -17,6 +17,38 @@
             <!-- Content will be dynamically loaded here -->
             <div class="loading-spinner">Loading...</div>
         </main>
+        
+        <!-- Private Messages Sidebar -->
+        <div id="private-messages-sidebar" class="messages-sidebar">
+            <div class="messages-header">
+                <h3>Private Messages</h3>
+                <button id="toggle-messages" class="toggle-btn">◀</button>
+            </div>
+            <div class="online-users">
+                <h4>Online Users</h4>
+                <div id="online-users-list" class="users-list"></div>
+            </div>
+            <div class="conversations">
+                <h4>Conversations</h4>
+                <div id="conversations-list" class="users-list"></div>
+            </div>
+        </div>
+        
+        <!-- Active Chat Container -->
+        <div id="active-chat-container" class="chat-container">
+            <div class="chat-header">
+                <h3 id="chat-with-user">Select a user to chat</h3>
+                <button id="close-chat" class="close-btn">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea id="message-input" placeholder="Type your message..."></textarea>
+                <button id="send-message">Send</button>
+            </div>
+        </div>
+        
+        <!-- Fixed Chat Toggle Button -->
+        <button id="chat-toggle-btn" class="chat-toggle-button">💬</button>
         
         <!-- Error popup container -->
         <div id="error-container"></div>

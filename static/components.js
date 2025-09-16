@@ -2,21 +2,21 @@
 const components = {};
 
 // Navbar Component
-components.navbar = (isAuthenticated = false, username = '') => {
+components.navbar = (isAuthenticated = false, userData = {}) => {
     return `
         <header class="navbar">
             <div id="in-logo">
-                <div class="logo-box">Forum</div>
+                <div class="logo-box">Real-Time Forum</div>
                 <a href="#home" data-link></a>
             </div>
             <nav class="nav-links">
                 <div class="auth-buttons">
                     ${isAuthenticated ? `
-                        <span class="welcome-text">Welcome, ${username}</span>
+                        <a href="#profile" data-link>Profile</a>
                         <a href="#logout" data-link>Logout</a>
                     ` : `
                         <a href="#login" data-link>Login</a>
-                        <a href="#signup" data-link>Register</a>
+                        <a href="#register" data-link>Register</a>
                     `}
                 </div>
             </nav>
@@ -27,32 +27,28 @@ components.navbar = (isAuthenticated = false, username = '') => {
 // Home/Layout Component
 components.home = (data = {}) => {
     const isAuthenticated = data.isAuthenticated || false;
-    const username = data.username || '';
+    const userData = data.userData || {};
     const posts = data.posts || [];
     const formError = data.form_error || '';
     
     return `
-        ${components.postToggleSection(isAuthenticated, username, formError)}
+        ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
         ${components.posts(posts, isAuthenticated)}
     `;
 };
 
 // Post Toggle Section Component
-components.postToggleSection = (isAuthenticated, username, formError) => {
+components.postToggleSection = (userData, formError) => {
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
             <input type="radio" name="post-toggle" id="show-create" hidden>
             <div class="toggle-buttons">
-                ${isAuthenticated ? `
-                    <label for="show-filter">🔍 Filter Posts</label>
-                    <label for="show-create">➕ Make a Post</label>
-                ` : `
-                    <label for="show-filter">🔍 Filter Posts</label>
-                `}
+                <label for="show-filter">🔍 Filter Posts</label>
+                <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                ${isAuthenticated ? `<p>👋Welcome, ${username} </p>` : ''}
+                <p>👋Welcome, ${userData.nickname || userData.firstName} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -135,7 +131,7 @@ components.postToggleSection = (isAuthenticated, username, formError) => {
 // Posts Component
 components.posts = (posts, isAuthenticated) => {
     if (!posts || posts.length === 0) {
-        return `<section class="posts-container"><p>No posts available.</p></section>`;
+        return `<section class="posts-container"><p>No posts available. Be the first to post!</p></section>`;
     }
     
     return `
@@ -173,7 +169,7 @@ components.post = (post, isAuthenticated) => {
                             <span>👎</span>
                             <span class="count">${post.DislikeCount}</span>
                         </button>
-                        <button class="reaction-btn comments-btn" data-post-id="${post.ID}">
+                        <button class="reaction-btn comments-btn toggle-comments" data-post-id="${post.ID}">
                             <span>💬</span>
                             <span class="count">${post.Comments ? post.Comments.length : 0}</span>
                         </button>
@@ -187,11 +183,12 @@ components.post = (post, isAuthenticated) => {
             
             ${isAuthenticated ? components.commentForm(post.ID) : ''}
             
-            ${post.Comments && post.Comments.length > 0 ? `
-                <div class="comment-section">
-                    ${post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('')}
-                </div>
-            ` : ''}
+            <div class="comment-section" style="display: none;">
+                ${post.Comments && post.Comments.length > 0 ? 
+                    post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('') 
+                    : '<p class="no-comments">No comments yet.</p>'
+                }
+            </div>
         </article>
     `;
 };
@@ -212,8 +209,10 @@ components.commentForm = (postId) => {
 components.comment = (comment, isAuthenticated) => {
     return `
         <div class="comment" data-comment-id="${comment.ID}">
-            <span class="comment-author">Posted by ${comment.Author.UserName}</span>
-            <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
+            <div class="comment-header">
+                <span class="comment-author">${comment.Author.UserName}</span>
+                <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
+            </div>
             <p class="comment-content">${comment.Content}</p>
             ${isAuthenticated ? `
                 <div class="comment-reactions">
@@ -240,15 +239,15 @@ components.login = (error = '', email = '') => {
                 <form id="login-form">
                     ${error ? components.errorPopup(error) : ''}
                     
-                    <label for="email_input">Email</label>
-                    <input type="text" id="email_input" name="email" placeholder="Enter your email" value="${email}">
+                    <label for="login_identifier">Email or Nickname</label>
+                    <input type="text" id="login_identifier" name="identifier" placeholder="Enter your email or nickname" value="${email}">
                     
-                    <label for="password_input">Password</label>
-                    <input type="password" id="password_input" name="password" placeholder="Enter your password">
+                    <label for="login_password">Password</label>
+                    <input type="password" id="login_password" name="password" placeholder="Enter your password">
                     
                     <div class="new_account_div">
-                        <b>don't have an account?</b>
-                        <a href="#signup" data-link>create here!</a>
+                        <b>Don't have an account?</b>
+                        <a href="#register" data-link>Create one here!</a>
                         <br>
                         <a href="#home" data-link class="back-to-home">Back to Home Page</a>
                     </div>
@@ -259,33 +258,134 @@ components.login = (error = '', email = '') => {
     `;
 };
 
-// Signup Component
-components.signup = (error = '', username = '', email = '') => {
+// Register Component
+components.register = (error = '', formData = {}) => {
     return `
         <div class="auth-container">
             <div id="signup_container">
-                <h1>Sign up</h1>
-                <form id="signup-form">
+                <h1>Register</h1>
+                <form id="register-form">
                     ${error ? components.errorPopup(error) : ''}
                     
-                    <label for="username_input">Username</label>
-                    <input type="text" id="username_input" name="username" required placeholder="Enter your username" value="${username}">
+                    <label for="register_nickname">Nickname *</label>
+                    <input type="text" id="register_nickname" name="nickname" required 
+                        placeholder="Choose a nickname" value="${formData.nickname || ''}">
                     
-                    <label for="email_input">Email</label>
-                    <input type="email" id="email_input" name="email" required placeholder="Enter your email address" value="${email}">
+                    <label for="register_email">Email *</label>
+                    <input type="email" id="register_email" name="email" required 
+                        placeholder="Enter your email address" value="${formData.email || ''}">
                     
-                    <label for="password_input">Password</label>
-                    <input type="password" id="password_input" name="password" required placeholder="Create a secure password">
+                    <label for="register_password">Password *</label>
+                    <input type="password" id="register_password" name="password" required 
+                        placeholder="Create a secure password">
+                    
+                    <label for="register_firstname">First Name *</label>
+                    <input type="text" id="register_firstname" name="firstname" required 
+                        placeholder="Enter your first name" value="${formData.firstname || ''}">
+                    
+                    <label for="register_lastname">Last Name *</label>
+                    <input type="text" id="register_lastname" name="lastname" required 
+                        placeholder="Enter your last name" value="${formData.lastname || ''}">
+                    
+                    <label for="register_age">Age *</label>
+                    <input type="number" id="register_age" name="age" required min="13" 
+                        placeholder="Enter your age" value="${formData.age || ''}">
+                    
+                    <label for="register_gender">Gender</label>
+                    <select id="register_gender" name="gender">
+                        <option value="">Select gender</option>
+                        <option value="male" ${formData.gender === 'male' ? 'selected' : ''}>Male</option>
+                        <option value="female" ${formData.gender === 'female' ? 'selected' : ''}>Female</option>
+                        <option value="other" ${formData.gender === 'other' ? 'selected' : ''}>Other</option>
+                        <option value="prefer_not_to_say" ${formData.gender === 'prefer_not_to_say' ? 'selected' : ''}>Prefer not to say</option>
+                    </select>
                     
                     <div class="have_account_div">
                         <b>Already have an account?</b>
-                        <a href="#login" data-link>log in here!</a>
+                        <a href="#login" data-link>Log in here!</a>
                         <br>
                         <a href="#home" data-link class="back-to-home">Back to Home Page</a>
                     </div>
-                    <input type="submit" id="submit_button" value="Sign Up">
+                    <input type="submit" id="submit_button" value="Create Account">
                 </form>
             </div>
+        </div>
+    `;
+};
+
+// Profile Component
+components.profile = (userData) => {
+    return `
+        <div class="profile-container">
+            <h1>Your Profile</h1>
+            <div class="profile-info">
+                <div class="profile-field">
+                    <label>Nickname:</label>
+                    <span>${userData.nickname}</span>
+                </div>
+                <div class="profile-field">
+                    <label>Email:</label>
+                    <span>${userData.email}</span>
+                </div>
+                <div class="profile-field">
+                    <label>First Name:</label>
+                    <span>${userData.firstname}</span>
+                </div>
+                <div class="profile-field">
+                    <label>Last Name:</label>
+                    <span>${userData.lastname}</span>
+                </div>
+                <div class="profile-field">
+                    <label>Age:</label>
+                    <span>${userData.age}</span>
+                </div>
+                <div class="profile-field">
+                    <label>Gender:</label>
+                    <span>${userData.gender || 'Not specified'}</span>
+                </div>
+                <div class="profile-field">
+                    <label>Member since:</label>
+                    <span>${new Date(userData.createdAt).toLocaleDateString()}</span>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// User List Item Component (for private messages)
+components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
+    const displayName = user.nickname || `${user.firstname} ${user.lastname}`;
+    const statusClass = user.isOnline ? 'online' : 'offline';
+    const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
+    const lastMessagePreview = lastMessage ? 
+        (lastMessage.content.length > 30 ? 
+            lastMessage.content.substring(0, 30) + '...' : lastMessage.content) : 
+        'No messages yet';
+    
+    return `
+        <div class="user-list-item" data-user-id="${user.id}">
+            <div class="user-avatar ${statusClass}"></div>
+            <div class="user-info">
+                <div class="user-name">${displayName}</div>
+                <div class="last-message">${lastMessagePreview}</div>
+            </div>
+            <div class="message-info">
+                <div class="last-time">${lastMessageTime}</div>
+                ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
+            </div>
+        </div>
+    `;
+};
+
+// Chat Message Component
+components.chatMessage = (message, isOwn = false) => {
+    return `
+        <div class="message ${isOwn ? 'own-message' : 'other-message'}">
+            <div class="message-header">
+                <span class="message-sender">${isOwn ? 'You' : message.senderName}</span>
+                <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <div class="message-content">${message.content}</div>
         </div>
     `;
 };
