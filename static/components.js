@@ -1,185 +1,306 @@
-// All page components in one object
-const Components = {
-    // Navigation bar component
-    navbar: (isAuthenticated, username) => {
-        return `
-            <nav class="navbar">
-                <a href="#" class="logo" data-link="/">Forum</a>
-                <div class="nav-links">
+// Component registry
+const components = {};
+
+// Navbar Component
+components.navbar = (isAuthenticated = false, username = '') => {
+    return `
+        <header class="navbar">
+            <div id="in-logo">
+                <div class="logo-box">Forum</div>
+                <a href="#home" data-link></a>
+            </div>
+            <nav class="nav-links">
+                <div class="auth-buttons">
                     ${isAuthenticated ? `
-                        <span>Welcome, ${username}</span>
-                        <div class="auth-buttons">
-                            <a href="#" data-link="/logout">Logout</a>
-                        </div>
+                        <span class="welcome-text">Welcome, ${username}</span>
+                        <a href="#logout" data-link>Logout</a>
                     ` : `
-                        <div class="auth-buttons">
-                            <a href="#" data-link="/login">Login</a>
-                            <a href="#" data-link="/register">Register</a>
-                        </div>
+                        <a href="#login" data-link>Login</a>
+                        <a href="#signup" data-link>Register</a>
                     `}
                 </div>
             </nav>
-        `;
-    },
+        </header>
+    `;
+};
 
-    // Login page component
-    login: (error = '') => {
-        return `
-            ${Components.navbar(false)}
-            <div class="form-container">
-                <h1>Login</h1>
-                ${error ? `<div class="error">${error}</div>` : ''}
-                <form id="login-form">
-                    <label for="email">Email</label>
-                    <input type="text" id="email" name="email" placeholder="Enter your email" required>
-                    
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
-                    
-                    <div class="form-links">
-                        <b>Don't have an account?</b>
-                        <a href="#" data-link="/register">Create here!</a>
-                    </div>
-                    
-                    <input type="submit" value="Sign In">
-                </form>
+// Home/Layout Component
+components.home = (data = {}) => {
+    const isAuthenticated = data.isAuthenticated || false;
+    const username = data.username || '';
+    const posts = data.posts || [];
+    const formError = data.form_error || '';
+    
+    return `
+        ${components.postToggleSection(isAuthenticated, username, formError)}
+        ${components.posts(posts, isAuthenticated)}
+    `;
+};
+
+// Post Toggle Section Component
+components.postToggleSection = (isAuthenticated, username, formError) => {
+    return `
+        <div class="post-toggle-wrapper">
+            <input type="radio" name="post-toggle" id="show-filter" checked hidden>
+            <input type="radio" name="post-toggle" id="show-create" hidden>
+            <div class="toggle-buttons">
+                ${isAuthenticated ? `
+                    <label for="show-filter">🔍 Filter Posts</label>
+                    <label for="show-create">➕ Make a Post</label>
+                ` : `
+                    <label for="show-filter">🔍 Filter Posts</label>
+                `}
             </div>
-        `;
-    },
-
-    // Register page component
-    register: (error = '', formData = {}) => {
-        return `
-            ${Components.navbar(false)}
-            <div class="form-container">
-                <h1>Sign Up</h1>
-                ${error ? `<div class="error">${error}</div>` : ''}
-                <form id="register-form">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="Enter your username" 
-                        value="${formData.username || ''}" required>
-                    
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Enter your email address" 
-                        value="${formData.email || ''}" required>
-                    
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Create a secure password" required>
-                    
-                    <div class="form-links">
-                        <b>Already have an account?</b>
-                        <a href="#" data-link="/login">Log in here!</a>
-                    </div>
-                    
-                    <input type="submit" value="Sign Up">
-                </form>
+            <div class="Welcome-msg">
+                ${isAuthenticated ? `<p>👋Welcome, ${username} </p>` : ''}
             </div>
-        `;
-    },
 
-    // Posts page component
-    posts: (posts = [], error = '') => {
-        return `
-            ${Components.navbar(true, "User")}
-            <div class="posts-container">
-                <h2>All Posts</h2>
-                ${error ? `<div class="error">${error}</div>` : ''}
-                
-                <div class="create-post">
-                    <h3>Create a New Post</h3>
+            ${formError ? components.errorPopup(formError) : ''}
+            
+            <div class="post-sections">
+                <div class="post-section filter-section">
+                    <form id="filter-form">
+                        <div class="filter-options">
+                            <h4>Filter by Categories:</h4>
+                            <div class="category-tags-filter">
+                                <label class="category-tag">
+                                    <input type="checkbox" name="category-filter" value="technology">
+                                    <span>Technology</span>
+                                </label>
+                                <label class="category-tag">
+                                    <input type="checkbox" name="category-filter" value="gaming">
+                                    <span>Gaming</span>
+                                </label>
+                                <label class="category-tag">
+                                    <input type="checkbox" name="category-filter" value="science">
+                                    <span>Science</span>
+                                </label>
+                                <label class="category-tag">
+                                    <input type="checkbox" name="category-filter" value="art & creativity">
+                                    <span>Art & Creativity</span>
+                                </label>
+                                <label class="category-tag">
+                                    <input type="checkbox" name="category-filter" value="general">
+                                    <span>General</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="filter-checkboxes">
+                            <label class="filter-option">
+                                <input type="checkbox" name="myPosts">
+                                <span>My Posts</span>
+                            </label>
+                            <label class="filter-option">
+                                <input type="checkbox" name="likedPosts">
+                                <span>Liked Posts</span>
+                            </label>
+                        </div>
+                        <button type="submit">Apply Filters</button>
+                    </form>
+                </div>
+                <div class="post-section create-section">
                     <form id="create-post-form">
-                        <textarea id="post-content" placeholder="What's on your mind?" required></textarea>
+                        <textarea name="content" placeholder="Write your post..." required maxlength="5000"></textarea>
+                        <h4>Select Categories:</h4>
+                        <div class="category-options">
+                            <label class="category-tag">
+                                <input type="checkbox" name="categories" value="technology">
+                                <span>Technology</span>
+                            </label>
+                            <label class="category-tag">
+                                <input type="checkbox" name="categories" value="gaming">
+                                <span>Gaming</span>
+                            </label>
+                            <label class="category-tag">
+                                <input type="checkbox" name="categories" value="science">
+                                <span>Science</span>
+                            </label>
+                            <label class="category-tag">
+                                <input type="checkbox" name="categories" value="art & creativity">
+                                <span>Art & Creativity</span>
+                            </label>
+                            <label class="category-tag">
+                                <input type="checkbox" name="categories" value="general">
+                                <span>General</span>
+                            </label>
+                        </div>
                         <button type="submit">Post</button>
                     </form>
                 </div>
-                
-                <div class="posts-list">
-                    ${posts.length > 0 ? 
-                        posts.map(post => Components.postItem(post)).join('') : 
-                        '<p>No posts available.</p>'
-                    }
+            </div>
+        </div>
+    `;
+};
+
+// Posts Component
+components.posts = (posts, isAuthenticated) => {
+    if (!posts || posts.length === 0) {
+        return `<section class="posts-container"><p>No posts available.</p></section>`;
+    }
+    
+    return `
+        <section class="posts-container">
+            <h2 class="posts-title">All Posts</h2>
+            ${posts.map(post => components.post(post, isAuthenticated)).join('')}
+        </section>
+    `;
+};
+
+// Single Post Component
+components.post = (post, isAuthenticated) => {
+    return `
+        <article class="forum-post" data-post-id="${post.ID}">
+            <div class="post-header">
+                <span class="post-author">Posted by ${post.Author.UserName} </span>
+                <span class="post-date">${new Date(post.CreatedAt).toLocaleString()}</span>
+            </div>
+
+            <div class="post-content">${post.Content}</div>
+
+            <div class="post-footer">
+                <div class="post-categories">
+                    ${post.Categories.map(cat => 
+                        `<span class="category-badge">${cat.Name}</span>`
+                    ).join('')}
+                </div>
+                <div class="post-stats">
+                    ${isAuthenticated ? `
+                        <button class="reaction-btn like-btn" data-post-id="${post.ID}" data-type="like">
+                            <span>👍</span>
+                            <span class="count">${post.LikeCount}</span>
+                        </button>
+                        <button class="reaction-btn dislike-btn" data-post-id="${post.ID}" data-type="dislike">
+                            <span>👎</span>
+                            <span class="count">${post.DislikeCount}</span>
+                        </button>
+                        <button class="reaction-btn comments-btn" data-post-id="${post.ID}">
+                            <span>💬</span>
+                            <span class="count">${post.Comments ? post.Comments.length : 0}</span>
+                        </button>
+                    ` : `
+                        <span class="likes">👍 ${post.LikeCount}</span>
+                        <span class="dislikes">👎 ${post.DislikeCount}</span>
+                        <span class="comments">💬 ${post.Comments ? post.Comments.length : 0} comments</span>
+                    `}
                 </div>
             </div>
             
-            ${Components.chatSidebar()}
-        `;
-    },
-
-    // Single post item component
-    postItem: (post) => {
-        return `
-            <div class="post" data-post-id="${post.id}">
-                <div class="post-header">
-                    <span class="post-author">Posted by ${post.author}</span>
-                    <span class="post-date">${new Date(post.createdAt).toLocaleString()}</span>
+            ${isAuthenticated ? components.commentForm(post.ID) : ''}
+            
+            ${post.Comments && post.Comments.length > 0 ? `
+                <div class="comment-section">
+                    ${post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('')}
                 </div>
-                <div class="post-content">${post.content}</div>
-                <div class="post-actions">
-                    <button class="action-btn like-btn">
+            ` : ''}
+        </article>
+    `;
+};
+
+// Comment Form Component
+components.commentForm = (postId) => {
+    return `
+        <div class="comment-form">
+            <form class="create-comment-form" data-post-id="${postId}">
+                <textarea name="content" placeholder="Add a comment..." required maxlength="249"></textarea>
+                <button type="submit">Post Comment</button>
+            </form>
+        </div>
+    `;
+};
+
+// Comment Component
+components.comment = (comment, isAuthenticated) => {
+    return `
+        <div class="comment" data-comment-id="${comment.ID}">
+            <span class="comment-author">Posted by ${comment.Author.UserName}</span>
+            <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
+            <p class="comment-content">${comment.Content}</p>
+            ${isAuthenticated ? `
+                <div class="comment-reactions">
+                    <button class="reaction-btn like-btn" data-comment-id="${comment.ID}" data-type="like">
                         <span>👍</span>
-                        <span class="count">${post.likes || 0}</span>
+                        <span class="count">${comment.LikeCount}</span>
                     </button>
-                    <button class="action-btn comment-btn">
-                        <span>💬</span>
-                        <span class="count">${post.comments ? post.comments.length : 0}</span>
+                    <button class="reaction-btn dislike-btn" data-comment-id="${comment.ID}" data-type="dislike">
+                        <span>👎</span>
+                        <span class="count">${comment.DislikeCount}</span>
                     </button>
                 </div>
-                
-                <div class="comments-section" style="display: none;">
-                    ${post.comments ? post.comments.map(comment => `
-                        <div class="comment">
-                            <div class="comment-author">${comment.author}</div>
-                            <div class="comment-content">${comment.content}</div>
-                        </div>
-                    `).join('') : ''}
+            ` : ''}
+        </div>
+    `;
+};
+
+// Login Component
+components.login = (error = '', email = '') => {
+    return `
+        <div class="auth-container">
+            <div class="login_container">
+                <h1>Login</h1>
+                <form id="login-form">
+                    ${error ? components.errorPopup(error) : ''}
                     
-                    <form class="comment-form">
-                        <input type="text" placeholder="Add a comment..." required>
-                        <button type="submit">Comment</button>
-                    </form>
-                </div>
-            </div>
-        `;
-    },
-
-    // Chat sidebar component
-    chatSidebar: () => {
-        return `
-            <div class="chat-sidebar">
-                <h3>Online Users</h3>
-                <ul class="user-list">
-                    <li class="user-item user-online">User1</li>
-                    <li class="user-item user-online">User2</li>
-                    <li class="user-item user-offline">User3</li>
-                </ul>
-                
-                <div class="chat-window">
-                    <h4>Chat with User1</h4>
-                    <div class="messages">
-                        <div class="message">Hello!</div>
-                        <div class="message">How are you?</div>
+                    <label for="email_input">Email</label>
+                    <input type="text" id="email_input" name="email" placeholder="Enter your email" value="${email}">
+                    
+                    <label for="password_input">Password</label>
+                    <input type="password" id="password_input" name="password" placeholder="Enter your password">
+                    
+                    <div class="new_account_div">
+                        <b>don't have an account?</b>
+                        <a href="#signup" data-link>create here!</a>
+                        <br>
+                        <a href="#home" data-link class="back-to-home">Back to Home Page</a>
                     </div>
-                    <form class="message-form">
-                        <input type="text" placeholder="Type a message..." required>
-                        <button type="submit">Send</button>
-                    </form>
-                </div>
+                    <input type="submit" class="login_button" value="Sign In">
+                </form>
             </div>
-        `;
-    },
+        </div>
+    `;
+};
 
-    // Error page component
-    error: (statusCode, message) => {
-        return `
-            ${Components.navbar(false)}
-            <div class="form-container">
-                <h2>Oops!</h2>
-                <h1>${statusCode}</h1>
-                <p>${message}</p>
-                <div class="form-links">
-                    <a href="#" data-link="/">Go back to home page</a>
-                </div>
+// Signup Component
+components.signup = (error = '', username = '', email = '') => {
+    return `
+        <div class="auth-container">
+            <div id="signup_container">
+                <h1>Sign up</h1>
+                <form id="signup-form">
+                    ${error ? components.errorPopup(error) : ''}
+                    
+                    <label for="username_input">Username</label>
+                    <input type="text" id="username_input" name="username" required placeholder="Enter your username" value="${username}">
+                    
+                    <label for="email_input">Email</label>
+                    <input type="email" id="email_input" name="email" required placeholder="Enter your email address" value="${email}">
+                    
+                    <label for="password_input">Password</label>
+                    <input type="password" id="password_input" name="password" required placeholder="Create a secure password">
+                    
+                    <div class="have_account_div">
+                        <b>Already have an account?</b>
+                        <a href="#login" data-link>log in here!</a>
+                        <br>
+                        <a href="#home" data-link class="back-to-home">Back to Home Page</a>
+                    </div>
+                    <input type="submit" id="submit_button" value="Sign Up">
+                </form>
             </div>
-        `;
-    }
+        </div>
+    `;
+};
+
+// Error Popup Component
+components.errorPopup = (message) => {
+    return `
+        <div class="error-popout">
+            <span class="error-close">&times;</span>
+            <p class="error-message">${message}</p>
+        </div>
+    `;
+};
+
+// Loading Component
+components.loading = () => {
+    return `<div class="loading-spinner">Loading...</div>`;
 };
