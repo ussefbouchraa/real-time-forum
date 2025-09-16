@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Forum</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f9;
+    }
+    header {
+      background: #333;
+      color: #fff;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav {
+      background: #555;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      background: #666;
+      border-radius: 5px;
+    }
+    nav a:hover {
+      background: #444;
+    }
+    #app {
+      padding: 2rem;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Real-Time Forum</h1>
+  </header>
+  <nav>
+    <a href="#/">Home</a>
+    <a href="#/login">Login</a>
+    <a href="#/profile">Profile</a>
+    <a href="#/post">Post</a>
+    <a href="#/create">Create Post</a>
+    <a href="#/chat">Chat</a>
+  </nav>
+  <main id="app"></main>
+
+  <script>
+    // All pages
+    const pages = {
+      HomeView: () => `<h2>Home</h2><p>Welcome to the forum. Browse posts here.</p>`,
+      LoginView: () => `<h2>Login</h2><form><input placeholder="Username"><br><input type="password" placeholder="Password"><br><button>Login</button></form>`,
+      ProfileView: () => `<h2>Profile</h2><p>User profile details here.</p>`,
+      PostView: () => `<h2>Post</h2><p>Single post with comments.</p>`,
+      CreatePostView: () => `<h2>Create Post</h2><form><input placeholder="Title"><br><textarea placeholder="Write something..."></textarea><br><button>Create</button></form>`,
+      ChatView: () => `<h2>Chat</h2><p>Real-time chat will appear here.</p>`,
+      ErrorView: () => `<h2 class="error">404</h2><p>Page not found.</p>`
+    };
+
+    // Router logic
+    function router() {
+      const routes = {
+        "/": pages.HomeView,
+        "/login": pages.LoginView,
+        "/profile": pages.ProfileView,
+        "/post": pages.PostView,
+        "/create": pages.CreatePostView,
+        "/chat": pages.ChatView,
+      };
+      const path = location.hash.slice(1) || "/";
+      const view = routes[path] || pages.ErrorView;
+      document.getElementById("app").innerHTML = view();
+    }
+
+    window.addEventListener("hashchange", router);
+    window.addEventListener("load", router);
+  </script>
+</body>
+</html>
