@@ -32,15 +32,19 @@ components.home = (data = {}) => {
     const formError = data.form_error || '';
     
     return `
-        ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
+        ${isAuthenticated ? components.menuSection(userData, formError) : ''}
         ${components.posts(posts, isAuthenticated)}
+        
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>
+        
     `;
 };
 
 // Post Toggle Section Component
-components.postToggleSection = (userData, formError) => {
+components.menuSection = (userData, formError) => {
     return `
-        <div class="post-toggle-wrapper">
+        <div class="menu-container">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
             <input type="radio" name="post-toggle" id="show-create" hidden>
             <div class="toggle-buttons">
@@ -349,6 +353,9 @@ components.profile = (userData) => {
                 </div>
             </div>
         </div>
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>
+        
     `;
 };
 
@@ -374,6 +381,39 @@ components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
                 ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
             </div>
         </div>
+    `;
+};
+
+
+components.chatSidebar = () => {
+    return `
+            <div class="sidebar-container hide">
+            <div class="messages-header">
+                <h3>CHAT MESSAGE </h3>
+            </div>
+            <div class="online-users">
+                <h4>Online Users</h4>
+                <div id="online-users-list" class="users-list"></div>
+            </div>
+            <div class="conversations">
+                <h4>Conversations</h4>
+                <div id="conversations-list" class="users-list"></div>
+            </div>
+        </div>
+
+        <div id="active-chat-container" class="chat-container">
+            <div class="chat-header">
+                <h3 id="chat-with-user">Select a user to chat</h3>
+                <button id="close-chat" class="close-btn">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea id="message-input" placeholder="Type your message..."></textarea>
+                <button id="send-message" class="close-btn">close</button>
+                <button id="send-message">Send</button>
+            </div>
+        </div>
+        <\div>
     `;
 };
 

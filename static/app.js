@@ -34,13 +34,13 @@ class RealTimeForum {
     // Connect to WebSocket server
     connectWebSocket() {
         if (!this.isAuthenticated) return;
-        
+
         // In a real app, you would connect to your WebSocket server
         // this.ws = new WebSocket('ws://your-forum-websocket-server');
-        
+
         // Simulate WebSocket connection
         console.log('WebSocket connection established');
-        
+
         // Simulate receiving online users list
         setTimeout(() => {
             this.handleOnlineUsers([
@@ -55,24 +55,24 @@ class RealTimeForum {
     router() {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
-        
+
         this.renderNavigation();
-        
+
         // Redirect to login if not authenticated and trying to access protected pages
         const protectedPages = ['home', 'profile'];
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login';
             return;
         }
-        
+
         // Redirect to home if authenticated and trying to access auth pages
         const authPages = ['login', 'register'];
         if (this.isAuthenticated && authPages.includes(path)) {
             window.location.hash = 'home';
             return;
         }
-        
-        switch(path) {
+
+        switch (path) {
             case 'home':
                 this.renderHome();
                 break;
@@ -100,9 +100,9 @@ class RealTimeForum {
             navbarContainer.innerHTML = components.navbar(this.isAuthenticated, this.userData);
             this.setupNavigationEvents();
         }
-        
+
         // Show/hide private messages sidebar based on authentication
-        const messagesSidebar = document.getElementById('private-messages-sidebar');
+        const messagesSidebar = document.getElementById('private-sidebar-container');
         if (messagesSidebar) {
             messagesSidebar.style.display = this.isAuthenticated ? 'block' : 'none';
         }
@@ -112,7 +112,7 @@ class RealTimeForum {
     async renderHome() {
         const mainContent = document.getElementById('main-content');
         mainContent.innerHTML = components.loading();
-        
+
         try {
             // In a real app, you would fetch posts from your API
             const posts = await this.fetchPosts();
@@ -122,7 +122,7 @@ class RealTimeForum {
                 posts: posts,
                 form_error: ''
             });
-            
+
             this.setupHomeEvents();
         } catch (error) {
             mainContent.innerHTML = components.errorPopup('Failed to load posts');
@@ -156,47 +156,35 @@ class RealTimeForum {
         window.addEventListener('hashchange', () => {
             this.router();
         });
-        
+
         // Close error popups when clicked
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('error-close')) {
                 e.target.closest('.error-popout').style.display = 'none';
             }
         });
-        
-        // Private messages sidebar toggle
-        const toggleMessagesBtn = document.getElementById('toggle-messages');
-        if (toggleMessagesBtn) {
-            toggleMessagesBtn.addEventListener('click', () => {
-                const sidebar = document.getElementById('private-messages-sidebar');
-                sidebar.classList.toggle('collapsed');
-                toggleMessagesBtn.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
-            });
-        }
-        
-        // Close chat button
-        const closeChatBtn = document.getElementById('close-chat');
-        if (closeChatBtn) {
-            closeChatBtn.addEventListener('click', () => {
-                this.closeChat();
-            });
-        }
-        
-        // Setup chat toggle button
-    const chatToggleBtn = document.getElementById('chat-toggle-btn');
-    if (chatToggleBtn) {
-        chatToggleBtn.addEventListener('click', () => {
-            this.toggleChat();
+
+
+
+        //   Setup sidebar toggle
+        document.addEventListener('click', (e) => {
+        if (e.target.closest('.chat-toggle-btn')) this.toggleSideBar();
         });
-    }
-        // Send message button
-        const sendMessageBtn = document.getElementById('send-message');
-        if (sendMessageBtn) {
-            sendMessageBtn.addEventListener('click', () => {
-                this.sendMessage();
+
+
+
+        // Close chat button
+        document.addEventListener('click', (e) => {
+                if ( e.target.closest('.close-btn')) this.closeChat();
             });
-        }
         
+
+        // Send message button
+        document.addEventListener('click', (e) => {
+               if ( e.target.closest('#send-message')) this.sendMessage();
+            });
+        
+
         // Send message on Enter key (but allow Shift+Enter for new line)
         const messageInput = document.getElementById('message-input');
         if (messageInput) {
@@ -208,6 +196,7 @@ class RealTimeForum {
             });
         }
     }
+
 
     // Setup navigation events
     setupNavigationEvents() {
@@ -236,7 +225,7 @@ class RealTimeForum {
                 }
             });
         });
-        
+
         // Handle post creation
         const createForm = document.getElementById('create-post-form');
         if (createForm) {
@@ -245,7 +234,7 @@ class RealTimeForum {
                 this.handleCreatePost(e.target);
             });
         }
-        
+
         // Handle filtering
         const filterForm = document.getElementById('filter-form');
         if (filterForm) {
@@ -254,14 +243,14 @@ class RealTimeForum {
                 this.handleFilterPosts(e.target);
             });
         }
-        
+
         // Handle post reactions
         document.querySelectorAll('.reaction-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const postId = e.target.closest('[data-post-id]')?.getAttribute('data-post-id');
                 const commentId = e.target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
                 const type = e.target.getAttribute('data-type');
-                
+
                 if (postId) {
                     this.handlePostReaction(postId, type);
                 } else if (commentId) {
@@ -269,7 +258,7 @@ class RealTimeForum {
                 }
             });
         });
-        
+
         // Toggle comments visibility
         document.querySelectorAll('.toggle-comments').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -278,7 +267,7 @@ class RealTimeForum {
                 commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
             });
         });
-        
+
         // Handle comment submission
         document.querySelectorAll('.create-comment-form').forEach(form => {
             form.addEventListener('submit', (e) => {
@@ -364,7 +353,7 @@ class RealTimeForum {
         const formData = new FormData(form);
         const identifier = formData.get('identifier');
         const password = formData.get('password');
-        
+
         try {
             // In a real app, this would be an API call
             // const response = await fetch('/api/login', { 
@@ -373,7 +362,7 @@ class RealTimeForum {
             //     body: JSON.stringify({ identifier, password }) 
             // });
             // const data = await response.json();
-            
+
             // Simulate API response
             if (identifier && password) {
                 // Simulate successful login
@@ -388,16 +377,16 @@ class RealTimeForum {
                     gender: 'male',
                     createdAt: new Date()
                 };
-                
+
                 // Store auth data in localStorage
                 localStorage.setItem('forumAuth', JSON.stringify({
                     user: this.userData,
                     token: 'simulated-jwt-token'
                 }));
-                
+
                 // Connect to WebSocket
                 this.connectWebSocket();
-                
+
                 // Redirect to home
                 window.location.hash = 'home';
             } else {
@@ -420,7 +409,7 @@ class RealTimeForum {
             age: formData.get('age'),
             gender: formData.get('gender')
         };
-        
+
         try {
             // In a real app, this would be an API call
             // const response = await fetch('/api/register', { 
@@ -429,7 +418,7 @@ class RealTimeForum {
             //     body: JSON.stringify(userData) 
             // });
             // const data = await response.json();
-            
+
             // Simulate API response
             if (userData.nickname && userData.email && userData.password) {
                 // Simulate successful registration
@@ -439,16 +428,16 @@ class RealTimeForum {
                     ...userData,
                     createdAt: new Date()
                 };
-                
+
                 // Store auth data in localStorage
                 localStorage.setItem('forumAuth', JSON.stringify({
                     user: this.userData,
                     token: 'simulated-jwt-token'
                 }));
-                
+
                 // Connect to WebSocket
                 this.connectWebSocket();
-                
+
                 // Redirect to home
                 window.location.hash = 'home';
             } else {
@@ -464,16 +453,16 @@ class RealTimeForum {
         this.isAuthenticated = false;
         this.userData = {};
         localStorage.removeItem('forumAuth');
-        
+
         // Close WebSocket connection
         if (this.ws) {
             this.ws.close();
             this.ws = null;
         }
-        
+
         // Close chat if open
         this.closeChat();
-        
+
         // Redirect to login
         window.location.hash = 'login';
     }
@@ -483,7 +472,7 @@ class RealTimeForum {
         const formData = new FormData(form);
         const content = formData.get('content');
         const categories = formData.getAll('categories');
-        
+
         try {
             // In a real app, this would be an API call
             // await fetch('/api/posts', { 
@@ -494,7 +483,7 @@ class RealTimeForum {
             //     },
             //     body: JSON.stringify({ content, categories }) 
             // });
-            
+
             // For now, just reload the posts
             this.renderHome();
             form.reset();
@@ -509,12 +498,12 @@ class RealTimeForum {
         const categoryFilters = formData.getAll('category-filter');
         const myPosts = formData.get('myPosts') === 'on';
         const likedPosts = formData.get('likedPosts') === 'on';
-        
+
         try {
             // In a real app, this would be an API call with filters
             // const response = await fetch(`/api/posts?categories=${categoryFilters.join(',')}&myPosts=${myPosts}&likedPosts=${likedPosts}`);
             // const posts = await response.json();
-            
+
             // For now, just reload all posts
             this.renderHome();
         } catch (error) {
@@ -534,7 +523,7 @@ class RealTimeForum {
             //     },
             //     body: JSON.stringify({ postId, type }) 
             // });
-            
+
             // For now, just reload the posts
             this.renderHome();
         } catch (error) {
@@ -554,7 +543,7 @@ class RealTimeForum {
             //     },
             //     body: JSON.stringify({ commentId, type }) 
             // });
-            
+
             // For now, just reload the posts
             this.renderHome();
         } catch (error) {
@@ -566,7 +555,7 @@ class RealTimeForum {
     async handleCreateComment(postId, form) {
         const formData = new FormData(form);
         const content = formData.get('content');
-        
+
         try {
             // In a real app, this would be an API call
             // await fetch('/api/comments', { 
@@ -577,7 +566,7 @@ class RealTimeForum {
             //     },
             //     body: JSON.stringify({ postId, content }) 
             // });
-            
+
             // For now, just reload the posts
             this.renderHome();
             form.reset();
@@ -590,22 +579,22 @@ class RealTimeForum {
     handleOnlineUsers(users) {
         const onlineUsersList = document.getElementById('online-users-list');
         const conversationsList = document.getElementById('conversations-list');
-        
+
         if (onlineUsersList) {
             // Filter out current user and show online users
             const onlineUsers = users.filter(user => user.isOnline && user.id !== this.userData.id);
-            onlineUsersList.innerHTML = onlineUsers.map(user => 
+            onlineUsersList.innerHTML = onlineUsers.map(user =>
                 components.userListItem(user)
             ).join('');
         }
-        
+
         if (conversationsList) {
             // Show all users with conversation history
             conversationsList.innerHTML = users.filter(user => user.id !== this.userData.id)
                 .map(user => components.userListItem(user, 0, null))
                 .join('');
         }
-        
+
         // Setup events for user list items
         this.setupPrivateMessagesEvents();
     }
@@ -613,11 +602,11 @@ class RealTimeForum {
     // Open chat with a user
     openChat(userId) {
         this.activeChatUserId = userId;
-        
+
         // Get user info from the list (in a real app, you'd fetch this from server)
         const userItems = document.querySelectorAll('.user-list-item');
         let userInfo = null;
-        
+
         userItems.forEach(item => {
             if (item.getAttribute('data-user-id') === userId) {
                 const userNameElement = item.querySelector('.user-name');
@@ -626,15 +615,15 @@ class RealTimeForum {
                 }
             }
         });
-        
+
         if (userInfo) {
             // Show chat container
             const chatContainer = document.getElementById('active-chat-container');
             chatContainer.style.display = 'block';
-            
+
             // Update chat header
             document.getElementById('chat-with-user').textContent = `Chat with ${userInfo.name}`;
-            
+
             // Load messages (in a real app, you'd fetch from server)
             this.loadChatMessages(userId);
         }
@@ -648,6 +637,14 @@ class RealTimeForum {
         document.getElementById('chat-messages').innerHTML = '';
         document.getElementById('message-input').value = '';
     }
+
+    toggleSideBar() {
+        const sidebar = document.querySelector('.sidebar-container');
+        if (sidebar) sidebar.classList.toggle('hide')
+    }
+
+
+
 
     // Load chat messages for a user
     loadChatMessages(userId) {
@@ -676,16 +673,16 @@ class RealTimeForum {
                 timestamp: new Date(Date.now() - 3400000)
             }
         ];
-        
+
         // Store messages
         this.chatMessages[userId] = messages;
-        
+
         // Display messages
         const chatMessagesContainer = document.getElementById('chat-messages');
-        chatMessagesContainer.innerHTML = messages.map(message => 
+        chatMessagesContainer.innerHTML = messages.map(message =>
             components.chatMessage(message, message.senderId === this.userData.id)
         ).join('');
-        
+
         // Scroll to bottom
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
     }
@@ -693,12 +690,12 @@ class RealTimeForum {
     // Send a message
     sendMessage() {
         if (!this.activeChatUserId) return;
-        
+
         const messageInput = document.getElementById('message-input');
         const content = messageInput.value.trim();
-        
+
         if (!content) return;
-        
+
         // Create message object
         const message = {
             id: Date.now(),
@@ -708,27 +705,27 @@ class RealTimeForum {
             timestamp: new Date(),
             recipientId: this.activeChatUserId
         };
-        
+
         // In a real app, you'd send this via WebSocket to the server
         // this.ws.send(JSON.stringify({
         //     type: 'private_message',
         //     data: message
         // }));
-        
+
         // For now, just add to local messages
         if (!this.chatMessages[this.activeChatUserId]) {
             this.chatMessages[this.activeChatUserId] = [];
         }
         this.chatMessages[this.activeChatUserId].push(message);
-        
+
         // Update UI
         const chatMessagesContainer = document.getElementById('chat-messages');
         chatMessagesContainer.innerHTML += components.chatMessage(message, true);
-        
+
         // Clear input and scroll to bottom
         messageInput.value = '';
         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-        
+
         // Simulate response after a delay
         setTimeout(() => {
             this.simulateResponse();
@@ -736,38 +733,38 @@ class RealTimeForum {
     }
 
     // Simulate a response from the other user
-    simulateResponse() {
-        if (!this.activeChatUserId) return;
-        
-        const responses = [
-            "That's interesting!",
-            "I see what you mean.",
-            "Thanks for sharing!",
-            "I'll think about that.",
-            "Can you tell me more?",
-            "That makes sense.",
-            "I agree with you.",
-            "Let's discuss this further."
-        ];
-        
-        const response = responses[Math.floor(Math.random() * responses.length)];
-        
-        const message = {
-            id: Date.now(),
-            senderId: this.activeChatUserId,
-            senderName: 'Jane Doe', // In a real app, you'd get the actual name
-            content: response,
-            timestamp: new Date()
-        };
-        
-        // Add to messages
-        this.chatMessages[this.activeChatUserId].push(message);
-        
-        // Update UI
-        const chatMessagesContainer = document.getElementById('chat-messages');
-        chatMessagesContainer.innerHTML += components.chatMessage(message, false);
-        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-    }
+    // simulateResponse() {
+    //     if (!this.activeChatUserId) return;
+
+    //     const responses = [
+    //         "That's interesting!",
+    //         "I see what you mean.",
+    //         "Thanks for sharing!",
+    //         "I'll think about that.",
+    //         "Can you tell me more?",
+    //         "That makes sense.",
+    //         "I agree with you.",
+    //         "Let's discuss this further."
+    //     ];
+
+    //     const response = responses[Math.floor(Math.random() * responses.length)];
+
+    //     const message = {
+    //         id: Date.now(),
+    //         senderId: this.activeChatUserId,
+    //         senderName: 'Jane Doe', // In a real app, you'd get the actual name
+    //         content: response,
+    //         timestamp: new Date()
+    //     };
+
+    //     // Add to messages
+    //     this.chatMessages[this.activeChatUserId].push(message);
+
+    //     // Update UI
+    //     const chatMessagesContainer = document.getElementById('chat-messages');
+    //     chatMessagesContainer.innerHTML += components.chatMessage(message, false);
+    //     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+    // }
 
     // Show error message
     showError(message) {
@@ -779,7 +776,7 @@ class RealTimeForum {
             }, 5000);
         }
     }
-    
+
 }
 
 // Initialize the application when DOM is loaded
