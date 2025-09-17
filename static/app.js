@@ -732,40 +732,7 @@ class RealTimeForum {
         }, 1000 + Math.random() * 2000);
     }
 
-    // Simulate a response from the other user
-    // simulateResponse() {
-    //     if (!this.activeChatUserId) return;
-
-    //     const responses = [
-    //         "That's interesting!",
-    //         "I see what you mean.",
-    //         "Thanks for sharing!",
-    //         "I'll think about that.",
-    //         "Can you tell me more?",
-    //         "That makes sense.",
-    //         "I agree with you.",
-    //         "Let's discuss this further."
-    //     ];
-
-    //     const response = responses[Math.floor(Math.random() * responses.length)];
-
-    //     const message = {
-    //         id: Date.now(),
-    //         senderId: this.activeChatUserId,
-    //         senderName: 'Jane Doe', // In a real app, you'd get the actual name
-    //         content: response,
-    //         timestamp: new Date()
-    //     };
-
-    //     // Add to messages
-    //     this.chatMessages[this.activeChatUserId].push(message);
-
-    //     // Update UI
-    //     const chatMessagesContainer = document.getElementById('chat-messages');
-    //     chatMessagesContainer.innerHTML += components.chatMessage(message, false);
-    //     chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-    // }
-
+    
     // Show error message
     showError(message) {
         const errorContainer = document.getElementById('error-container');
