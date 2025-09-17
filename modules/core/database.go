@@ -40,6 +40,7 @@ func createUsersTable() {
         last_name TEXT NOT NULL,
         nickname TEXT NOT NULL UNIQUE,
         age INTEGER NOT NULL,
+		gender TEXT,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL
     );`

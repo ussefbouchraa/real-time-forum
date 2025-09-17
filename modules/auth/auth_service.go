@@ -15,8 +15,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var Db = core.Db
-
 func RegisterUser(data RegisterData) error {
 	data.FirstName = strings.TrimSpace(data.FirstName)
 	data.LastName = strings.TrimSpace(data.LastName)
@@ -59,8 +57,8 @@ func RegisterUser(data RegisterData) error {
 	userID := uuid.New().String()
 	data.UserID = userID
 
-	_, err = Db.Exec(`INSERT INTO users (user_id, first_name, last_name, nickname, age, email, password) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		userID, data.FirstName, data.LastName, data.Nickname, data.Age, data.Email, hashedPwd)
+	_, err = core.Db.Exec(`INSERT INTO users (user_id, first_name, last_name, nickname, age, gender, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		userID, data.FirstName, data.LastName, data.Nickname, data.Age, data.Gender, data.Email, hashedPwd)
 	if err != nil {
 		return err
 	}
@@ -103,11 +101,11 @@ func ValidateNamesAndNickname(data RegisterData) error {
 func IsNicknameOrEmailTaken(data RegisterData) error {
 	var existing string
 
-	err := Db.QueryRow("SELECT email FROM users WHERE email = ?", data.Email).Scan(&existing)
+	err := core.Db.QueryRow("SELECT email FROM users WHERE email = ?", data.Email).Scan(&existing)
 	if err == nil {
 		return fmt.Errorf("email is already taken")
 	}
-	err = Db.QueryRow("SELECT nickname FROM users WHERE nickname = ?", data.Nickname).Scan(&existing)
+	err = core.Db.QueryRow("SELECT nickname FROM users WHERE nickname = ?", data.Nickname).Scan(&existing)
 	if err == nil {
 		return fmt.Errorf("nickname is already taken")
 	}
@@ -178,8 +176,8 @@ func LoginUser(emailOrNickname, password string) (RegisterData, error) {
 	var user RegisterData
 	var hashedPwd string
 
-	err := Db.QueryRow(
-		`SELECT user_id, first_name, last_name, nickname, age, email, password 
+	err := core.Db.QueryRow(
+		`SELECT user_id, first_name, last_name, nickname, age, gender, email, password 
 		 FROM users 
 		 WHERE email = ? OR nickname = ?`,
 		emailOrNickname, emailOrNickname,
@@ -189,6 +187,7 @@ func LoginUser(emailOrNickname, password string) (RegisterData, error) {
 		&user.LastName,
 		&user.Nickname,
 		&user.Age,
+		&user.Gender,
 		&user.Email,
 		&hashedPwd,
 	)
@@ -209,7 +208,14 @@ func CreateSession(userID string) (string, error) {
 	sessionID := uuid.New().String()
 	expiresAt := time.Now().Add(24 * time.Hour)
 
-	_, err := Db.Exec(
+	// Delete any existing sessions for this user
+	_, err := core.Db.Exec("DELETE FROM sessions WHERE user_id = ?", userID)
+	if err != nil {
+		return "", fmt.Errorf("failed to clear existing sessions: %v", err)
+	}
+
+	// Insert new session
+	_, err = core.Db.Exec(
 		"INSERT INTO sessions (session_id, user_id, expires_at) VALUES (?, ?, ?)",
 		sessionID, userID, expiresAt,
 	)
@@ -229,8 +235,8 @@ func GetUserIDFromSession(sessionID string) (string, error) {
 	var userID string
 	var expiresAt time.Time
 
-	// Query DB for sessionID
-	err := Db.QueryRow(
+	// Query Db for sessionID
+	err := core.Db.QueryRow(
 		"SELECT user_id, expires_at FROM sessions WHERE session_id = ?", sessionID).Scan(&userID, &expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -241,6 +247,11 @@ func GetUserIDFromSession(sessionID string) (string, error) {
 
 	// Check if session expired
 	if time.Now().After(expiresAt) {
+		// Delete the expired session
+		_, deleteErr := core.Db.Exec("DELETE FROM sessions WHERE session_id = ?", sessionID)
+		if deleteErr != nil {
+			fmt.Printf("Warning: Failed to delete expired session %s: %v\n", sessionID, deleteErr)
+		}
 		return "", errors.New("session expired")
 	}
 
@@ -250,7 +261,7 @@ func GetUserIDFromSession(sessionID string) (string, error) {
 func GetUserNickNameFromSession(sessionID string) string {
 	var nickname string
 	// no error expected
-	Db.QueryRow(
+	core.Db.QueryRow(
 		`SELECT u.nickname 
 		 FROM users u
 		 JOIN sessions s ON u.user_id = s.user_id

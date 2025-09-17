@@ -13,8 +13,6 @@ import (
 	"real-time-forum/modules/templates"
 )
 
-var Db = core.Db
-
 func mainHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		http.Error(w, "Page not found", http.StatusNotFound)
@@ -37,7 +35,7 @@ func StartSessionCleanup() {
 	go func() {
 		for {
 			time.Sleep(15 * time.Minute)
-			Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
+			core.Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
 		}
 	}()
 }

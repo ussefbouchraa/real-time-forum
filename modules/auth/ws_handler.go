@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"real-time-forum/modules/core"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -27,6 +29,7 @@ type RegisterData struct {
 	LastName  string `json:"last_name"`
 	Nickname  string `json:"nickname"`
 	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 }
@@ -38,7 +41,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// cleanup expired sessions
-	Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
+	core.Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -66,11 +69,10 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				conn.WriteJSON(map[string]interface{}{
 					"type":   "session_response",
 					"status": "error",
-					"error":  "Invalid data format",
+					"error":  "Invalid data format : session",
 				})
 				continue
 			}
-
 			userID, err := GetUserIDFromSession(data.SessionID)
 			if err != nil {
 				conn.WriteJSON(map[string]interface{}{
@@ -82,12 +84,15 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// valid session → send success
-			conn.WriteJSON(map[string]interface{}{
-				"type":     "session_response",
-				"status":   "ok",
+			response := map[string]interface{}{
+				"type":   "session_response",
+				"status": "ok",
+			}
+			response["user"] = map[string]interface{}{
 				"userID":   userID,
 				"nickname": GetUserNickNameFromSession(data.SessionID),
-			})
+			}
+			conn.WriteJSON(response)
 		case "register":
 			var data RegisterData
 			bytes, _ := json.Marshal(msg.Data)
@@ -96,7 +101,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				conn.WriteJSON(map[string]interface{}{
 					"type":   "register_response",
 					"status": "error",
-					"error":  "Invalid data format",
+					"error":  "Invalid data format : register",
 				})
 				continue
 			}
@@ -110,6 +115,14 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response := map[string]interface{}{
 				"type":   "register_response",
 				"status": status,
+			}
+			response["user"] = map[string]interface{}{
+				"nickname":  data.Nickname,
+				"firstname": data.FirstName,
+				"lastname":  data.LastName,
+				"email":     data.Email,
+				"age":       data.Age,
+				"gender":    data.Gender,
 			}
 			if err != nil {
 				response["error"] = err.Error()
@@ -143,11 +156,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				status = "error"
 				response["status"] = status
 				response["error"] = err.Error()
+				response["EmailOrNickname"] = loginData.EmailOrNickname
 			} else {
 				sessionID, err := CreateSession(user.UserID)
 				if err != nil {
 					response["status"] = "error"
 					response["error"] = "Cannot create session"
+					response["EmailOrNickname"] = loginData.EmailOrNickname
 				} else {
 					response["sessionID"] = sessionID
 					response["user"] = map[string]interface{}{

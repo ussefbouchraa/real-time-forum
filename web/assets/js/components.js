@@ -1,8 +1,8 @@
 // Component registry
-const components = {};
+export const components = {};
 
 // Navbar Component
-components.navbar = (isAuthenticated = false, userData = {}) => {
+components.navbar = (isAuthenticated = false, nickname = '') => {
     return `
         <header class="navbar">
             <div id="in-logo">
@@ -14,6 +14,7 @@ components.navbar = (isAuthenticated = false, userData = {}) => {
                     ${isAuthenticated ? `
                         <a href="#profile" data-link>Profile</a>
                         <a href="#logout" data-link>Logout</a>
+                        <p>wlc ${nickname}
                     ` : `
                         <a href="#login" data-link>Login</a>
                         <a href="#register" data-link>Register</a>
@@ -48,7 +49,7 @@ components.postToggleSection = (userData, formError) => {
                 <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                <p>👋Welcome, ${userData.nickname || userData.firstName} </p>
+                <p>👋Welcome, ${userData.nickname} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -231,19 +232,19 @@ components.comment = (comment, isAuthenticated) => {
 };
 
 // Login Component
-components.login = (error = '', email = '') => {
+components.login = (error = '', EmailOrNickname = '') => {
     return `
         <div class="auth-container">
             <div class="login_container">
                 <h1>Login</h1>
                 <form id="login-form">
-                    ${error ? components.errorPopup(error) : ''}
+                    <div class="error-container"></div>
                     
-                    <label for="login_identifier">Email or Nickname</label>
-                    <input type="text" id="login_identifier" name="identifier" placeholder="Enter your email or nickname" value="${email}">
+                    <label for="email_or_nickname">Email or Nickname</label>
+                    <input type="text" id="email_or_nickname" name="identifier" placeholder="Enter your email or nickname" value="${EmailOrNickname}">
                     
-                    <label for="login_password">Password</label>
-                    <input type="password" id="login_password" name="password" placeholder="Enter your password">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password">
                     
                     <div class="new_account_div">
                         <b>Don't have an account?</b>
@@ -265,34 +266,34 @@ components.register = (error = '', formData = {}) => {
             <div id="signup_container">
                 <h1>Register</h1>
                 <form id="register-form">
-                    ${error ? components.errorPopup(error) : ''}
+                    <div class="error-container"></div>
                     
-                    <label for="register_nickname">Nickname *</label>
-                    <input type="text" id="register_nickname" name="nickname" required 
+                    <label for="nickname">Nickname *</label>
+                    <input type="text" id="nickname" name="nickname" required 
                         placeholder="Choose a nickname" value="${formData.nickname || ''}">
                     
-                    <label for="register_email">Email *</label>
-                    <input type="email" id="register_email" name="email" required 
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required 
                         placeholder="Enter your email address" value="${formData.email || ''}">
                     
-                    <label for="register_password">Password *</label>
-                    <input type="password" id="register_password" name="password" required 
+                    <label for="password">Password *</label>
+                    <input type="password" id="password" name="password" required 
                         placeholder="Create a secure password">
                     
-                    <label for="register_firstname">First Name *</label>
-                    <input type="text" id="register_firstname" name="firstname" required 
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="firstname" required 
                         placeholder="Enter your first name" value="${formData.firstname || ''}">
                     
-                    <label for="register_lastname">Last Name *</label>
-                    <input type="text" id="register_lastname" name="lastname" required 
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="lastname" required 
                         placeholder="Enter your last name" value="${formData.lastname || ''}">
                     
-                    <label for="register_age">Age *</label>
-                    <input type="number" id="register_age" name="age" required min="13" 
+                    <label for="age">Age *</label>
+                    <input type="number" id="age" name="age" 
                         placeholder="Enter your age" value="${formData.age || ''}">
                     
-                    <label for="register_gender">Gender</label>
-                    <select id="register_gender" name="gender">
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
                         <option value="">Select gender</option>
                         <option value="male" ${formData.gender === 'male' ? 'selected' : ''}>Male</option>
                         <option value="female" ${formData.gender === 'female' ? 'selected' : ''}>Female</option>
