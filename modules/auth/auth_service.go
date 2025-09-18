@@ -15,11 +15,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterUser(data RegisterData) error {
-	data.FirstName = strings.TrimSpace(data.FirstName)
-	data.LastName = strings.TrimSpace(data.LastName)
-	data.Nickname = strings.TrimSpace(data.Nickname)
-	if len(strings.TrimSpace(data.Password)) != len(data.Password) {
+func RegisterUser(data UserPayload) error {
+	data.User.FirstName = strings.TrimSpace(data.User.FirstName)
+	data.User.LastName = strings.TrimSpace(data.User.LastName)
+	data.User.Nickname = strings.TrimSpace(data.User.Nickname)
+	if len(strings.TrimSpace(data.User.Password)) != len(data.User.Password) {
 		return fmt.Errorf("your password can't start or end with a blank space")
 	}
 
@@ -43,32 +43,32 @@ func RegisterUser(data RegisterData) error {
 		return err
 	}
 
-	if err := IsValidEmail(data.Email); err != nil {
+	if err := IsValidEmail(data.User.Email); err != nil {
 		return err
 	}
 
 	// hash password
-	hashedPwd, err := HashPassword(data.Password)
+	hashedPwd, err := HashPassword(data.User.Password)
 	if err != nil {
 		return err
 	}
 
 	// generate uuid
 	userID := uuid.New().String()
-	data.UserID = userID
+	data.User.UserID = userID
 
 	_, err = core.Db.Exec(`INSERT INTO users (user_id, first_name, last_name, nickname, age, gender, email, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		userID, data.FirstName, data.LastName, data.Nickname, data.Age, data.Gender, data.Email, hashedPwd)
+		userID, data.User.FirstName, data.User.LastName, data.User.Nickname, data.User.Age, data.User.Gender, data.User.Email, hashedPwd)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func ValidateNamesAndNickname(data RegisterData) error {
+func ValidateNamesAndNickname(data UserPayload) error {
 	cmp := 0
 
-	for _, r := range data.FirstName {
+	for _, r := range data.User.FirstName {
 		if !unicode.IsLetter(r) {
 			return fmt.Errorf("first name can only contain letters")
 		} else if unicode.IsSpace(r) {
@@ -76,7 +76,7 @@ func ValidateNamesAndNickname(data RegisterData) error {
 		}
 	}
 
-	for _, r := range data.LastName {
+	for _, r := range data.User.LastName {
 		if !unicode.IsLetter(r) {
 			return fmt.Errorf("last name can only contain letters")
 		} else if unicode.IsSpace(r) {
@@ -84,7 +84,7 @@ func ValidateNamesAndNickname(data RegisterData) error {
 		}
 	}
 
-	for _, r := range data.Nickname {
+	for _, r := range data.User.Nickname {
 		if unicode.IsSpace(r) {
 			return fmt.Errorf("your nickname must not contain middle spaces")
 		}
@@ -98,14 +98,14 @@ func ValidateNamesAndNickname(data RegisterData) error {
 	return nil
 }
 
-func IsNicknameOrEmailTaken(data RegisterData) error {
+func IsNicknameOrEmailTaken(data UserPayload) error {
 	var existing string
 
-	err := core.Db.QueryRow("SELECT email FROM users WHERE email = ?", data.Email).Scan(&existing)
+	err := core.Db.QueryRow("SELECT email FROM users WHERE email = ?", data.User.Email).Scan(&existing)
 	if err == nil {
 		return fmt.Errorf("email is already taken")
 	}
-	err = core.Db.QueryRow("SELECT nickname FROM users WHERE nickname = ?", data.Nickname).Scan(&existing)
+	err = core.Db.QueryRow("SELECT nickname FROM users WHERE nickname = ?", data.User.Nickname).Scan(&existing)
 	if err == nil {
 		return fmt.Errorf("nickname is already taken")
 	}
@@ -113,42 +113,42 @@ func IsNicknameOrEmailTaken(data RegisterData) error {
 	return nil
 }
 
-func BasicChecks(data RegisterData) error {
-	if len(data.FirstName) < 2 || len(data.LastName) < 2 {
+func BasicChecks(data UserPayload) error {
+	if len(data.User.FirstName) < 2 || len(data.User.LastName) < 2 {
 		return fmt.Errorf("are you sure you entered your name correctly?")
 	}
 
-	if data.Age <= 0 || data.Age > 120 {
+	if data.User.Age <= 0 || data.User.Age > 120 {
 		return fmt.Errorf("are you sure you entered your age correctly?")
 	}
 	return nil
 }
 
-func AllFieldAreRequiredCheck(data RegisterData) error {
-	if data.FirstName == "" {
+func AllFieldAreRequiredCheck(data UserPayload) error {
+	if data.User.FirstName == "" {
 		return fmt.Errorf("first name is required")
 	}
-	if data.LastName == "" {
+	if data.User.LastName == "" {
 		return fmt.Errorf("last name is required")
 	}
-	if data.Nickname == "" {
+	if data.User.Nickname == "" {
 		return fmt.Errorf("nickname is required")
 	}
-	if data.Email == "" {
+	if data.User.Email == "" {
 		return fmt.Errorf("email is required")
 	}
-	if data.Password == "" {
+	if data.User.Password == "" {
 		return fmt.Errorf("password is required")
 	}
 	return nil
 }
 
-func LengthCheck(data RegisterData) error {
-	if len(data.Nickname) < 3 || len(data.Nickname) > 20 {
+func LengthCheck(data UserPayload) error {
+	if len(data.User.Nickname) < 3 || len(data.User.Nickname) > 20 {
 		return fmt.Errorf("nickname must be 3-20 characters")
 	}
 
-	if len(data.Password) < 6 {
+	if len(data.User.Password) < 6 {
 		return fmt.Errorf("password must be at least 6 characters")
 	}
 	return nil
@@ -172,8 +172,8 @@ func HashPassword(password string) (string, error) {
 	return string(hashedBytes), nil
 }
 
-func LoginUser(emailOrNickname, password string) (RegisterData, error) {
-	var user RegisterData
+func LoginUser(emailOrNickname, password string) (UserPayload, error) {
+	var user UserPayload
 	var hashedPwd string
 
 	err := core.Db.QueryRow(
@@ -182,23 +182,23 @@ func LoginUser(emailOrNickname, password string) (RegisterData, error) {
 		 WHERE email = ? OR nickname = ?`,
 		emailOrNickname, emailOrNickname,
 	).Scan(
-		&user.UserID,
-		&user.FirstName,
-		&user.LastName,
-		&user.Nickname,
-		&user.Age,
-		&user.Gender,
-		&user.Email,
+		&user.User.UserID,
+		&user.User.FirstName,
+		&user.User.LastName,
+		&user.User.Nickname,
+		&user.User.Age,
+		&user.User.Gender,
+		&user.User.Email,
 		&hashedPwd,
 	)
 	if err != nil {
 		// no need to specifie the error (senstitive data)
-		return RegisterData{}, fmt.Errorf("invalid email/nickname or password")
+		return UserPayload{}, fmt.Errorf("invalid email/nickname or password")
 	}
 
 	if !CheckPasswordHash(password, hashedPwd) {
 		// no need to specifie the error (senstitive data)
-		return RegisterData{}, fmt.Errorf("invalid email/nickname or password")
+		return UserPayload{}, fmt.Errorf("invalid email/nickname or password")
 	}
 
 	return user, nil
@@ -231,13 +231,15 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GetUserIDFromSession(sessionID string) (string, error) {
-	var userID string
+func GetNickFromSession(sessionID string) (string, error) {
+	var nickname string
 	var expiresAt time.Time
 
-	// Query Db for sessionID
 	err := core.Db.QueryRow(
-		"SELECT user_id, expires_at FROM sessions WHERE session_id = ?", sessionID).Scan(&userID, &expiresAt)
+		`SELECT u.nickname, s.expires_at 
+		 FROM sessions s 
+		 JOIN users u ON u.user_id = s.user_id 
+		 WHERE s.session_id = ?`, sessionID).Scan(&nickname, &expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", errors.New("session not found")
@@ -245,9 +247,7 @@ func GetUserIDFromSession(sessionID string) (string, error) {
 		return "", err
 	}
 
-	// Check if session expired
 	if time.Now().After(expiresAt) {
-		// Delete the expired session
 		_, deleteErr := core.Db.Exec("DELETE FROM sessions WHERE session_id = ?", sessionID)
 		if deleteErr != nil {
 			fmt.Printf("Warning: Failed to delete expired session %s: %v\n", sessionID, deleteErr)
@@ -255,16 +255,5 @@ func GetUserIDFromSession(sessionID string) (string, error) {
 		return "", errors.New("session expired")
 	}
 
-	return userID, nil
-}
-
-func GetUserNickNameFromSession(sessionID string) string {
-	var nickname string
-	// no error expected
-	core.Db.QueryRow(
-		`SELECT u.nickname 
-		 FROM users u
-		 JOIN sessions s ON u.user_id = s.user_id
-		 WHERE s.session_id = ?`, sessionID).Scan(&nickname)
-	return nickname
+	return nickname, nil
 }

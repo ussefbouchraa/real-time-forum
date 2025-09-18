@@ -2,10 +2,8 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"time"
-
-	"real-time-forum/modules/core"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,19 +17,48 @@ var upgrader = websocket.Upgrader{
 }
 
 type ClientWSMessage struct {
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
 }
 
-type RegisterData struct {
-	UserID    string `json:"user_id"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Nickname  string `json:"nickname"`
-	Age       int    `json:"age"`
-	Gender    string `json:"gender"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
+type UserPayload struct {
+	User struct {
+		EmailOrNickname string `json:"email_or_nickname,omitempty"`
+		SessionID       string `json:"session_id,omitempty"`
+		UserID          string `json:"user_id,omitempty"`
+		Nickname        string `json:"nickname,omitempty"`
+		FirstName       string `json:"firstname,omitempty"`
+		LastName        string `json:"lastname,omitempty"`
+		Email           string `json:"email,omitempty"`
+		Age             int    `json:"age,omitempty"`
+		Gender          string `json:"gender,omitempty"`
+		Password        string `json:"password,omitempty"`
+	} `json:"user"`
+}
+
+func decodeMessage[T any](raw json.RawMessage) (T, error) {
+	var data T
+	err := json.Unmarshal(raw, &data)
+	return data, err
+}
+
+type WSResponse struct {
+	Type   string      `json:"type"`
+	Status string      `json:"status"`
+	Error  string      `json:"error,omitempty"`
+	Data   interface{} `json:"data,omitempty"`
+}
+
+func writeResponse(conn *websocket.Conn, msgType string, status string, data interface{}, errMsg string) {
+	err := conn.WriteJSON(WSResponse{
+		Type:   msgType,
+		Status: status,
+		Data:   data,
+		Error:  errMsg,
+	})
+	if err != nil {
+		fmt.Println("WriteJSON failed:", err)
+	}
 }
 
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +66,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	// cleanup expired sessions
-	core.Db.Exec("DELETE FROM sessions WHERE expires_at < ?", time.Now())
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -60,119 +84,79 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch msg.Type {
 		case "user_have_session":
-			var data struct {
+			type SessionData struct {
 				SessionID string `json:"sessionID"`
 			}
-			bytes, _ := json.Marshal(msg.Data)
-			err := json.Unmarshal(bytes, &data)
+
+			parsedSession, err := decodeMessage[SessionData](msg.Data)
 			if err != nil {
-				conn.WriteJSON(map[string]interface{}{
-					"type":   "session_response",
-					"status": "error",
-					"error":  "Invalid data format : session",
-				})
+				writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
 				continue
 			}
-			userID, err := GetUserIDFromSession(data.SessionID)
+			Nickname, err := GetNickFromSession(parsedSession.SessionID)
 			if err != nil {
-				conn.WriteJSON(map[string]interface{}{
-					"type":   "session_response",
-					"status": "error",
-					"error":  err.Error(),
-				})
+				writeResponse(conn, "session_response", "error", "", err.Error())
 				continue
 			}
 
 			// valid session → send success
-			response := map[string]interface{}{
-				"type":   "session_response",
-				"status": "ok",
-			}
-			response["user"] = map[string]interface{}{
-				"userID":   userID,
-				"nickname": GetUserNickNameFromSession(data.SessionID),
-			}
-			conn.WriteJSON(response)
+			var response UserPayload
+			response.User.Nickname = Nickname
+			writeResponse(conn, "session_response", "ok", response, "")
+
 		case "register":
-			var data RegisterData
-			bytes, _ := json.Marshal(msg.Data)
-			err := json.Unmarshal(bytes, &data)
+			parsedSession, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
-				conn.WriteJSON(map[string]interface{}{
-					"type":   "register_response",
-					"status": "error",
-					"error":  "Invalid data format : register",
-				})
+				writeResponse(conn, "register_response", "error", nil, "Invalid data format : register")
 				continue
 			}
 
-			err = RegisterUser(data)
+			err = RegisterUser(parsedSession)
+			var response UserPayload
 			status := "ok"
+			errMsg := ""
 			if err != nil {
 				status = "error"
+				errMsg = err.Error()
 			}
+			response.User.Nickname = parsedSession.User.Nickname
+			response.User.FirstName = parsedSession.User.FirstName
+			response.User.LastName = parsedSession.User.LastName
+			response.User.Email = parsedSession.User.Email
+			response.User.Age = parsedSession.User.Age
+			response.User.Gender = parsedSession.User.Gender
 
-			response := map[string]interface{}{
-				"type":   "register_response",
-				"status": status,
-			}
-			response["user"] = map[string]interface{}{
-				"nickname":  data.Nickname,
-				"firstname": data.FirstName,
-				"lastname":  data.LastName,
-				"email":     data.Email,
-				"age":       data.Age,
-				"gender":    data.Gender,
-			}
-			if err != nil {
-				response["error"] = err.Error()
-			}
-			conn.WriteJSON(response)
-
+			writeResponse(conn, "register_response", status, response, errMsg)
 		case "login":
-			var loginData struct {
-				EmailOrNickname string `json:"email_or_nickname"`
-				Password        string `json:"password"`
-			}
 
-			bytes, _ := json.Marshal(msg.Data)
-			err := json.Unmarshal(bytes, &loginData)
+			loginData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
-				conn.WriteJSON(map[string]interface{}{
-					"type":   "login_response",
-					"status": "error",
-					"error":  "Invalid data format",
-				})
+				writeResponse(conn, "login_response", "error", nil, "Invalid data format")
 				continue
 			}
 
-			user, err := LoginUser(loginData.EmailOrNickname, loginData.Password)
+			user, err := LoginUser(loginData.User.EmailOrNickname, loginData.User.Password)
 			status := "ok"
-			response := map[string]interface{}{
-				"type":   "login_response",
-				"status": status,
-			}
+			errMsg := ""
+			var response UserPayload
+
 			if err != nil {
+				response.User.EmailOrNickname = loginData.User.EmailOrNickname
 				status = "error"
-				response["status"] = status
-				response["error"] = err.Error()
-				response["EmailOrNickname"] = loginData.EmailOrNickname
+				errMsg = err.Error()
 			} else {
-				sessionID, err := CreateSession(user.UserID)
+				sessionID, err := CreateSession(user.User.UserID)
 				if err != nil {
-					response["status"] = "error"
-					response["error"] = "Cannot create session"
-					response["EmailOrNickname"] = loginData.EmailOrNickname
+					status = "error"
+					errMsg = "Cannot create session"
+					response.User.EmailOrNickname = loginData.User.EmailOrNickname
 				} else {
-					response["sessionID"] = sessionID
-					response["user"] = map[string]interface{}{
-						"user_id":  user.UserID,
-						"nickname": user.Nickname,
-					}
+					response.User.SessionID = sessionID
+					response.User.Nickname = loginData.User.Nickname
 				}
 			}
 
-			conn.WriteJSON(response)
+			writeResponse(conn, "login_response", status, response, errMsg)
 		}
 	}
 }
