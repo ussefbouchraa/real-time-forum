@@ -1,27 +1,24 @@
+
 import { components } from './components.js';
 
+export const renders = {} 
+
 // Render navigation
-export function renderNavigation(isAuthenticated, userData, setupNavigationEvents) {
+renders.Navigation = (isAuthenticated) => {
     const navbarContainer = document.getElementById('navbar-container');
     if (navbarContainer) {
-        navbarContainer.innerHTML = components.navbar(isAuthenticated, userData);
-        setupNavigationEvents();
+        navbarContainer.innerHTML = components.navbar(isAuthenticated);
     }
 }
 
 // Render home page
-export function renderHome(isAuthenticated, userData, setupHomeEvents) {
+renders.Home = (data = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
 
     try {
-        mainContent.innerHTML = components.home({
-            isAuthenticated,
-            userData,
-            form_error: ''
-        });
+        mainContent.innerHTML = components.home(data)
 
-        setupHomeEvents();
     } catch (error) {
         mainContent.innerHTML = components.renderError('Failed to load posts');
         console.error('Error loading posts:', error);
@@ -29,27 +26,25 @@ export function renderHome(isAuthenticated, userData, setupHomeEvents) {
 }
 
 // Render login page
-export function renderLogin(error = '', email = '', setupAuthEvents) {
+renders.Login = (error = '', email = '') => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.login(error, email);
-    setupAuthEvents('login');
 }
 
 // Render register page
-export function renderRegister(error = '', formData = {}, setupAuthEvents) {
+renders.Register = (error = '', formData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.register(error, formData);
-    setupAuthEvents('register');
 }
 
 // Render profile page
-export function renderProfile(userData) {
+renders.Profile = (userData) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.profile(userData);
 }
 
     // render error message
-export function renderError(message) {
+renders.Error = (message) => {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
             errorContainer.innerHTML = components.errorPopup(message);

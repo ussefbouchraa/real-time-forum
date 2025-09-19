@@ -125,7 +125,6 @@ func BasicChecks(data UserPayload) error {
 }
 
 func AllFieldAreRequiredCheck(data UserPayload) error {
-	fmt.Println("data:", data)
 	if data.User.FirstName == "" {
 		return fmt.Errorf("first name is required")
 	}

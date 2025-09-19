@@ -1,7 +1,7 @@
 export const components = {};
 
 // Navbar Component
-components.navbar = (isAuthenticated = false, nickname = '') => {
+components.navbar = (isAuthenticated = false) => {
     return `
         <header class="navbar">
             <div id="in-logo">
@@ -13,7 +13,6 @@ components.navbar = (isAuthenticated = false, nickname = '') => {
                     ${isAuthenticated ? `
                         <a href="#profile" data-link>Profile</a>
                         <a href="#logout" data-link>Logout</a>
-                        <p>wlc ${nickname} </p>
                     ` : `
                         <a href="#login" data-link>Login</a>
                         <a href="#register" data-link>Register</a>
@@ -30,10 +29,12 @@ components.home = (data = {}) => {
     const userData = data.userData || {};
     const posts = data.posts || [];
     const formError = data.form_error || '';
-    
+
     return `
         ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
         ${components.posts(posts, isAuthenticated)}
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>
     `;
 };
 
@@ -133,7 +134,7 @@ components.posts = (posts, isAuthenticated) => {
     if (!posts || posts.length === 0) {
         return `<section class="posts-container"><p>No posts available. Be the first to post!</p></section>`;
     }
-    
+
     return `
         <section class="posts-container">
             <h2 class="posts-title">All Posts</h2>
@@ -155,9 +156,9 @@ components.post = (post, isAuthenticated) => {
 
             <div class="post-footer">
                 <div class="post-categories">
-                    ${post.Categories.map(cat => 
-                        `<span class="category-badge">${cat.Name}</span>`
-                    ).join('')}
+                    ${post.Categories.map(cat =>
+        `<span class="category-badge">${cat.Name}</span>`
+    ).join('')}
                 </div>
                 <div class="post-stats">
                     ${isAuthenticated ? `
@@ -184,10 +185,10 @@ components.post = (post, isAuthenticated) => {
             ${isAuthenticated ? components.commentForm(post.ID) : ''}
             
             <div class="comment-section" style="display: none;">
-                ${post.Comments && post.Comments.length > 0 ? 
-                    post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('') 
-                    : '<p class="no-comments">No comments yet.</p>'
-                }
+                ${post.Comments && post.Comments.length > 0 ?
+            post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('')
+            : '<p class="no-comments">No comments yet.</p>'
+        }
             </div>
         </article>
     `;
@@ -357,11 +358,11 @@ components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
     const displayName = user.nickname || `${user.firstname} ${user.lastname}`;
     const statusClass = user.isOnline ? 'online' : 'offline';
     const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
-    const lastMessagePreview = lastMessage ? 
-        (lastMessage.content.length > 30 ? 
-            lastMessage.content.substring(0, 30) + '...' : lastMessage.content) : 
+    const lastMessagePreview = lastMessage ?
+        (lastMessage.content.length > 30 ?
+            lastMessage.content.substring(0, 30) + '...' : lastMessage.content) :
         'No messages yet';
-    
+
     return `
         <div class="user-list-item" data-user-id="${user.id}">
             <div class="user-avatar ${statusClass}"></div>
@@ -374,6 +375,37 @@ components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
                 ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
             </div>
         </div>
+    `;
+};
+components.chatSidebar = () => {
+    return `
+            <div class="sidebar-container hide">
+            <div class="messages-header">
+                <h3>CHAT MESSAGE </h3>
+            </div>
+            <div class="online-users">
+                <h4>Online Users</h4>
+                <div id="online-users-list" class="users-list"></div>
+            </div>
+            <div class="conversations">
+                <h4>Conversations</h4>
+                <div id="conversations-list" class="users-list"></div>
+            </div>
+        </div>
+
+        <div id="active-chat-container" class="chat-container">
+            <div class="chat-header">
+                <h3 id="chat-with-user">Select a user to chat</h3>
+                <button id="close-chat" class="close-btn">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea id="message-input" placeholder="Type your message..."></textarea>
+                <button id="send-message" class="close-btn">close</button>
+                <button id="send-message">Send</button>
+            </div>
+        </div>
+        <\div>
     `;
 };
 

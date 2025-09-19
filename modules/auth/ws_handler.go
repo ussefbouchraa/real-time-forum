@@ -156,7 +156,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					response.User.Nickname = user.User.Nickname
 				}
 			}
-			fmt.Println(response)
 			writeResponse(conn, "login_response", status, response, errMsg)
 		}
 	}

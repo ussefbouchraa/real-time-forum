@@ -49,8 +49,29 @@ body {
     width: 100%;
 }
 
-.messages-sidebar {
-    
+
+.chat-toggle-btn {
+  position: fixed;
+  bottom: 20px;   
+  right: 20px;    
+  z-index: 1000;  
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 50%;  
+  width: 50px;
+  height: 50px;
+  font-size: 22px;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.chat-toggle-btn:hover {
+  background: var(--primary-hover);
+}
+.hide{ display: none;}
+
+.sidebar-container {
     position: fixed;
     right: 0;
     top: 80px;
@@ -61,20 +82,15 @@ body {
     padding: 1rem;
     overflow-y: auto;
     transition: var(--transition);
-    z-index: 900;
+    z-index: 999;
 }
 
-.messages-sidebar.collapsed {
+.sidebar-container.collapsed {
     width: 50px;
     padding: 0.5rem;
     right: -250px;
 }
 
-.messages-sidebar.collapsed .messages-header h3,
-.messages-sidebar.collapsed .online-users,
-.messages-sidebar.collapsed .conversations {
-    display: none;
-}
 
 .messages-header {
     display: flex;
@@ -87,25 +103,18 @@ body {
 
 .messages-header h3 {
     color: var(--primary-color);
+    text-decoration: line-through;
 }
 
-.toggle-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    cursor: pointer;
-    color: var(--text-secondary);
-}
 
-.toggle-btn:hover {
-    color: var(--primary-color);
-}
 
-.online-users, .conversations {
+.online-users,
+.conversations {
     margin-bottom: 1.5rem;
 }
 
-.online-users h4, .conversations h4 {
+.online-users h4,
+.conversations h4 {
     color: var(--primary-color);
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
@@ -219,11 +228,10 @@ body {
     border-top: 1px solid var(--border-color);
     display: none;
     flex-direction: column;
-    height: 300px;
     z-index: 950;
 }
 
-.messages-sidebar.collapsed ~ .chat-container {
+.sidebar-container.collapsed~.chat-container {
     right: 50px;
     width: calc(100% - 50px);
 }
@@ -246,7 +254,6 @@ body {
     background: none;
     border: none;
     color: white;
-    font-size: 1.5rem;
     cursor: pointer;
     line-height: 1;
 }
@@ -254,10 +261,11 @@ body {
 .chat-messages {
     flex: 1;
     padding: 1rem;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    overflow-y: auto;   
+  height: 310px; 
 }
 
 .message {
@@ -398,8 +406,8 @@ main {
     padding: 2rem 1rem;
 }
 
-/* Post Toggle Wrapper */
-.post-toggle-wrapper {
+/* Menu Container */
+.menu-container {
     background: var(--card-bg);
     border-radius: var(--border-radius);
     box-shadow: var(--shadow);
@@ -434,16 +442,16 @@ main {
 }
 
 /* Toggle transitions */
-#show-filter:checked ~ .post-sections .filter-section,
-#show-create:checked ~ .post-sections .create-section {
+#show-filter:checked~.post-sections .filter-section,
+#show-create:checked~.post-sections .create-section {
     opacity: 1;
     max-height: 1000px;
     transform: translateY(0px);
     pointer-events: auto;
 }
 
-#show-filter:checked ~ .toggle-buttons label[for="show-filter"],
-#show-create:checked ~ .toggle-buttons label[for="show-create"] {
+#show-filter:checked~.toggle-buttons label[for="show-filter"],
+#show-create:checked~.toggle-buttons label[for="show-create"] {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-dark);
@@ -506,7 +514,7 @@ main {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: rgba(255, 99, 71, 0.1);
+    background:#daedf0;
     border: 2px solid var(--border-color);
     border-radius: 20px;
     cursor: pointer;
@@ -525,7 +533,7 @@ main {
     display: none;
 }
 
-.category-tag input[type="checkbox"]:checked + span {
+.category-tag input[type="checkbox"]:checked+span {
     color: var(--primary-color);
     font-weight: 600;
 }
@@ -735,7 +743,9 @@ button[type="submit"]:active {
     font-weight: 600;
 }
 
-.likes, .dislikes, .comments {
+.likes,
+.dislikes,
+.comments {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
@@ -859,7 +869,8 @@ button[type="submit"]:active {
     padding: 2rem;
 }
 
-.login_container, #signup_container {
+.login_container,
+#signup_container {
     background: var(--card-bg);
     padding: 2rem;
     border-radius: var(--border-radius);
@@ -882,7 +893,7 @@ button[type="submit"]:active {
 .auth-container label {
     font-weight: 600;
     color: var(--text-color);
-    margin-bottom: 0.25rem;
+    margin-bottom: -1rem;
 }
 
 .auth-container input[type="text"],
@@ -930,7 +941,8 @@ button[type="submit"]:active {
     font-size: 0.9rem;
 }
 
-.login_button, #submit_button {
+.login_button,
+#submit_button {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     color: white;
     border: none;
@@ -943,7 +955,8 @@ button[type="submit"]:active {
     box-shadow: var(--shadow);
 }
 
-.login_button:hover, #submit_button:hover {
+.login_button:hover,
+#submit_button:hover {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
@@ -1007,6 +1020,7 @@ button[type="submit"]:active {
         transform: translateX(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(0);
         opacity: 1;
@@ -1027,110 +1041,103 @@ button[type="submit"]:active {
     padding-right: 1.5rem;
 }
 
-/* Loading Spinner */
-.loading-spinner {
-    text-align: center;
-    padding: 2rem;
-    font-size: 1.2rem;
-    color: var(--text-secondary);
-}
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-    .messages-sidebar {
+    .sidebar-container {
         width: 250px;
     }
-    
+
     .chat-container {
         right: 250px;
         width: calc(100% - 250px);
     }
-    
-    .messages-sidebar.collapsed ~ .chat-container {
+
+    .sidebar-container.collapsed~.chat-container {
         right: 50px;
         width: calc(100% - 50px);
     }
 }
 
 @media (max-width: 1024px) {
-    .messages-sidebar {
+    .sidebar-container {
         width: 200px;
     }
-    
+
     .chat-container {
         right: 200px;
         width: calc(100% - 200px);
     }
-    
-    .messages-sidebar.collapsed ~ .chat-container {
+
+    .sidebar-container.collapsed~.chat-container {
         right: 50px;
         width: calc(100% - 50px);
     }
 }
 
 @media (max-width: 768px) {
-    .messages-sidebar {
+    .sidebar-container {
         display: none;
     }
-    
+
     .chat-container {
         right: 0;
         width: 100%;
     }
-    
+
     .navbar {
         padding: 1rem;
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .nav-links {
         width: 100%;
         justify-content: center;
     }
-    
+
     .auth-buttons {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .post-footer {
         flex-direction: column;
         align-items: flex-start;
     }
-    
+
     .post-stats {
         width: 100%;
         justify-content: space-between;
     }
-    
+
     .toggle-buttons {
         flex-direction: column;
     }
-    
+
     .category-tags-filter,
     .category-options {
         justify-content: center;
     }
-    
+
     .filter-checkboxes {
         flex-direction: column;
     }
-    
+
     .auth-container {
         margin: 1rem;
         padding: 1rem;
     }
-    
+
     .profile-field {
         flex-direction: column;
         gap: 0.25rem;
     }
-    
+
     .user-list-item {
         padding: 0.5rem;
     }
-    
+
     .user-avatar {
         width: 32px;
         height: 32px;
@@ -1142,31 +1149,34 @@ button[type="submit"]:active {
         flex-direction: column;
         gap: 0.5rem;
     }
-    
+
     .post-stats {
         flex-wrap: wrap;
         gap: 0.5rem;
     }
-    
-    .reaction-btn, .likes, .dislikes, .comments {
+
+    .reaction-btn,
+    .likes,
+    .dislikes,
+    .comments {
         font-size: 0.8rem;
         padding: 0.4rem 0.6rem;
     }
-    
+
     .message {
         max-width: 90%;
     }
-    
-    .messages-sidebar {
+
+    .sidebar-container {
         width: 100%;
         right: -100%;
     }
-    
-    .messages-sidebar.collapsed {
+
+    .sidebar-container.collapsed {
         right: 0;
         width: 50px;
     }
-    
+
     .chat-container {
         width: 100%;
         right: 0;
