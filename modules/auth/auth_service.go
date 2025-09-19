@@ -125,6 +125,7 @@ func BasicChecks(data UserPayload) error {
 }
 
 func AllFieldAreRequiredCheck(data UserPayload) error {
+	fmt.Println("data:", data)
 	if data.User.FirstName == "" {
 		return fmt.Errorf("first name is required")
 	}
@@ -231,7 +232,7 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GetNickFromSession(sessionID string) (string, error) {
+func GetNickFromSessionID(sessionID string) (string, error) {
 	var nickname string
 	var expiresAt time.Time
 

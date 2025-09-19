@@ -1,4 +1,3 @@
-// Component registry
 export const components = {};
 
 // Navbar Component
@@ -14,7 +13,7 @@ components.navbar = (isAuthenticated = false, nickname = '') => {
                     ${isAuthenticated ? `
                         <a href="#profile" data-link>Profile</a>
                         <a href="#logout" data-link>Logout</a>
-                        <p>wlc ${nickname}
+                        <p>wlc ${nickname} </p>
                     ` : `
                         <a href="#login" data-link>Login</a>
                         <a href="#register" data-link>Register</a>
@@ -97,7 +96,7 @@ components.postToggleSection = (userData, formError) => {
                 </div>
                 <div class="post-section create-section">
                     <form id="create-post-form">
-                        <textarea name="content" placeholder="Write your post..." required maxlength="5000"></textarea>
+                        <textarea name="content" placeholder="Write your post..." maxlength="5000"></textarea>
                         <h4>Select Categories:</h4>
                         <div class="category-options">
                             <label class="category-tag">
@@ -199,7 +198,7 @@ components.commentForm = (postId) => {
     return `
         <div class="comment-form">
             <form class="create-comment-form" data-post-id="${postId}">
-                <textarea name="content" placeholder="Add a comment..." required maxlength="249"></textarea>
+                <textarea name="content" placeholder="Add a comment..." maxlength="249"></textarea>
                 <button type="submit">Post Comment</button>
             </form>
         </div>
@@ -269,23 +268,23 @@ components.register = (error = '', formData = {}) => {
                     <div class="error-container"></div>
                     
                     <label for="nickname">Nickname *</label>
-                    <input type="text" id="nickname" name="nickname" required 
+                    <input type="text" id="nickname" name="nickname" 
                         placeholder="Choose a nickname" value="${formData.nickname || ''}">
                     
                     <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" required 
+                    <input type="email" id="email" name="email" 
                         placeholder="Enter your email address" value="${formData.email || ''}">
                     
                     <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" required 
+                    <input type="password" id="password" name="password" 
                         placeholder="Create a secure password">
                     
                     <label for="first_name">First Name *</label>
-                    <input type="text" id="first_name" name="firstname" required 
+                    <input type="text" id="first_name" name="firstname" 
                         placeholder="Enter your first name" value="${formData.firstname || ''}">
                     
                     <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="lastname" required 
+                    <input type="text" id="last_name" name="lastname" 
                         placeholder="Enter your last name" value="${formData.lastname || ''}">
                     
                     <label for="age">Age *</label>

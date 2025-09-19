@@ -27,8 +27,8 @@ type UserPayload struct {
 		SessionID       string `json:"session_id,omitempty"`
 		UserID          string `json:"user_id,omitempty"`
 		Nickname        string `json:"nickname,omitempty"`
-		FirstName       string `json:"firstname,omitempty"`
-		LastName        string `json:"lastname,omitempty"`
+		FirstName       string `json:"first_name,omitempty"`
+		LastName        string `json:"last_name,omitempty"`
 		Email           string `json:"email,omitempty"`
 		Age             int    `json:"age,omitempty"`
 		Gender          string `json:"gender,omitempty"`
@@ -46,7 +46,7 @@ type WSResponse struct {
 	Type   string      `json:"type"`
 	Status string      `json:"status"`
 	Error  string      `json:"error,omitempty"`
-	Data   interface{} `json:"data,omitempty"`
+	Data   interface{} `json:"user,omitempty"`
 }
 
 func writeResponse(conn *websocket.Conn, msgType string, status string, data interface{}, errMsg string) {
@@ -88,12 +88,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				SessionID string `json:"sessionID"`
 			}
 
-			parsedSession, err := decodeMessage[SessionData](msg.Data)
+			sessionData, err := decodeMessage[SessionData](msg.Data)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
 				continue
 			}
-			Nickname, err := GetNickFromSession(parsedSession.SessionID)
+			Nickname, err := GetNickFromSessionID(sessionData.SessionID)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", err.Error())
 				continue
@@ -102,16 +102,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			// valid session → send success
 			var response UserPayload
 			response.User.Nickname = Nickname
+			response.User.SessionID = sessionData.SessionID
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":
-			parsedSession, err := decodeMessage[UserPayload](msg.Data)
+			registerData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "register_response", "error", nil, "Invalid data format : register")
 				continue
 			}
 
-			err = RegisterUser(parsedSession)
+			err = RegisterUser(registerData)
 			var response UserPayload
 			status := "ok"
 			errMsg := ""
@@ -119,12 +120,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				status = "error"
 				errMsg = err.Error()
 			}
-			response.User.Nickname = parsedSession.User.Nickname
-			response.User.FirstName = parsedSession.User.FirstName
-			response.User.LastName = parsedSession.User.LastName
-			response.User.Email = parsedSession.User.Email
-			response.User.Age = parsedSession.User.Age
-			response.User.Gender = parsedSession.User.Gender
+			response.User.Nickname = registerData.User.Nickname
+			response.User.FirstName = registerData.User.FirstName
+			response.User.LastName = registerData.User.LastName
+			response.User.Email = registerData.User.Email
+			response.User.Age = registerData.User.Age
+			response.User.Gender = registerData.User.Gender
 
 			writeResponse(conn, "register_response", status, response, errMsg)
 		case "login":
@@ -141,7 +142,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			var response UserPayload
 
 			if err != nil {
-				response.User.EmailOrNickname = loginData.User.EmailOrNickname
+				response.User.EmailOrNickname = user.User.EmailOrNickname
 				status = "error"
 				errMsg = err.Error()
 			} else {
@@ -149,13 +150,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					status = "error"
 					errMsg = "Cannot create session"
-					response.User.EmailOrNickname = loginData.User.EmailOrNickname
+					response.User.EmailOrNickname = user.User.EmailOrNickname
 				} else {
 					response.User.SessionID = sessionID
-					response.User.Nickname = loginData.User.Nickname
+					response.User.Nickname = user.User.Nickname
 				}
 			}
-
+			fmt.Println(response)
 			writeResponse(conn, "login_response", status, response, errMsg)
 		}
 	}

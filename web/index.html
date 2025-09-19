@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,17 +8,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./assets/css/style.css">
 </head>
+
 <body>
     <div id="app">
         <!-- Navigation will be injected here -->
         <div id="navbar-container"></div>
-        
+
         <!-- Main content area -->
         <main id="main-content">
             <!-- Content will be dynamically loaded here -->
             <div class="loading-spinner">Loading...</div>
         </main>
-        
+
         <!-- Private Messages Sidebar -->
         <div id="private-messages-sidebar" class="messages-sidebar">
             <div class="messages-header">
@@ -33,7 +35,7 @@
                 <div id="conversations-list" class="users-list"></div>
             </div>
         </div>
-        
+
         <!-- Active Chat Container -->
         <div id="active-chat-container" class="chat-container">
             <div class="chat-header">
@@ -46,15 +48,15 @@
                 <button id="send-message">Send</button>
             </div>
         </div>
-        
+
         <!-- Fixed Chat Toggle Button -->
         <button id="chat-toggle-btn" class="chat-toggle-button">💬</button>
-        
+
         <!-- Error popup container -->
         <div id="error-container"></div>
     </div>
 
-    <script type="module" src="./assets/js/components.js"></script>
     <script type="module" src="./assets/js/app.js"></script>
 </body>
+
 </html>
