@@ -1,5 +1,5 @@
-import { renderNavigation, renderHome, renderLogin, renderRegister, renderProfile, renderError } from './render.js';
-import { components } from "./components.js"
+import { renders } from './renders.js';
+import { setups } from './setupEvent.js';
 
 class RealTimeForum {
     constructor() {
@@ -64,9 +64,9 @@ class RealTimeForum {
                     break;
                 case "session_response":
                 case "login_response":
-                    
+
                     if (data.status === "ok") {
-                            localStorage.setItem("sessionID", data.user.user.session_id);
+                        localStorage.setItem("sessionID", data.user.user.session_id);
                         //inject navbar
                         document.getElementById("navbar-container").innerHTML = components.navbar(true, data.user.user.nickname)
                         // inject home layout
@@ -85,46 +85,46 @@ class RealTimeForum {
             }
         }
     }
-
     // Router function to handle navigation
     router() {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
-        renderNavigation(this.isAuthenticated, this.userData, this.setupNavigationEvents);
-
-        // Redirect to login if not authenticated and trying to access protected pages
+        renders.Navigation(this.isAuthenticated, this.userData);
+        setups.NavigationEvents
+        // Redirect to login  or home depend authenticated if trying to access protected pages
         const protectedPages = ['home', 'profile'];
-        if (!this.isAuthenticated && protectedPages.includes(path)) {
-            window.location.hash = 'login';
-            return;
-        }
-
-        // Redirect to home if authenticated and trying to access auth pages
         const authPages = ['login', 'register'];
+
+        if (!this.isAuthenticated && protectedPages.includes(path)) {
+            window.location.hash = 'login'; return;
+        }
         if (this.isAuthenticated && authPages.includes(path)) {
-            window.location.hash = 'home';
-            return;
+            window.location.hash = 'home'; return;
         }
 
         switch (path) {
             case 'home':
-                renderHome(this.isAuthenticated, this.userData, this.setupHomeEvents);
+                renders.Home(this.isAuthenticated, this.userData)
+                setups.HomeEvents()
                 break;
             case 'login':
-                renderLogin('', '', this.setupAuthEvents.bind(this));
+                renders.Login('', '')
+                setups.AuthEvents('login', this);
                 break;
             case 'register':
-                renderRegister('', '', this.setupAuthEvents.bind(this));
+                renders.Register('', '')
+                setups.AuthEvents('register', this);
+
                 break;
             case 'profile':
-                renderProfile(this.userData);
+                renders.Profile(this.userData);
                 break;
             case 'logout':
                 // handleLogout();
                 break;
             default:
-                renderError("NOT FOUND")
+                renders.Error("NOT FOUND")
             // renderHome();
         }
     }
@@ -144,152 +144,37 @@ class RealTimeForum {
             if (e.target.classList.contains('error-close')) {
                 e.target.closest('.error-popout').style.display = 'none';
             }
-        });
-
-        //   Setup sidebar toggle
-        document.addEventListener('click', (e) => {
+            //   Setup sidebar toggle
             if (e.target.closest('.chat-toggle-btn')) this.toggleSideBar();
-        });
-
-        // Close chat button
-        document.addEventListener('click', (e) => {
+            // Close chat button
             if (e.target.closest('.close-btn')) this.closeChat();
-        });
-
-        // Send message button
-        document.addEventListener('click', (e) => {
+            // Send message button
             if (e.target.closest('#send-message')) this.sendMessage();
-        });
 
-    }
-
-
-
-
-    // Setup navigation events
-    setupNavigationEvents() {
-        // Handle navigation links
-        document.querySelectorAll('a[data-link]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const path = e.target.getAttribute('href').replace('#', '');
-                window.location.hash = path;
-            });
         });
     }
 
 
 
-    // Setup home page events
-    setupHomeEvents() {
-        // Toggle between filter and create sections
-        document.querySelectorAll('.toggle-buttons label').forEach(label => {
-            label.addEventListener('click', (e) => {
-                const target = e.target.getAttribute('for');
-                if (target === 'show-filter') {
-                    document.querySelector('.filter-section').style.display = 'block';
-                    document.querySelector('.create-section').style.display = 'none';
-                } else if (target === 'show-create') {
-                    document.querySelector('.filter-section').style.display = 'none';
-                    document.querySelector('.create-section').style.display = 'block';
+    handleLogin() {
+        const emailOrNickname = document.getElementById('email_or_nickname').value;
+        const password = document.getElementById('password').value;
+
+        this.ws.send(JSON.stringify({
+            type: "login",
+            data: {
+                user: {
+                    email_or_nickname: emailOrNickname,
+                    password: password
                 }
-            });
-        });
-
-        // Handle post creation
-        const createForm = document.getElementById('create-post-form');
-        if (createForm) {
-            createForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                // this.handleCreatePost(e.target);  
-            });
-        }
-
-        // Handle filtering
-        const filterForm = document.getElementById('filter-form');
-        if (filterForm) {
-            filterForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                // this.handleFilterPosts(e.target);
-            });
-        }
-
-        // Handle post reactions
-        document.querySelectorAll('.reaction-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const postId = e.target.closest('[data-post-id]')?.getAttribute('data-post-id');
-                const commentId = e.target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
-                const type = e.target.getAttribute('data-type');
-
-                if (postId) {
-                    // this.handlePostReaction(postId, type);
-                } else if (commentId) {
-                    // this.handleCommentReaction(commentId, type);
-                }
-            });
-        });
-
-        // Toggle comments visibility
-        document.querySelectorAll('.toggle-comments').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const postElement = e.target.closest('.forum-post');
-                const commentSection = postElement.querySelector('.comment-section');
-                commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
-
-            });
-        });
-
-        // Handle comment submission
-        document.querySelectorAll('.create-comment-form').forEach(form => {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const postId = e.target.getAttribute('data-post-id');
-                // this.handleCreateComment(postId, e.target);
-            });
-        });
+            }
+        }));
     }
 
-
-
-
-    // Setup authentication events
-    setupAuthEvents(formType) {
-        const form = document.getElementById(`${formType}-form`);
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                if (formType === 'login') {
-                    this.handleLogin();
-                } else if (formType === 'register') {
-                    this.handleRegister();
-                }
-            });
-        }
-    }
-
-    // Handle logout
-    handleLogout() {
-        this.isAuthenticated = false;
-        this.userData = {};
-        localStorage.removeItem('sessionID');
-
-        // Close WebSocket connection
-        if (this.ws) {
-            this.ws.close();
-            this.ws = null;
-        }
-
-        // Close chat if open
-        this.closeChat();
-
-        // Redirect to login
-        window.location.hash = 'login';
-    }
 
     // Handle registration
     handleRegister() {
         const ageVal = parseInt(document.getElementById("age").value) || 0;
-
         const userData = {
             type: "register",
             data: {
@@ -308,35 +193,28 @@ class RealTimeForum {
         this.ws.send(JSON.stringify(userData));
     }
 
-    // Handle login
-    handleLogin() {
-        const emailOrNickname = document.getElementById('email_or_nickname').value;
-        const password = document.getElementById('password').value;
+    // Handle logout
 
-        this.ws.send(JSON.stringify({
-            type: "login",
-            data: {
-                user: {
-                    email_or_nickname: emailOrNickname,
-                    password: password
-                }
-            }
-        }));
-    }
+    handleLogout() {
+        this.isAuthenticated = false;
+        this.userData = {};
+        localStorage.removeItem('forumAuth');
 
-    // Setup private messages events
-    setupPrivateMessagesEvents() {
-        // User list items click event
-        document.querySelectorAll('.user-list-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const userId = item.getAttribute('data-user-id');
-                this.openChat(userId);
-            });
-        });
+        // Close WebSocket connection
+        if (this.ws) {
+            this.ws.close();
+            this.ws = null;
+        }
+
+        // Close chat if open
+        this.closeChat();
+
+        // Redirect to login
+        window.location.hash = 'login';
     }
 
 
-
+    //about Chat
 
     // Open chat with a user
     openChat(userId) {
@@ -381,9 +259,6 @@ class RealTimeForum {
         const sidebar = document.querySelector('.sidebar-container');
         if (sidebar) sidebar.classList.toggle('hide')
     }
-
-
-
 
 }
 

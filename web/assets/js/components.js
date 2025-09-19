@@ -1,7 +1,8 @@
+// Component registry
 export const components = {};
 
 // Navbar Component
-components.navbar = (isAuthenticated = false, nickname = '') => {
+components.navbar = (isAuthenticated = false) => {
     return `
         <header class="navbar">
             <div id="in-logo">
@@ -13,7 +14,6 @@ components.navbar = (isAuthenticated = false, nickname = '') => {
                     ${isAuthenticated ? `
                         <a href="#profile" data-link>Profile</a>
                         <a href="#logout" data-link>Logout</a>
-                        <p>wlc ${nickname} </p>
                     ` : `
                         <a href="#login" data-link>Login</a>
                         <a href="#register" data-link>Register</a>
@@ -32,15 +32,19 @@ components.home = (data = {}) => {
     const formError = data.form_error || '';
     
     return `
-        ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
+        ${isAuthenticated ? components.menuSection(userData, formError) : ''}
         ${components.posts(posts, isAuthenticated)}
+        
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>
+        
     `;
 };
 
 // Post Toggle Section Component
-components.postToggleSection = (userData, formError) => {
+components.menuSection = (userData, formError) => {
     return `
-        <div class="post-toggle-wrapper">
+        <div class="menu-container">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
             <input type="radio" name="post-toggle" id="show-create" hidden>
             <div class="toggle-buttons">
@@ -48,7 +52,7 @@ components.postToggleSection = (userData, formError) => {
                 <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                <p>👋Welcome, ${userData.nickname} </p>
+                <p>👋Welcome, ${userData.nickname || userData.firstName} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -96,7 +100,7 @@ components.postToggleSection = (userData, formError) => {
                 </div>
                 <div class="post-section create-section">
                     <form id="create-post-form">
-                        <textarea name="content" placeholder="Write your post..." maxlength="5000"></textarea>
+                        <textarea name="content" placeholder="Write your post..." required maxlength="5000"></textarea>
                         <h4>Select Categories:</h4>
                         <div class="category-options">
                             <label class="category-tag">
@@ -198,7 +202,7 @@ components.commentForm = (postId) => {
     return `
         <div class="comment-form">
             <form class="create-comment-form" data-post-id="${postId}">
-                <textarea name="content" placeholder="Add a comment..." maxlength="249"></textarea>
+                <textarea name="content" placeholder="Add a comment..." required maxlength="249"></textarea>
                 <button type="submit">Post Comment</button>
             </form>
         </div>
@@ -231,19 +235,19 @@ components.comment = (comment, isAuthenticated) => {
 };
 
 // Login Component
-components.login = (error = '', EmailOrNickname = '') => {
+components.login = (error = '', email = '') => {
     return `
         <div class="auth-container">
             <div class="login_container">
                 <h1>Login</h1>
                 <form id="login-form">
-                    <div class="error-container"></div>
+                    ${error ? components.errorPopup(error) : ''}
                     
-                    <label for="email_or_nickname">Email or Nickname</label>
-                    <input type="text" id="email_or_nickname" name="identifier" placeholder="Enter your email or nickname" value="${EmailOrNickname}">
+                    <label for="login_identifier">Email or Nickname</label>
+                    <input type="text" id="login_identifier" name="identifier" placeholder="Enter your email or nickname" value="${email}">
                     
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Enter your password">
+                    <label for="login_password">Password</label>
+                    <input type="password" id="login_password" name="password" placeholder="Enter your password">
                     
                     <div class="new_account_div">
                         <b>Don't have an account?</b>
@@ -265,39 +269,37 @@ components.register = (error = '', formData = {}) => {
             <div id="signup_container">
                 <h1>Register</h1>
                 <form id="register-form">
-                    <div class="error-container"></div>
+                    ${error ? components.errorPopup(error) : ''}
                     
-                    <label for="nickname">Nickname *</label>
-                    <input type="text" id="nickname" name="nickname" 
+                    <label for="register_nickname">Nickname *</label>
+                    <input type="text" id="register_nickname" name="nickname" required 
                         placeholder="Choose a nickname" value="${formData.nickname || ''}">
                     
-                    <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" 
+                    <label for="register_email">Email *</label>
+                    <input type="email" id="register_email" name="email" required 
                         placeholder="Enter your email address" value="${formData.email || ''}">
                     
-                    <label for="password">Password *</label>
-                    <input type="password" id="password" name="password" 
+                    <label for="register_password">Password *</label>
+                    <input type="password" id="register_password" name="password" required 
                         placeholder="Create a secure password">
                     
-                    <label for="first_name">First Name *</label>
-                    <input type="text" id="first_name" name="firstname" 
+                    <label for="register_firstname">First Name *</label>
+                    <input type="text" id="register_firstname" name="firstname" required 
                         placeholder="Enter your first name" value="${formData.firstname || ''}">
                     
-                    <label for="last_name">Last Name *</label>
-                    <input type="text" id="last_name" name="lastname" 
+                    <label for="register_lastname">Last Name *</label>
+                    <input type="text" id="register_lastname" name="lastname" required 
                         placeholder="Enter your last name" value="${formData.lastname || ''}">
                     
-                    <label for="age">Age *</label>
-                    <input type="number" id="age" name="age" 
+                    <label for="register_age">Age *</label>
+                    <input type="number" id="register_age" name="age" required min="13" 
                         placeholder="Enter your age" value="${formData.age || ''}">
                     
-                    <label for="gender">Gender</label>
-                    <select id="gender" name="gender">
+                    <label for="register_gender">Gender</label>
+                    <select id="register_gender" name="gender">
                         <option value="">Select gender</option>
                         <option value="male" ${formData.gender === 'male' ? 'selected' : ''}>Male</option>
                         <option value="female" ${formData.gender === 'female' ? 'selected' : ''}>Female</option>
-                        <option value="other" ${formData.gender === 'other' ? 'selected' : ''}>Other</option>
-                        <option value="prefer_not_to_say" ${formData.gender === 'prefer_not_to_say' ? 'selected' : ''}>Prefer not to say</option>
                     </select>
                     
                     <div class="have_account_div">
@@ -349,6 +351,9 @@ components.profile = (userData) => {
                 </div>
             </div>
         </div>
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>
+        
     `;
 };
 
@@ -374,6 +379,39 @@ components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
                 ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
             </div>
         </div>
+    `;
+};
+
+
+components.chatSidebar = () => {
+    return `
+            <div class="sidebar-container hide">
+            <div class="messages-header">
+                <h3>CHAT MESSAGE </h3>
+            </div>
+            <div class="online-users">
+                <h4>Online Users</h4>
+                <div id="online-users-list" class="users-list"></div>
+            </div>
+            <div class="conversations">
+                <h4>Conversations</h4>
+                <div id="conversations-list" class="users-list"></div>
+            </div>
+        </div>
+
+        <div id="active-chat-container" class="chat-container">
+            <div class="chat-header">
+                <h3 id="chat-with-user">Select a user to chat</h3>
+                <button id="close-chat" class="close-btn">×</button>
+            </div>
+            <div id="chat-messages" class="chat-messages"></div>
+            <div class="chat-input">
+                <textarea id="message-input" placeholder="Type your message..."></textarea>
+                <button id="send-message" class="close-btn">close</button>
+                <button id="send-message">Send</button>
+            </div>
+        </div>
+        <\div>
     `;
 };
 
