@@ -59,7 +59,7 @@ class RealTimeForum {
                     if (data.status === "ok") {
                         renders.Login()
                     } else {
-                        renders.Error(data.user.error)
+                        renders.Error(data.error)
                     }
                     break;
                 case "session_response":

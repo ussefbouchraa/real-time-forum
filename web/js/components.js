@@ -1,5 +1,18 @@
 export const components = {};
 
+// Utility function to prevent XSS attacks
+function escapeHTML(str) {
+    if (!str) return '';
+    console.log(str);
+    
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Navbar Component
 components.navbar = (isAuthenticated = false) => {
     return `
@@ -146,18 +159,18 @@ components.posts = (posts, isAuthenticated) => {
 // Single Post Component
 components.post = (post, isAuthenticated) => {
     return `
-        <article class="forum-post" data-post-id="${post.ID}">
+        <article class="forum-post" data-post-id="${escapeHTML(post.ID)}">
             <div class="post-header">
-                <span class="post-author">Posted by ${post.Author.UserName} </span>
+                <span class="post-author">Posted by ${escapeHTML(post.Author.UserName)} </span>
                 <span class="post-date">${new Date(post.CreatedAt).toLocaleString()}</span>
             </div>
 
-            <div class="post-content">${post.Content}</div>
+            <div class="post-content">${escapeHTML(post.Content)}</div>
 
             <div class="post-footer">
                 <div class="post-categories">
                     ${post.Categories.map(cat =>
-        `<span class="category-badge">${cat.Name}</span>`
+        `<span class="category-badge">${escapeHTML(cat.Name)}</span>`
     ).join('')}
                 </div>
                 <div class="post-stats">
@@ -211,15 +224,15 @@ components.comment = (comment, isAuthenticated) => {
     return `
         <div class="comment" data-comment-id="${comment.ID}">
             <div class="comment-header">
-                <span class="comment-author">${comment.Author.UserName}</span>
+                <span class="comment-author">${escapeHTML(comment.Author.UserName)}</span>
                 <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
             </div>
-            <p class="comment-content">${comment.Content}</p>
+            <p class="comment-content">${escapeHTML(comment.Content)}</p>
             ${isAuthenticated ? `
                 <div class="comment-reactions">
                     <button class="reaction-btn like-btn" data-comment-id="${comment.ID}" data-type="like">
                         <span>👍</span>
-                        <span class="count">${comment.LikeCount}</span>
+                        <span class="count">${escapeHTML(comment.LikeCount)}</span>
                     </button>
                     <button class="reaction-btn dislike-btn" data-comment-id="${comment.ID}" data-type="dislike">
                         <span>👎</span>
@@ -270,11 +283,11 @@ components.register = (error = '', formData = {}) => {
                     
                     <label for="nickname">Nickname *</label>
                     <input type="text" id="nickname" name="nickname" 
-                        placeholder="Choose a nickname" value="${formData.nickname || ''}">
+                        placeholder="Choose a nickname" value="${escapeHTML(formData.nickname) || ''}">
                     
                     <label for="email">Email *</label>
                     <input type="email" id="email" name="email" 
-                        placeholder="Enter your email address" value="${formData.email || ''}">
+                        placeholder="Enter your email address" value="${escapeHTML(formData.email) || ''}">
                     
                     <label for="password">Password *</label>
                     <input type="password" id="password" name="password" 
@@ -282,15 +295,15 @@ components.register = (error = '', formData = {}) => {
                     
                     <label for="first_name">First Name *</label>
                     <input type="text" id="first_name" name="firstname" 
-                        placeholder="Enter your first name" value="${formData.firstname || ''}">
+                        placeholder="Enter your first name" value="${escapeHTML(formData.firstname) || ''}">
                     
                     <label for="last_name">Last Name *</label>
                     <input type="text" id="last_name" name="lastname" 
-                        placeholder="Enter your last name" value="${formData.lastname || ''}">
+                        placeholder="Enter your last name" value="${escapeHTML(formData.lastname) || ''}">
                     
                     <label for="age">Age *</label>
                     <input type="number" id="age" name="age" 
-                        placeholder="Enter your age" value="${formData.age || ''}">
+                        placeholder="Enter your age" value="${escapeHTML(formData.age) || ''}">
                     
                     <label for="gender">Gender</label>
                     <select id="gender" name="gender">
@@ -322,27 +335,27 @@ components.profile = (userData) => {
             <div class="profile-info">
                 <div class="profile-field">
                     <label>Nickname:</label>
-                    <span>${userData.nickname}</span>
+                    <span>${escapeHTML(userData.nickname)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Email:</label>
-                    <span>${userData.email}</span>
+                    <span>${escapeHTML(userData.email)}</span>
                 </div>
                 <div class="profile-field">
                     <label>First Name:</label>
-                    <span>${userData.firstname}</span>
+                    <span>${escapeHTML(userData.firstname)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Last Name:</label>
-                    <span>${userData.lastname}</span>
+                    <span>${escapeHTML(userData.lastname)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Age:</label>
-                    <span>${userData.age}</span>
+                    <span>${escapeHTML(userData.age)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Gender:</label>
-                    <span>${userData.gender || 'Not specified'}</span>
+                    <span>${escapeHTML(userData.gender) || 'Not specified'}</span>
                 </div>
                 <div class="profile-field">
                     <label>Member since:</label>

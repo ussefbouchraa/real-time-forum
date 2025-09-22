@@ -19,6 +19,10 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set security headers
+	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self';")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -46,8 +50,8 @@ func main() {
 	core.InitDB(core.LoadConfig().DatabasePath)
 
 	// serve static files
-    http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./web/css/"))))
-    http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./web/js/"))))
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./web/css/"))))
+	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./web/js/"))))
 	// API routes
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/ws", auth.WebSocketHandler)
