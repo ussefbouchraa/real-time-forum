@@ -84,16 +84,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch msg.Type {
 		case "user_have_session":
-			type SessionData struct {
-				SessionID string `json:"sessionID"`
-			}
-
-			sessionData, err := decodeMessage[SessionData](msg.Data)
+		session, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
 				continue
 			}
-			Nickname, err := GetNickFromSessionID(sessionData.SessionID)
+			Nickname, err := GetNickFromSessionID(session.User.SessionID)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", err.Error())
 				continue
@@ -102,7 +98,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			// valid session → send success
 			var response UserPayload
 			response.User.Nickname = Nickname
-			response.User.SessionID = sessionData.SessionID
+			response.User.SessionID = session.User.SessionID
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":

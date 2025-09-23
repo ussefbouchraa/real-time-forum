@@ -21,19 +21,18 @@ class RealTimeForum {
 
     // Check if user is authenticated (from localStorage)
     checkAuthStatus() {
-        this.sessionID = localStorage.getItem('sessionID');
-        if (this.sessionID) {
-            try {
-                const data = JSON.parse(this.sessionID);
+        this.session_id = localStorage.getItem('session_id');
+        
+        if (this.session_id) {
+            try {                
                 this.isAuthenticated = true;
-                this.userData = data.user;
-                this.ws.onopen = () => {
-
+                
+                this.ws.onopen = () => {    
                     this.ws.send(JSON.stringify({
                         type: "user_have_session",
                         data: {
                             user: {
-                                sessionID: this.sessionID
+                                session_id: this.session_id
                             }
                         }
                     }));
@@ -41,9 +40,9 @@ class RealTimeForum {
                 }
             } catch (e) {
                 console.error('Error parsing auth data:', e);
-                localStorage.removeItem('sessionID');
+                localStorage.removeItem('session_id');
             }
-        } else {
+        } else {            
             this.BackToFrontPayload();
         }
     }
@@ -66,7 +65,7 @@ class RealTimeForum {
                 case "login_response":
 
                     if (data.status === "ok") {
-                        localStorage.setItem("sessionID", data.user.user.session_id);
+                        localStorage.setItem("session_id", data.user.user.session_id);
                         //inject navbar
                         renders.Navigation(true)
                         // inject home layout
@@ -200,7 +199,7 @@ class RealTimeForum {
     handleLogout() {
         this.isAuthenticated = false;
         this.userData = {};
-        localStorage.removeItem('forumAuth');
+        localStorage.removeItem('session_id');
 
         // Close WebSocket connection
         if (this.ws) {
