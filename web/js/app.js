@@ -21,9 +21,9 @@ class RealTimeForum {
 
     // Check if user is authenticated (from localStorage)
     checkAuthStatus() {
-        this.session_id = localStorage.getItem('session_id');
+        this.sessionID = localStorage.getItem('session_id');
         
-        if (this.session_id) {
+        if (this.sessionID) {
             try {                
                 this.isAuthenticated = true;
                 
@@ -32,7 +32,7 @@ class RealTimeForum {
                         type: "user_have_session",
                         data: {
                             user: {
-                                session_id: this.session_id
+                                session_id: this.sessionID
                             }
                         }
                     }));
@@ -52,8 +52,8 @@ class RealTimeForum {
     BackToFrontPayload() {
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            
             switch (data.type) {
-
                 case "register_response":
                     if (data.status === "ok") {
                         renders.Login()
@@ -61,26 +61,21 @@ class RealTimeForum {
                         renders.Error(data.error)
                     }
                     break;
-                case "session_response":
-                case "login_response":
-
-                    if (data.status === "ok") {
-                        localStorage.setItem("session_id", data.user.user.session_id);
-                        //inject navbar
-                        renders.Navigation(true)
-                        // inject home layout
-                        renders.Home(
-                            {
-                                isAuthenticated: true,
-                                userData: { nickname: data.user.user.nickname },
-                                posts: []
-                            }
-                        )
-                        setups.HomeEvents
-                    } else {
-                        renders.Error(data.error)
-                    }
+                    case "session_response":
+                    case "login_response":
+                            
+                       if (data.status === "ok") {
+                           
+                           localStorage.setItem("session_id", data.user.user.session_id);
+                           this.userData = data.user.user;
+                           this.isAuthenticated = true;
+                           window.location.hash = 'home';
+                        } else { renders.Error(data.error) }
                     break;
+
+                // case "profile_response":
+                //     if (data.status === "ok") {
+                //         this.userData = data.user.user;
                 case "new_post":
                     break;
             }
@@ -91,8 +86,9 @@ class RealTimeForum {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
-        renders.Navigation(this.isAuthenticated, this.userData);
-        setups.NavigationEvents
+        renders.Navigation(this.isAuthenticated);
+        setups.NavigationEvents()
+
         // Redirect to login  or home depend authenticated if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
@@ -107,7 +103,7 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                setups.HomeEvents
+                setups.HomeEvents()
                 break;
             case 'login':
                 renders.Login('', '')
@@ -122,7 +118,7 @@ class RealTimeForum {
                 renders.Profile(this.userData);
                 break;
             case 'logout':
-                // handleLogout();
+                this.handleLogout();
                 break;
             default:
                 renders.Error("NOT FOUND")
@@ -138,6 +134,12 @@ class RealTimeForum {
         // Handle hash changes for SPA routing
         window.addEventListener('hashchange', () => {
             this.router();
+        });
+
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'session_id' && !event.newValue) {
+                this.handleLogout();
+            }
         });
 
         // Close error popups when clicked
@@ -160,8 +162,7 @@ class RealTimeForum {
     handleLogin() {
         const emailOrNickname = document.getElementById('email_or_nickname').value;
         const password = document.getElementById('password').value;
-
-        this.ws.send(JSON.stringify({
+        const loginPayload = JSON.stringify({
             type: "login",
             data: {
                 user: {
@@ -169,7 +170,18 @@ class RealTimeForum {
                     password: password
                 }
             }
-        }));
+        });
+
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this.ws = new WebSocket("ws://localhost:8080/ws");
+            this.BackToFrontPayload(); // re-attach message handler
+
+            this.ws.onopen = () => {
+                this.ws.send(loginPayload);
+            };
+        } else {
+            this.ws.send(loginPayload);
+        }
     }
 
 

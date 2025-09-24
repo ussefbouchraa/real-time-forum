@@ -1,11 +1,9 @@
 export const components = {};
 
 // Utility function to prevent XSS attacks
-function escapeHTML(str) {
-    if (!str) return '';
-    console.log(str);
-    
-    return str
+export function escapeHTML(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -37,11 +35,11 @@ components.navbar = (isAuthenticated = false) => {
 };
 
 // Home/Layout Component
-components.home = (data = {}) => {
-    const isAuthenticated = data.isAuthenticated || false;
-    const userData = data.userData || {};
-    const posts = data.posts || [];
-    const formError = data.form_error || '';
+components.home = (isAuthenticated, userData = {} ) => {
+    console.log("222222222222222222", userData);
+    
+    const posts = userData.posts || [];
+    const formError = userData.form_error || '';
 
     return `
         ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
@@ -53,6 +51,8 @@ components.home = (data = {}) => {
 
 // Post Toggle Section Component
 components.postToggleSection = (userData, formError) => {
+     console.log("3333333333333", userData);
+    
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
@@ -310,8 +310,6 @@ components.register = (error = '', formData = {}) => {
                         <option value="">Select gender</option>
                         <option value="male" ${formData.gender === 'male' ? 'selected' : ''}>Male</option>
                         <option value="female" ${formData.gender === 'female' ? 'selected' : ''}>Female</option>
-                        <option value="other" ${formData.gender === 'other' ? 'selected' : ''}>Other</option>
-                        <option value="prefer_not_to_say" ${formData.gender === 'prefer_not_to_say' ? 'selected' : ''}>Prefer not to say</option>
                     </select>
                     
                     <div class="have_account_div">
@@ -343,11 +341,11 @@ components.profile = (userData) => {
                 </div>
                 <div class="profile-field">
                     <label>First Name:</label>
-                    <span>${escapeHTML(userData.firstname)}</span>
+                    <span>${escapeHTML(userData.first_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Last Name:</label>
-                    <span>${escapeHTML(userData.lastname)}</span>
+                    <span>${escapeHTML(userData.last_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Age:</label>
@@ -357,13 +355,10 @@ components.profile = (userData) => {
                     <label>Gender:</label>
                     <span>${escapeHTML(userData.gender) || 'Not specified'}</span>
                 </div>
-                <div class="profile-field">
-                    <label>Member since:</label>
-                    <span>${new Date(userData.createdAt).toLocaleDateString()}</span>
-                </div>
             </div>
         </div>
-    `;
+        ${components.chatSidebar()}
+        <button class="chat-toggle-btn">💬</button>    `;
 };
 
 // User List Item Component (for private messages)

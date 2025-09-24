@@ -12,12 +12,11 @@ renders.Navigation = (isAuthenticated) => {
 }
 
 // Render home page
-renders.Home = (data = {}) => {
+renders.Home = (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
-
     try {
-        mainContent.innerHTML = components.home(data)
+        mainContent.innerHTML = components.home(isAuthenticated, userData)
 
     } catch (error) {
         mainContent.innerHTML = components.renderError('Failed to load posts');

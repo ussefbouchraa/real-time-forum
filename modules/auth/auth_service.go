@@ -257,3 +257,29 @@ func GetNickFromSessionID(sessionID string) (string, error) {
 
 	return nickname, nil
 }
+
+// func getUserData(SessionID string ) {
+
+// var Data UserPayload
+
+// 	err := core.Db.QueryRow(
+// 		`SELECT user_id, first_name, last_name, nickname, age, gender, email, password 
+// 		 FROM users 
+// 		 WHERE email = ? OR nickname = ?`,
+// 		emailOrNickname, emailOrNickname,
+// 	).Scan(
+// 		&Data.User.UserID,
+// 		&Data.User.FirstName,
+// 		&Data.User.LastName,
+// 		&Data.User.Nickname,
+// 		&Data.User.Age,
+// 		&Data.User.Gender,
+// 		&Data.User.Email,
+// 		&hashedPwd,
+// 	)
+// 	if err != nil {
+// 		return UserPayload{}, err.error()
+// 	}
+
+// 	return Data, nil
+// }
