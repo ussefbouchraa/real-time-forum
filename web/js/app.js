@@ -14,76 +14,93 @@ class RealTimeForum {
     }
 
     init() {
-        this.checkAuthStatus();
         this.setupEventListeners();
+        this.setupWS();
         this.router();
     }
 
-    // Check if user is authenticated (from localStorage)
-    checkAuthStatus() {
-        this.session_id = localStorage.getItem('session_id');
-        
-        if (this.session_id) {
-            try {                
-                this.isAuthenticated = true;
-                
-                this.ws.onopen = () => {    
-                    this.ws.send(JSON.stringify({
-                        type: "user_have_session",
-                        data: {
-                            user: {
-                                session_id: this.session_id
-                            }
-                        }
-                    }));
-                    this.BackToFrontPayload();
-                }
-            } catch (e) {
-                console.error('Error parsing auth data:', e);
-                localStorage.removeItem('session_id');
+    setupWS() {
+
+        this.ws.addEventListener("open", () => {
+            const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
+            if (session) {
+
+                this.ws.send(JSON.stringify({
+                    type: "user_have_session",
+                    data: { user: { session_id: session } }
+                }));
             }
-        } else {            
-            this.BackToFrontPayload();
-        }
+        });
+
+        this.ws.addEventListener("message", (event) => {
+            this.BackToFrontPayload(event)
+        })
+
+        this.ws.addEventListener("close", () => {
+            console.warn("WebSocket closed, trying to reconnect...");
+            setTimeout(() => {
+                this.reconnectWS();
+            }, 5000);
+        });
+
+        this.ws.addEventListener("error", (err) => {
+            console.error('WebSocket error:', err);
+            renders.Error('Connection to server lost. Please try again.');
+        });
+
     }
 
+    reconnectWS() {
+        if (this.ws) {
+            this.ws.onopen = null;
+            this.ws.onmessage = null;
+            this.ws.onclose = null;
+            this.ws.onerror = null;
+            this.ws.close();
+        }
+
+        this.ws = new WebSocket("ws://localhost:8080/ws");
+        this.setupWS();
+    }
 
     // Handle incoming WebSocket messages
-    BackToFrontPayload() {
-        this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            switch (data.type) {
+    BackToFrontPayload(event) {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
 
-                case "register_response":
-                    if (data.status === "ok") {
-                        renders.Login()
-                    } else {
-                        renders.Error(data.error)
-                    }
-                    break;
-                case "session_response":
-                case "login_response":
+            case "register_response":
+                if (data.status === "ok") {
+                    renders.Login()
+                } else {
+                    renders.Error(data.error)
+                }
+                break;
+            case "session_response":
+            case "login_response":
 
-                    if (data.status === "ok") {
-                        localStorage.setItem("session_id", data.user.user.session_id);
-                        //inject navbar
-                        renders.Navigation(true)
-                        // inject home layout
-                        renders.Home(
-                            {
-                                isAuthenticated: true,
-                                userData: { nickname: data.user.user.nickname },
-                                posts: []
-                            }
-                        )
-                        setups.HomeEvents
-                    } else {
-                        renders.Error(data.error)
+                if (data.status === "ok") {
+                    localStorage.setItem("session_id", data.user.user.session_id);
+                    this.isAuthenticated = true;
+                    this.sessionID = localStorage.getItem("session_id")
+
+                    this.userData = {
+                        isAuthenticated: true,
+                        userData: { nickname: data.user.user.nickname },
+                        posts: []
                     }
-                    break;
-                case "new_post":
-                    break;
-            }
+                    window.location.hash = 'home';
+                    window.location.hash.replace('#', '')
+                } else {
+                    this.isAuthenticated = false;
+                    localStorage.removeItem("session_id");
+                    this.sessionID = null;
+                    renders.Error(data.error)
+                    window.location.hash = 'login';
+                    window.location.hash.replace('#', '');
+                }
+                break;
+            case "new_post":
+                break;
         }
     }
     // Router function to handle navigation
@@ -91,8 +108,8 @@ class RealTimeForum {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
-        renders.Navigation(this.isAuthenticated, this.userData);
-        setups.NavigationEvents
+        renders.Navigation(this.isAuthenticated);
+        setups.NavigationEvents()
         // Redirect to login  or home depend authenticated if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
@@ -106,15 +123,15 @@ class RealTimeForum {
 
         switch (path) {
             case 'home':
-                renders.Home(this.isAuthenticated, this.userData)
-                setups.HomeEvents
+                renders.Home(this.userData);
+                setups.HomeEvents()
                 break;
             case 'login':
-                renders.Login('', '')
+                renders.Login()
                 setups.AuthEvents('login', this);
                 break;
             case 'register':
-                renders.Register('', '')
+                renders.Register()
                 setups.AuthEvents('register', this);
 
                 break;
@@ -200,6 +217,7 @@ class RealTimeForum {
         this.isAuthenticated = false;
         this.userData = {};
         localStorage.removeItem('session_id');
+        this.sessionID = null;
 
         // Close WebSocket connection
         if (this.ws) {

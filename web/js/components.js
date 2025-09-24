@@ -3,7 +3,6 @@ export const components = {};
 // Utility function to prevent XSS attacks
 function escapeHTML(str) {
     if (!str) return '';
-    console.log(str);
     
     return str
         .replace(/&/g, '&amp;')
@@ -38,6 +37,7 @@ components.navbar = (isAuthenticated = false) => {
 
 // Home/Layout Component
 components.home = (data = {}) => {
+    
     const isAuthenticated = data.isAuthenticated || false;
     const userData = data.userData || {};
     const posts = data.posts || [];
