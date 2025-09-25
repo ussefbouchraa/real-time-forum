@@ -25,15 +25,15 @@ renders.Home = (isAuthenticated, userData = {}) => {
 }
 
 // Render login page
-renders.Login = (error = '', email = '') => {
+renders.Login = () => {
     const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = components.login(error, email);
+    mainContent.innerHTML = components.login();
 }
 
 // Render register page
 renders.Register = (error = '', formData = {}) => {
     const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = components.register(error, formData);
+    mainContent.innerHTML = components.register();
 }
 
 // Render profile page

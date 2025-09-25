@@ -36,7 +36,6 @@ components.navbar = (isAuthenticated = false) => {
 
 // Home/Layout Component
 components.home = (isAuthenticated, userData = {} ) => {
-    console.log("222222222222222222", userData);
     
     const posts = userData.posts || [];
     const formError = userData.form_error || '';
@@ -50,9 +49,7 @@ components.home = (isAuthenticated, userData = {} ) => {
 };
 
 // Post Toggle Section Component
-components.postToggleSection = (userData, formError) => {
-     console.log("3333333333333", userData);
-    
+components.postToggleSection = (userData, formError) => {    
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
@@ -62,7 +59,7 @@ components.postToggleSection = (userData, formError) => {
                 <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                <p>👋Welcome, ${userData.nickname} </p>
+                <p>👋Welcome, ${escapeHTML(userData.nickname)} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -245,7 +242,7 @@ components.comment = (comment, isAuthenticated) => {
 };
 
 // Login Component
-components.login = (error = '', EmailOrNickname = '') => {
+components.login = () => {
     return `
         <div class="auth-container">
             <div class="login_container">
@@ -254,7 +251,7 @@ components.login = (error = '', EmailOrNickname = '') => {
                     <div class="error-container"></div>
                     
                     <label for="email_or_nickname">Email or Nickname</label>
-                    <input type="text" id="email_or_nickname" name="identifier" placeholder="Enter your email or nickname" value="${EmailOrNickname}">
+                    <input type="text" id="email_or_nickname" name="identifier" placeholder="Enter your email or nickname" >
                     
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Enter your password">
@@ -273,7 +270,7 @@ components.login = (error = '', EmailOrNickname = '') => {
 };
 
 // Register Component
-components.register = (error = '', formData = {}) => {
+components.register = () => {
     return `
         <div class="auth-container">
             <div id="signup_container">
@@ -283,33 +280,33 @@ components.register = (error = '', formData = {}) => {
                     
                     <label for="nickname">Nickname *</label>
                     <input type="text" id="nickname" name="nickname" 
-                        placeholder="Choose a nickname" value="${escapeHTML(formData.nickname) || ''}">
+                        placeholder="Choose a nickname" required>
                     
                     <label for="email">Email *</label>
                     <input type="email" id="email" name="email" 
-                        placeholder="Enter your email address" value="${escapeHTML(formData.email) || ''}">
+                        placeholder="Enter your email address" required>
                     
                     <label for="password">Password *</label>
                     <input type="password" id="password" name="password" 
-                        placeholder="Create a secure password">
+                        placeholder="Create a secure password" required minlength="6" maxlength="20">
                     
                     <label for="first_name">First Name *</label>
                     <input type="text" id="first_name" name="firstname" 
-                        placeholder="Enter your first name" value="${escapeHTML(formData.firstname) || ''}">
+                        placeholder="Enter your first name" required>
                     
                     <label for="last_name">Last Name *</label>
                     <input type="text" id="last_name" name="lastname" 
-                        placeholder="Enter your last name" value="${escapeHTML(formData.lastname) || ''}">
+                        placeholder="Enter your last name" required>
                     
                     <label for="age">Age *</label>
                     <input type="number" id="age" name="age" 
-                        placeholder="Enter your age" value="${escapeHTML(formData.age) || ''}">
+                        placeholder="Enter your age" min="13" max="120" required>
                     
                     <label for="gender">Gender</label>
                     <select id="gender" name="gender">
                         <option value="">Select gender</option>
-                        <option value="male" ${formData.gender === 'male' ? 'selected' : ''}>Male</option>
-                        <option value="female" ${formData.gender === 'female' ? 'selected' : ''}>Female</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
                     </select>
                     
                     <div class="have_account_div">

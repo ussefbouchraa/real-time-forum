@@ -7,6 +7,7 @@ class RealTimeForum {
         this.userData = {};
         this.currentPage = 'home';
         this.ws = new WebSocket("ws://localhost:8080/ws");
+        this.isLoggingOut = false;
         this.activeChatUserId = null;
         this.chatMessages = {};
         this.sessionID = null;
@@ -14,75 +15,101 @@ class RealTimeForum {
     }
 
     init() {
-        this.checkAuthStatus();
+        this.setupWS();
         this.setupEventListeners();
         this.router();
     }
 
-    // Check if user is authenticated (from localStorage)
-    checkAuthStatus() {
-        this.sessionID = localStorage.getItem('session_id');
-        
-        if (this.sessionID) {
-            try {                
-                this.isAuthenticated = true;
-                
-                this.ws.onopen = () => {    
-                    this.ws.send(JSON.stringify({
-                        type: "user_have_session",
-                        data: {
-                            user: {
-                                session_id: this.sessionID
-                            }
-                        }
-                    }));
-                    this.BackToFrontPayload();
-                }
-            } catch (e) {
-                console.error('Error parsing auth data:', e);
-                localStorage.removeItem('session_id');
+
+
+    setupWS() {
+        this.ws.addEventListener("open", () => {
+            const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
+            if (session) {
+
+                this.ws.send(JSON.stringify({
+                    type: "user_have_session",
+                    data: { user: { session_id: session } }
+                }));
             }
-        } else {            
-            this.BackToFrontPayload();
-        }
+        });
+
+        this.ws.addEventListener("message", (event) => {
+            this.BackToFrontPayload(event)
+        })
+
+        this.ws.addEventListener("close", () => {
+        if (this.isLoggingOut) {
+        this.isLoggingOut = false; // reset for next login
+        return; // Do NOT reconnect after logout
+    }
+            console.warn("WebSocket closed, trying to reconnect...");
+            setTimeout(() => {
+                this.reconnectWS();
+            }, 50000);
+        });
+
+        this.ws.addEventListener("error", (err) => {
+            console.error('WebSocket error:', err);
+            renders.Error('Connection to server lost. Please try again.');
+        });
+
     }
 
 
-    // Handle incoming WebSocket messages
-    BackToFrontPayload() {
-        this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            
-            switch (data.type) {
-                case "register_response":
-                    if (data.status === "ok") {
-                        renders.Login()
-                    } else {
-                        renders.Error(data.error)
-                    }
-                    break;
-                    case "session_response":
-                    case "login_response":
-                            
-                       if (data.status === "ok") {
-                           
-                           localStorage.setItem("session_id", data.user.user.session_id);
-                           this.userData = data.user.user;
-                           this.isAuthenticated = true;
-                           window.location.hash = 'home';
-                        } else { renders.Error(data.error) }
-                    break;
 
-                // case "profile_response":
-                //     if (data.status === "ok") {
-                //         this.userData = data.user.user;
-                case "new_post":
-                    break;
-            }
+    reconnectWS() {
+        if (this.ws) {
+            this.ws.onopen = null;
+            this.ws.onmessage = null;
+            this.ws.onclose = null;
+            this.ws.onerror = null;
+            this.ws.close();
+        }
+
+        this.ws = new WebSocket("ws://localhost:8080/ws");
+        this.setupWS();
+    }
+
+
+
+
+
+
+    // Handle incoming WebSocket messages
+    BackToFrontPayload(event) {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
+            case "register_response":
+                if (data.status === "ok") {
+                    window.location.hash = 'home';
+                } else {
+                    renders.Error(data.error)
+                }
+                break;
+            case "session_response":
+            case "login_response":
+
+                if (data.status === "ok") {
+                    localStorage.setItem("session_id", data.user.user.session_id);
+                    this.userData = data.user.user;
+                    this.isAuthenticated = true;
+                    window.location.hash = 'home';
+                } else {
+                    localStorage.removeItem("session_id");
+                    this.isAuthenticated = false;
+                    this.sessionID = null;
+                    renders.Error(data.error)
+                }
+                break;
+            case "new_post":
+                break;
         }
     }
     // Router function to handle navigation
     router() {
+            // const path = window.location.pathname.replace('/', '') || 'home';
+            //  this.currentPage = path;
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
@@ -106,11 +133,11 @@ class RealTimeForum {
                 setups.HomeEvents()
                 break;
             case 'login':
-                renders.Login('', '')
+                renders.Login()
                 setups.AuthEvents('login', this);
                 break;
             case 'register':
-                renders.Register('', '')
+                renders.Register()
                 setups.AuthEvents('register', this);
 
                 break;
@@ -164,24 +191,16 @@ class RealTimeForum {
         const password = document.getElementById('password').value;
         const loginPayload = JSON.stringify({
             type: "login",
-            data: {
-                user: {
-                    email_or_nickname: emailOrNickname,
-                    password: password
-                }
-            }
+            data: { user: { email_or_nickname: emailOrNickname, password: password }}
         });
 
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
             this.ws = new WebSocket("ws://localhost:8080/ws");
-            this.BackToFrontPayload(); // re-attach message handler
+            this.setupWS();
 
-            this.ws.onopen = () => {
-                this.ws.send(loginPayload);
-            };
-        } else {
-            this.ws.send(loginPayload);
-        }
+            this.ws.onopen = () => { this.ws.send(loginPayload) };
+        
+        } else { this.ws.send(loginPayload); }
     }
 
 
@@ -210,6 +229,7 @@ class RealTimeForum {
 
     handleLogout() {
         this.isAuthenticated = false;
+         this.isLoggingOut = true; 
         this.userData = {};
         localStorage.removeItem('session_id');
 
@@ -263,7 +283,7 @@ class RealTimeForum {
     closeChat() {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
-        chatContainer.style.display = 'none';
+        if (chatContainer) chatContainer.style.display = 'none';
         document.getElementById('chat-messages').innerHTML = '';
         document.getElementById('message-input').value = '';
     }
