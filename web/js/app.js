@@ -20,8 +20,6 @@ class RealTimeForum {
         this.router();
     }
 
-
-
     setupWS() {
         this.ws.addEventListener("open", () => {
             const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');

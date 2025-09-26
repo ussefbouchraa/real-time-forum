@@ -20,7 +20,8 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set security headers
-	w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self';")
+	w.Header().Set("Content-Security-Policy",
+		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	if r.Method != http.MethodGet {
