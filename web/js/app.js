@@ -39,10 +39,10 @@ class RealTimeForum {
         })
 
         this.ws.addEventListener("close", () => {
-        if (this.isLoggingOut) {
-        this.isLoggingOut = false; // reset for next login
-        return; // Do NOT reconnect after logout
-    }
+            if (this.isLoggingOut) {
+                this.isLoggingOut = false; // reset for next login
+                return; // Do NOT reconnect after logout
+            }
             console.warn("WebSocket closed, trying to reconnect...");
             setTimeout(() => {
                 this.reconnectWS();
@@ -70,11 +70,6 @@ class RealTimeForum {
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.setupWS();
     }
-
-
-
-
-
 
     // Handle incoming WebSocket messages
     BackToFrontPayload(event) {
@@ -108,8 +103,8 @@ class RealTimeForum {
     }
     // Router function to handle navigation
     router() {
-            // const path = window.location.pathname.replace('/', '') || 'home';
-            //  this.currentPage = path;
+        // const path = window.location.pathname.replace('/', '') || 'home';
+        //  this.currentPage = path;
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
@@ -163,8 +158,16 @@ class RealTimeForum {
             this.router();
         });
 
+        // storage listener
         window.addEventListener('storage', (event) => {
-            if (event.key === 'session_id' && !event.newValue) {
+            if (event.key === 'session_id' && event.newValue) {
+                const sessionPayload = JSON.stringify({
+                    type: "user_have_session",
+                    data: { user: { session_id: event.newValue } }
+                });
+
+                this.sendWS(sessionPayload);
+            } else if (event.key === 'session_id' && !event.newValue) {
                 this.handleLogout();
             }
         });
@@ -184,30 +187,39 @@ class RealTimeForum {
         });
     }
 
+    sendWS(payload) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(payload);
+        } else {
 
+            // create new WS if needed
+            this.ws = new WebSocket("ws://localhost:8080/ws");
+
+            // setup all events on the new ws
+            this.setupWS();
+
+            // queue the payload for send after open
+            this.ws.addEventListener('open', () => {
+                this.ws.send(payload);
+            }, { once: true });
+        }
+    }
 
     handleLogin() {
         const emailOrNickname = document.getElementById('email_or_nickname').value;
         const password = document.getElementById('password').value;
         const loginPayload = JSON.stringify({
             type: "login",
-            data: { user: { email_or_nickname: emailOrNickname, password: password }}
+            data: { user: { email_or_nickname: emailOrNickname, password: password } }
         });
 
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-            this.ws = new WebSocket("ws://localhost:8080/ws");
-            this.setupWS();
-
-            this.ws.onopen = () => { this.ws.send(loginPayload) };
-        
-        } else { this.ws.send(loginPayload); }
+        this.sendWS(loginPayload);
     }
-
 
     // Handle registration
     handleRegister() {
         const ageVal = parseInt(document.getElementById("age").value) || 0;
-        const userData = {
+        const registerPayload = JSON.stringify({
             type: "register",
             data: {
                 user: {
@@ -220,16 +232,16 @@ class RealTimeForum {
                     password: document.getElementById("password").value
                 }
             }
-        };
+        });
 
-        this.ws.send(JSON.stringify(userData));
+        this.sendWS(registerPayload)
     }
 
     // Handle logout
 
     handleLogout() {
         this.isAuthenticated = false;
-         this.isLoggingOut = true; 
+        this.isLoggingOut = true;
         this.userData = {};
         localStorage.removeItem('session_id');
 

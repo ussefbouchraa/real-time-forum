@@ -84,21 +84,26 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch msg.Type {
 		case "user_have_session":
-		session, err := decodeMessage[UserPayload](msg.Data)
+			session, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
 				continue
 			}
-			Nickname, err := GetNickFromSessionID(session.User.SessionID)
+			sessionData, err := GetUserFromSessionID(session.User.SessionID)
 			if err != nil {
 				writeResponse(conn, "session_response", "error", "", err.Error())
 				continue
 			}
 
-			// valid session → send success
 			var response UserPayload
-			response.User.Nickname = Nickname
-			response.User.SessionID = session.User.SessionID
+			response.User.SessionID = sessionData.User.SessionID
+			response.User.UserID = sessionData.User.UserID
+			response.User.Nickname = sessionData.User.Nickname
+			response.User.FirstName = sessionData.User.FirstName
+			response.User.LastName = sessionData.User.LastName
+			response.User.Email = sessionData.User.Email
+			response.User.Age = sessionData.User.Age
+			response.User.Gender = sessionData.User.Gender
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":
@@ -142,19 +147,19 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					errMsg = "Cannot create session"
 					response.User.EmailOrNickname = user.User.EmailOrNickname
 				} else {
-					response.User.SessionID  = sessionID
-					response.User.UserID     = user.User.UserID
-					response.User.Nickname   = user.User.Nickname
-					response.User.FirstName  = user.User.FirstName
-					response.User.LastName   = user.User.LastName
-					response.User.Email      = user.User.Email
-					response.User.Age        = user.User.Age
-					response.User.Gender     = user.User.Gender
+					response.User.SessionID = sessionID
+					response.User.UserID = user.User.UserID
+					response.User.Nickname = user.User.Nickname
+					response.User.FirstName = user.User.FirstName
+					response.User.LastName = user.User.LastName
+					response.User.Email = user.User.Email
+					response.User.Age = user.User.Age
+					response.User.Gender = user.User.Gender
 
 				}
 			}
 			writeResponse(conn, "login_response", status, response, errMsg)
-		
+
 			// case "profile":
 			// session, err := decodeMessage[UserPayload](msg.Data)
 			// if err != nil {
@@ -171,15 +176,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			// var response UserPayload
 			// response.User.Nickname = data.User.Nickname
 			// response.User.Email = data.User.Email
- 			// response.User.FirstName = data.User.FirstName
+			// response.User.FirstName = data.User.FirstName
 			// response.User.LastName = data.User.LastName
 			// response.User.Age = data.User.Age
 			// response.User.Gender = data.User.Gender
-			
+
 			// writeResponse(conn, "profile_response", "ok", response, "")
 
 		}
 	}
-
-
 }

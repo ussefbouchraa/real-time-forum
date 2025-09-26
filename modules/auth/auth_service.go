@@ -231,20 +231,27 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GetNickFromSessionID(sessionID string) (string, error) {
-	var nickname string
+func GetUserFromSessionID(sessionID string) (UserPayload, error) {
+	var user UserPayload
 	var expiresAt time.Time
 
-	err := core.Db.QueryRow(
-		`SELECT u.nickname, s.expires_at 
-		 FROM sessions s 
-		 JOIN users u ON u.user_id = s.user_id 
-		 WHERE s.session_id = ?`, sessionID).Scan(&nickname, &expiresAt)
+	query := `
+        SELECT u.user_id, u.nickname, u.first_name, u.last_name, 
+               u.email, u.age, u.gender, s.expires_at
+        FROM sessions s
+        JOIN users u ON u.user_id = s.user_id
+        WHERE s.session_id = ?
+    `
+
+	err := core.Db.QueryRow(query, sessionID).
+		Scan(&user.User.UserID, &user.User.Nickname, &user.User.FirstName,
+			&user.User.LastName, &user.User.Email, &user.User.Age,
+			&user.User.Gender, &expiresAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", errors.New("session not found")
+			return UserPayload{}, errors.New("session not found")
 		}
-		return "", err
+		return UserPayload{}, err
 	}
 
 	if time.Now().After(expiresAt) {
@@ -252,10 +259,11 @@ func GetNickFromSessionID(sessionID string) (string, error) {
 		if deleteErr != nil {
 			fmt.Printf("Warning: Failed to delete expired session %s: %v\n", sessionID, deleteErr)
 		}
-		return "", errors.New("session expired")
+		return UserPayload{}, errors.New("session expired")
 	}
 
-	return nickname, nil
+	user.User.SessionID = sessionID
+	return user, nil
 }
 
 // func getUserData(SessionID string ) {
@@ -263,8 +271,8 @@ func GetNickFromSessionID(sessionID string) (string, error) {
 // var Data UserPayload
 
 // 	err := core.Db.QueryRow(
-// 		`SELECT user_id, first_name, last_name, nickname, age, gender, email, password 
-// 		 FROM users 
+// 		`SELECT user_id, first_name, last_name, nickname, age, gender, email, password
+// 		 FROM users
 // 		 WHERE email = ? OR nickname = ?`,
 // 		emailOrNickname, emailOrNickname,
 // 	).Scan(
