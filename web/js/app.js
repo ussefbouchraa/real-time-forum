@@ -92,6 +92,7 @@ class RealTimeForum {
                     localStorage.removeItem("session_id");
                     this.isAuthenticated = false;
                     this.sessionID = null;
+                    window.location.hash = 'login';
                     renders.Error(data.error)
                 }
                 break;
@@ -156,7 +157,7 @@ class RealTimeForum {
             this.router();
         });
 
-        // storage listener
+        // storage listener || all tabs stay in sync with login/logout
         window.addEventListener('storage', (event) => {
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
@@ -185,7 +186,7 @@ class RealTimeForum {
         });
     }
 
-    sendWS(payload) {
+        sendWS(payload) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(payload);
         } else {
