@@ -11,6 +11,7 @@ class RealTimeForum {
         this.activeChatUserId = null;
         this.chatMessages = {};
         this.sessionID = null;
+        this.chatWS = null; // Chat WebSocket
         this.init();
     }
 
@@ -24,7 +25,6 @@ class RealTimeForum {
         this.ws.addEventListener("open", () => {
             const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
             if (session) {
-
                 this.ws.send(JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: session } }
@@ -34,12 +34,12 @@ class RealTimeForum {
 
         this.ws.addEventListener("message", (event) => {
             this.BackToFrontPayload(event)
-        })
+        });
 
         this.ws.addEventListener("close", () => {
             if (this.isLoggingOut) {
-                this.isLoggingOut = false; // reset for next login
-                return; // Do NOT reconnect after logout
+                this.isLoggingOut = false;
+                return;
             }
             console.warn("WebSocket closed, trying to reconnect...");
             setTimeout(() => {
@@ -51,10 +51,7 @@ class RealTimeForum {
             console.error('WebSocket error:', err);
             renders.Error('Connection to server lost. Please try again.');
         });
-
     }
-
-
 
     reconnectWS() {
         if (this.ws) {
@@ -64,12 +61,10 @@ class RealTimeForum {
             this.ws.onerror = null;
             this.ws.close();
         }
-
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.setupWS();
     }
 
-    // Handle incoming WebSocket messages
     BackToFrontPayload(event) {
         const data = JSON.parse(event.data);
         switch (data.type) {
@@ -82,7 +77,6 @@ class RealTimeForum {
                 break;
             case "session_response":
             case "login_response":
-
                 if (data.status === "ok") {
                     localStorage.setItem("session_id", data.user.user.session_id);
                     this.userData = data.user.user;
@@ -100,17 +94,14 @@ class RealTimeForum {
                 break;
         }
     }
-    // Router function to handle navigation
+
     router() {
-        // const path = window.location.pathname.replace('/', '') || 'home';
-        //  this.currentPage = path;
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
         renders.Navigation(this.isAuthenticated);
-        setups.NavigationEvents()
+        setups.NavigationEvents();
 
-        // Redirect to login  or home depend authenticated if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
@@ -133,7 +124,6 @@ class RealTimeForum {
             case 'register':
                 renders.Register()
                 setups.AuthEvents('register', this);
-
                 break;
             case 'profile':
                 renders.Profile(this.userData);
@@ -147,57 +137,63 @@ class RealTimeForum {
         }
     }
 
-
-
-
-    // Setup event listeners
     setupEventListeners() {
-        // Handle hash changes for SPA routing
         window.addEventListener('hashchange', () => {
             this.router();
         });
 
-        // storage listener || all tabs stay in sync with login/logout
         window.addEventListener('storage', (event) => {
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: event.newValue } }
                 });
-
                 this.sendWS(sessionPayload);
             } else if (event.key === 'session_id' && !event.newValue) {
                 this.handleLogout();
             }
         });
 
-        // Close error popups when clicked
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('error-close')) {
                 e.target.closest('.error-popout').style.display = 'none';
             }
-            //   Setup sidebar toggle
             if (e.target.closest('.chat-toggle-btn')) this.toggleSideBar();
-            // Close chat button
             if (e.target.closest('.close-btn')) this.closeChat();
-            // Send message button
             if (e.target.closest('#send-message')) this.sendMessage();
-
         });
+
+
+        /////////////////////////////////////////////////////////////////////////////here
+        
+        // // Demo for  Render online users in the sidebar
+        // const onlineUsers = [
+        //     { id: "1", nickname: "Alice", isOnline: true },
+        //     { id: "2", nickname: "Bob", isOnline: true }
+        //     // ...get this list from your backend or mock for now
+        // ];
+
+        // const onlineUsersList = document.getElementById('online-users-list');
+        // if (onlineUsersList) {
+        //     onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user)).join('');
+        // }
+
+        // // Add click event to user list items to open chat
+        // onlineUsersList.addEventListener('click', (e) => {
+        //     const item = e.target.closest('.user-list-item');
+        //     if (item) {
+        //         const userId = item.getAttribute('data-user-id');
+        //         this.openChat(userId);
+        //     }
+        // });
     }
 
-        sendWS(payload) {
+    sendWS(payload) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(payload);
         } else {
-
-            // create new WS if needed
             this.ws = new WebSocket("ws://localhost:8080/ws");
-
-            // setup all events on the new ws
             this.setupWS();
-
-            // queue the payload for send after open
             this.ws.addEventListener('open', () => {
                 this.ws.send(payload);
             }, { once: true });
@@ -211,11 +207,9 @@ class RealTimeForum {
             type: "login",
             data: { user: { email_or_nickname: emailOrNickname, password: password } }
         });
-
         this.sendWS(loginPayload);
     }
 
-    // Handle registration
     handleRegister() {
         const ageVal = parseInt(document.getElementById("age").value) || 0;
         const registerPayload = JSON.stringify({
@@ -232,42 +226,29 @@ class RealTimeForum {
                 }
             }
         });
-
-        this.sendWS(registerPayload)
+        this.sendWS(registerPayload);
     }
-
-    // Handle logout
 
     handleLogout() {
         this.isAuthenticated = false;
         this.isLoggingOut = true;
         this.userData = {};
         localStorage.removeItem('session_id');
-
-        // Close WebSocket connection
         if (this.ws) {
             this.ws.close();
             this.ws = null;
         }
-
-        // Close chat if open
         this.closeChat();
-
-        // Redirect to login
         window.location.hash = 'login';
     }
 
+    // --- Chat Functions ---
 
-    //about Chat
-
-    // Open chat with a user
     openChat(userId) {
         this.activeChatUserId = userId;
 
-        // Get user info from the list (in a real app, you'd fetch this from server)
         const userItems = document.querySelectorAll('.user-list-item');
         let userInfo = null;
-
         userItems.forEach(item => {
             if (item.getAttribute('data-user-id') === userId) {
                 const userNameElement = item.querySelector('.user-name');
@@ -278,35 +259,79 @@ class RealTimeForum {
         });
 
         if (userInfo) {
-            // Show chat container
             const chatContainer = document.getElementById('active-chat-container');
             chatContainer.style.display = 'block';
-
-            // Update chat header
             document.getElementById('chat-with-user').textContent = `Chat with ${userInfo.name}`;
+        }
 
-            // Load messages (in a real app, you'd fetch from server)
-            // this.loadChatMessages(userId);
+        // Create chat WebSocket
+        this.chatWS = new WebSocket("ws://localhost:8080/ws/chat");
+
+        // Listen for chat messages
+        this.chatWS.addEventListener("message", (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === "chat_message" && data.status === "ok") {
+                console.log("New chat message:", data.message);
+                this.displayChatMessage(data.message); 
+            } else if (data.status === "error") {
+                renders.Error(data.error);
+            }
+        });
+
+        // Optionally handle chat WebSocket closure
+        this.chatWS.addEventListener("close", () => {
+            console.warn("Chat connection closed.");
+        });
+    }
+
+    sendChatMessage(toUserId, messageText) {
+        if (this.chatWS && this.chatWS.readyState === WebSocket.OPEN) {
+            this.chatWS.send(JSON.stringify({
+                from: this.userData.nickname,
+                to: toUserId,
+                message: messageText
+            }));
         }
     }
 
-    // Close active chat
+    sendMessage() {
+        const input = document.getElementById('message-input');
+        const messageText = input.value.trim();
+        if (messageText && this.activeChatUserId) {
+            this.sendChatMessage(this.activeChatUserId, messageText);
+            input.value = '';
+        }
+    }
+
+    displayChatMessage(message) {
+        // Append message to chat UI
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        if (chatMessagesContainer) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'chat-message';
+            msgDiv.textContent = `${message.from}: ${message.message}`;
+            chatMessagesContainer.appendChild(msgDiv);
+        }
+    }
+
     closeChat() {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
         document.getElementById('chat-messages').innerHTML = '';
         document.getElementById('message-input').value = '';
+        if (this.chatWS) {
+            this.chatWS.close();
+            this.chatWS = null;
+        }
     }
 
     toggleSideBar() {
         const sidebar = document.querySelector('.sidebar-container');
-        if (sidebar) sidebar.classList.toggle('hide')
+        if (sidebar) sidebar.classList.toggle('hide');
     }
-
 }
 
-// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.forumApp = new RealTimeForum();
 });

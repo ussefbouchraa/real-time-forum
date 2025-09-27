@@ -160,29 +160,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			writeResponse(conn, "login_response", status, response, errMsg)
 
-			// case "profile":
-			// session, err := decodeMessage[UserPayload](msg.Data)
-			// if err != nil {
-			// 	writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
-			// 	continue
-			// }
-			// data, err := getUserData(session.User.SessionID)
-			// if err != nil {
-			// 	writeResponse(conn, "profile_response", "error", "", err.Error())
-			// 	continue
-			// }
-
-			// // valid session → send success
-			// var response UserPayload
-			// response.User.Nickname = data.User.Nickname
-			// response.User.Email = data.User.Email
-			// response.User.FirstName = data.User.FirstName
-			// response.User.LastName = data.User.LastName
-			// response.User.Age = data.User.Age
-			// response.User.Gender = data.User.Gender
-
-			// writeResponse(conn, "profile_response", "ok", response, "")
-
 		}
 	}
 }
