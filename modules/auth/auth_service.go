@@ -121,6 +121,10 @@ func BasicChecks(data UserPayload) error {
 	if data.User.Age <= 0 || data.User.Age > 120 {
 		return fmt.Errorf("are you sure you entered your age correctly?")
 	}
+
+	if data.User.Gender != "male" && data.User.Gender != "female" {
+		return fmt.Errorf("are you sure you entered your gender correctly?")
+	}
 	return nil
 }
 
@@ -148,8 +152,16 @@ func LengthCheck(data UserPayload) error {
 		return fmt.Errorf("nickname must be 3-20 characters")
 	}
 
-	if len(data.User.Password) < 6 {
-		return fmt.Errorf("password must be at least 6 characters")
+	if len(data.User.FirstName) > 20 {
+		return fmt.Errorf("first name must be 1-20 characters")
+	}
+
+	if len(data.User.LastName) > 20 {
+		return fmt.Errorf("last name must be 1-20 characters")
+	}
+
+	if len(data.User.Password) < 6 && len(data.User.Password) > 50 {
+		return fmt.Errorf("password must be 6-50 characters")
 	}
 	return nil
 }
