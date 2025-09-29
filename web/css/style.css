@@ -223,12 +223,12 @@ body {
     position: fixed;
     bottom: 0;
     right: 300px;
-    width: calc(100% - 300px);
+    /* width: calc(100% - 300px); */
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
     display: none;
     flex-direction: column;
-    z-index: 950;
+    z-index: 22950;
 }
 
 .sidebar-container.collapsed~.chat-container {

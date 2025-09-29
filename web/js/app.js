@@ -84,12 +84,18 @@ class RealTimeForum {
                     window.location.hash = 'home';
                 } else {
                     localStorage.removeItem("session_id");
-                    this.isAuthenticated = false;
+                    // this.isAuthenticated = false;
+                    // window.location.hash = 'login';
                     this.sessionID = null;
-                    window.location.hash = 'login';
                     renders.Error(data.error)
                 }
                 break;
+            case "online_users":
+                // if (data.status === "ok") {
+                //     renders.OnlineUsers(data.users);
+                // }
+                break
+
             case "new_post":
                 break;
         }
@@ -115,7 +121,10 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                setups.HomeEvents()
+                setups.HomeEvents();
+                const onlineUsers = [{ id: "1", nickname: "Alice", isOnline: true }, { id: "2", nickname: "Bob", isOnline: true }];
+                renders.OnlineUsers(onlineUsers);
+                // this.ws.send(JSON.stringify({ type: "get_online_users" }));
                 break;
             case 'login':
                 renders.Login()
@@ -164,28 +173,6 @@ class RealTimeForum {
         });
 
 
-        /////////////////////////////////////////////////////////////////////////////here
-        
-        // // Demo for  Render online users in the sidebar
-        // const onlineUsers = [
-        //     { id: "1", nickname: "Alice", isOnline: true },
-        //     { id: "2", nickname: "Bob", isOnline: true }
-        //     // ...get this list from your backend or mock for now
-        // ];
-
-        // const onlineUsersList = document.getElementById('online-users-list');
-        // if (onlineUsersList) {
-        //     onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user)).join('');
-        // }
-
-        // // Add click event to user list items to open chat
-        // onlineUsersList.addEventListener('click', (e) => {
-        //     const item = e.target.closest('.user-list-item');
-        //     if (item) {
-        //         const userId = item.getAttribute('data-user-id');
-        //         this.openChat(userId);
-        //     }
-        // });
     }
 
     sendWS(payload) {
@@ -272,33 +259,31 @@ class RealTimeForum {
             const data = JSON.parse(event.data);
             if (data.type === "chat_message" && data.status === "ok") {
                 console.log("New chat message:", data.message);
-                this.displayChatMessage(data.message); 
+                this.displayChatMessage(data.message);
             } else if (data.status === "error") {
                 renders.Error(data.error);
             }
         });
 
-        // Optionally handle chat WebSocket closure
+        //handle chat WebSocket closure
         this.chatWS.addEventListener("close", () => {
             console.warn("Chat connection closed.");
         });
     }
 
-    sendChatMessage(toUserId, messageText) {
-        if (this.chatWS && this.chatWS.readyState === WebSocket.OPEN) {
-            this.chatWS.send(JSON.stringify({
-                from: this.userData.nickname,
-                to: toUserId,
-                message: messageText
-            }));
-        }
-    }
+
 
     sendMessage() {
         const input = document.getElementById('message-input');
         const messageText = input.value.trim();
         if (messageText && this.activeChatUserId) {
-            this.sendChatMessage(this.activeChatUserId, messageText);
+            if (this.chatWS && this.chatWS.readyState === WebSocket.OPEN) {
+                this.chatWS.send(JSON.stringify({
+                    from: this.userData.nickname,
+                    to: this.activeChatUserId,
+                    message: messageText
+                }));
+            }
             input.value = '';
         }
     }

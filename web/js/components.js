@@ -354,8 +354,7 @@ components.profile = (userData) => {
                 </div>
             </div>
         </div>
-        ${components.chatSidebar()}
-        <button class="chat-toggle-btn">💬</button>    `;
+   `;
 };
 
 // User List Item Component (for private messages)
@@ -400,7 +399,7 @@ components.chatSidebar = () => {
 
         <div id="active-chat-container" class="chat-container">
             <div class="chat-header">
-                <h3 id="chat-with-user">Select a user to chat</h3>
+                <h3 id="chat-with-user">??</h3>
                 <button id="close-chat" class="close-btn">×</button>
             </div>
             <div id="chat-messages" class="chat-messages"></div>

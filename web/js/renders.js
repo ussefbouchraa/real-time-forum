@@ -1,7 +1,7 @@
 
 import { components } from './components.js';
 
-export const renders = {} 
+export const renders = {}
 
 // Render navigation
 renders.Navigation = (isAuthenticated) => {
@@ -31,7 +31,7 @@ renders.Login = () => {
 }
 
 // Render register page
-renders.Register = (error = '', formData = {}) => {
+renders.Register = () => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.register();
 }
@@ -42,13 +42,29 @@ renders.Profile = (userData) => {
     mainContent.innerHTML = components.profile(userData);
 }
 
-    // render error message
+// render error message
 renders.Error = (message) => {
-        const errorContainer = document.getElementById('error-container');
-        if (errorContainer) {
-            errorContainer.innerHTML = components.errorPopup(message);
-            setTimeout(() => {
-                errorContainer.innerHTML = '';
-            }, 5000);
-        }
+    const errorContainer = document.getElementById('error-container');
+    if (errorContainer) {
+        errorContainer.innerHTML = components.errorPopup(message);
+        setTimeout(() => {
+            errorContainer.innerHTML = '';
+        }, 5000);
     }
+}
+// Render online users in the sidebar
+renders.OnlineUsers = (users) => {
+
+    const onlineUsersList = document.getElementById('online-users-list');
+    if (!onlineUsersList) return;
+    onlineUsersList.innerHTML = users.map(user => components.userListItem(user)).join('');
+
+    // Setup click event for user items to open chat
+    onlineUsersList.onclick = (e) => {
+        const item = e.target.closest('.user-list-item');
+        if (item) {
+            const userId = item.getAttribute('data-user-id');
+            window.forumApp.openChat(userId);
+        }
+    };
+}
