@@ -123,7 +123,7 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                setups.HomeEvents()
+                setups.HomeEvents(this);
                 break;
             case 'login':
                 renders.Login()
@@ -256,8 +256,77 @@ class RealTimeForum {
         window.location.hash = 'login';
     }
 
+    // postToggle section
+    async handleCreatePost(postCreateForm) {
+            const content = postCreateForm.querySelector('textarea[name="content"]').value;
+            const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
+            try {
+                const response = await fetch('/api/posts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Session-ID': localStorage.getItem('session_id'),
+                        'request-type': 'create_post'
+                    },
+                    body: JSON.stringify({ content, categories })
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.hash = 'login';
+                        throw new Error('Invalid session, please log in');
+                    }
+                    throw new Error(`Failed to create post: ${response.status}`);
+                }
+                const post = await response.json();
+                
+                renders.AddPost(post);
+                // setting interactive elements
+                // setups.PostsListEvents();
+                postCreateForm.reset();
+                window.location.hash = 'home';
+            } catch (err) {
+                renders.Error(err.message);
+                console.error('Post creation error:', err);
+            }
+    }
 
-    //about Chat
+    async handleFilterPosts(filterForm) {
+        const categories = [...filterForm.querySelectorAll('input[name="category-filter"]:checked')].map(input => input.value);
+        const onlyMyPosts = filterForm.querySelector('input[name="myPosts"]')?.checked || false;
+        const onlyMyLikedPosts = filterForm.querySelector('input[name="likedPosts"]')?.checked || false;
+        console.log({ categories, onlyMyPosts, onlyMyLikedPosts });
+
+        try {
+            const params = new URLSearchParams();
+            if (categories.length) params.append('categories', categories.join(','));
+            if (onlyMyPosts) params.append('myPosts', 'true');
+            if (onlyMyLikedPosts) params.append('likedPosts', 'true');
+            const response = await fetch(`/api/posts?${params.toString()}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id'),
+                    'request-type': 'filter_posts'
+                }
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
+                } else if (response.status === 400) {
+                    throw new Error('Invalid filter parameters');
+                } else {
+                    throw new Error(`Failed to fetch filtered posts: ${response.status}`);
+                }
+            }
+            const data = await response.json();
+            renders.PostsList(data.posts);
+            // setups.PostsListEvents(); // setting interactive elements like, comment, etc.
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Filter error:', err);
+        }
+    }
 
     // Open chat with a user
     openChat(userId) {

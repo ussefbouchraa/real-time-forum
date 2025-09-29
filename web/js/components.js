@@ -11,6 +11,25 @@ export function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// Posts Component
+components.posts = (posts, isAuthenticated) => {
+    if (!posts || posts.length === 0) {
+        return `<section class="posts-container"><p>No posts available. Be the first to post!</p></section>`;
+    }
+
+    return `
+        <section class="posts-container" id="posts-container">
+            <h2 class="posts-title">All Posts</h2>
+            <div class="posts-list">
+                ${posts.map(post => components.post(post, isAuthenticated)).join('')}
+            </div>
+            <div class="posts-loader" style="display: none;">
+                <div class="loading-spinner">Loading more posts...</div>
+            </div>
+        </section>
+    `;
+}
+
 // Navbar Component
 components.navbar = (isAuthenticated = false) => {
     return `
@@ -35,8 +54,8 @@ components.navbar = (isAuthenticated = false) => {
 };
 
 // Home/Layout Component
-components.home = (isAuthenticated, userData = {} ) => {
-    
+components.home = (isAuthenticated, userData = {}) => {
+
     const posts = userData.posts || [];
     const formError = userData.form_error || '';
 
@@ -49,7 +68,7 @@ components.home = (isAuthenticated, userData = {} ) => {
 };
 
 // Post Toggle Section Component
-components.postToggleSection = (userData, formError) => {    
+components.postToggleSection = (userData, formError) => {
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" checked hidden>
@@ -64,9 +83,11 @@ components.postToggleSection = (userData, formError) => {
 
             ${formError ? components.errorPopup(formError) : ''}
             
+        <!-- post filtring form -->
+
             <div class="post-sections">
                 <div class="post-section filter-section">
-                    <form id="filter-form">
+                    <form id="filter-form" method="GET" action="/api/posts">
                         <div class="filter-options">
                             <h4>Filter by Categories:</h4>
                             <div class="category-tags-filter">
@@ -105,8 +126,11 @@ components.postToggleSection = (userData, formError) => {
                         <button type="submit">Apply Filters</button>
                     </form>
                 </div>
+
+    <!-- post creation form -->
+
                 <div class="post-section create-section">
-                    <form id="create-post-form">
+                    <form id="create-post-form" method="POST" action="/api/posts">
                         <textarea name="content" placeholder="Write your post..." maxlength="5000"></textarea>
                         <h4>Select Categories:</h4>
                         <div class="category-options">
@@ -139,24 +163,10 @@ components.postToggleSection = (userData, formError) => {
     `;
 };
 
-// Posts Component
-components.posts = (posts, isAuthenticated) => {
-    if (!posts || posts.length === 0) {
-        return `<section class="posts-container"><p>No posts available. Be the first to post!</p></section>`;
-    }
-
-    return `
-        <section class="posts-container">
-            <h2 class="posts-title">All Posts</h2>
-            ${posts.map(post => components.post(post, isAuthenticated)).join('')}
-        </section>
-    `;
-};
-
 // Single Post Component
 components.post = (post, isAuthenticated) => {
     return `
-        <article class="forum-post" data-post-id="${escapeHTML(post.ID)}">
+        <article class="forum-post" data-post-id="${escapeHTML(post.postID)}">
             <div class="post-header">
                 <span class="post-author">Posted by ${escapeHTML(post.Author.UserName)} </span>
                 <span class="post-date">${new Date(post.CreatedAt).toLocaleString()}</span>

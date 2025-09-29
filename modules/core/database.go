@@ -1,4 +1,3 @@
-// internal/core/database.go
 package core
 
 import (
