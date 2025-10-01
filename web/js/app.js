@@ -258,36 +258,37 @@ class RealTimeForum {
 
     // postToggle section
     async handleCreatePost(postCreateForm) {
-            const content = postCreateForm.querySelector('textarea[name="content"]').value;
-            const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
-            try {
-                const response = await fetch('/api/posts', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Session-ID': localStorage.getItem('session_id'),
-                        'request-type': 'create_post'
-                    },
-                    body: JSON.stringify({ content, categories })
-                });
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.hash = 'login';
-                        throw new Error('Invalid session, please log in');
-                    }
-                    throw new Error(`Failed to create post: ${response.status}`);
+        const content = postCreateForm.querySelector('textarea[name="content"]').value;
+        const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
+        try {
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id'),
+                    'request-type': 'create_post'
+                },
+                body: JSON.stringify({ content, categories })
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
                 }
-                const post = await response.json();
-                
-                renders.AddPost(post);
-                // setting interactive elements
-                // setups.PostsListEvents();
-                postCreateForm.reset();
-                window.location.hash = 'home';
-            } catch (err) {
-                renders.Error(err.message);
-                console.error('Post creation error:', err);
+                const errorText = await response.text();
+                throw new Error(errorText || `Failed to create post: ${response.status}`);
             }
+            const data = await response.json();
+
+            renders.AddPost(data.post);
+            // setting interactive elements
+            // setups.PostsListEvents();
+            postCreateForm.reset();
+            window.location.hash = 'home';
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Post creation error:', err);
+        }
     }
 
     async handleFilterPosts(filterForm) {
@@ -316,7 +317,8 @@ class RealTimeForum {
                 } else if (response.status === 400) {
                     throw new Error('Invalid filter parameters');
                 } else {
-                    throw new Error(`Failed to fetch filtered posts: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(errorText || `Failed to create post: ${response.status}`);
                 }
             }
             const data = await response.json();

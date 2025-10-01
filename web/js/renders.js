@@ -1,7 +1,7 @@
 
 import { components } from './components.js';
 
-export const renders = {} 
+export const renders = {}
 
 // Render navigation
 renders.Navigation = (isAuthenticated) => {
@@ -16,21 +16,21 @@ renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
     // try {
-        // Initial posts load
-        // const response = await fetch('/api/posts?page=1', {
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //         'Session-ID': localStorage.getItem('session_id')
-        //     }
-        // });
-        // if (!response.ok) throw new Error('Failed to fetch posts');
-        
-        // const data = await response.json();
-        // userData.posts = data.posts;
-        mainContent.innerHTML = components.home(isAuthenticated, userData);
-        
-        // Setup infinite scroll after content is loaded
-        // if (isAuthenticated) setupInfiniteScroll();
+    // Initial posts load
+    // const response = await fetch('/api/posts?page=1', {
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //         'Session-ID': localStorage.getItem('session_id')
+    //     }
+    // });
+    // if (!response.ok) throw new Error('Failed to fetch posts');
+
+    // const data = await response.json();
+    // userData.posts = data.posts;
+    mainContent.innerHTML = components.home(isAuthenticated, userData);
+
+    // Setup infinite scroll after content is loaded
+    // if (isAuthenticated) setupInfiniteScroll();
     // } catch (error) {
     //     mainContent.innerHTML = components.errorPopup('Failed to load posts');
     //     console.error('Error loading posts:', error);
@@ -57,10 +57,13 @@ renders.PostsList = (posts) => {
 renders.AddPost = (post) => {
     const postsContainer = document.querySelector('.posts-container');
     if (!postsContainer) return;
+    console.log(post);
 
     const postElement = document.createElement('div');
     postElement.innerHTML = components.post(post, true);
-    postsContainer.insertBefore(postElement.firstChild, postsContainer.firstChild);
+    postElement.querySelector('.comment-section').style.display = 'none';
+
+    postsContainer.insertBefore(postElement.children[0], postsContainer.firstChild);
 }
 
 // Render login page
@@ -97,11 +100,11 @@ function setupInfiniteScroll() {
     let page = 1;
     let loading = false;
     let hasMore = true;
-    
+
     const loadMorePosts = async () => {
         if (loading || !hasMore) return;
         loading = true;
-        
+
         try {
             const response = await fetch(`/api/posts?page=${page + 1}`, {
                 headers: {
@@ -109,22 +112,22 @@ function setupInfiniteScroll() {
                     'Session-ID': localStorage.getItem('session_id')
                 }
             });
-            
+
             if (!response.ok) throw new Error('Failed to fetch more posts');
-            
+
             const data = await response.json();
             if (data.posts.length === 0) {
                 hasMore = false;
                 return;
             }
-            
+
             const postsContainer = document.querySelector('.posts-container');
             data.posts.forEach(post => {
                 const postElement = document.createElement('div');
                 postElement.innerHTML = components.post(post, true);
                 postsContainer.appendChild(postElement.firstChild);
             });
-            
+
             page++;
         } catch (error) {
             console.error('Error loading more posts:', error);
@@ -133,7 +136,7 @@ function setupInfiniteScroll() {
             loading = false;
         }
     };
-    
+
     // Throttle scroll handler
     let ticking = false;
     const scrollHandler = () => {
@@ -141,7 +144,7 @@ function setupInfiniteScroll() {
             window.requestAnimationFrame(() => {
                 const scrolled = window.scrollY + window.innerHeight;
                 const threshold = document.documentElement.scrollHeight - 500;
-                
+
                 if (scrolled >= threshold) {
                     loadMorePosts();
                 }
@@ -150,6 +153,6 @@ function setupInfiniteScroll() {
             ticking = true;
         }
     };
-    
+
     window.addEventListener('scroll', scrollHandler);
 }

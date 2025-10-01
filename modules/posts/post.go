@@ -8,7 +8,7 @@ type Post struct {
 	Content      string         `json:"content"`
 	CreatedAt    time.Time      `json:"created_at"`
 	Author       Author         `json:"author,omitempty"`
-	Categories   []Category     `json:"categories"`
+	Categories   []string     `json:"categories"`
 	Comments     []Comment      `json:"comments,omitempty"`
 	LikeCount    int            `json:"like_count"`
 	DislikeCount int            `json:"dislike_count"`
@@ -46,4 +46,9 @@ type CommentReaction struct {
 	CommentID    string `json:"comment_id"`
 	UserID       string `json:"user_id"`
 	ReactionType int    `json:"reaction_type"`
+}
+
+type NewPost struct {
+	Content    string   `json:"content"`
+	Categories []string `json:"categories"`
 }

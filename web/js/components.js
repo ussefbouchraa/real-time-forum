@@ -166,47 +166,47 @@ components.postToggleSection = (userData, formError) => {
 // Single Post Component
 components.post = (post, isAuthenticated) => {
     return `
-        <article class="forum-post" data-post-id="${escapeHTML(post.postID)}">
+        <article class="forum-post" data-post-id="${escapeHTML(post.post_id)}">
             <div class="post-header">
-                <span class="post-author">Posted by ${escapeHTML(post.Author.UserName)} </span>
-                <span class="post-date">${new Date(post.CreatedAt).toLocaleString()}</span>
+                <span class="post-author">Posted by ${escapeHTML(post.author.nickname)} </span>
+                <span class="post-date">${new Date(post.created_at).toLocaleString()}</span>
             </div>
 
-            <div class="post-content">${escapeHTML(post.Content)}</div>
+            <div class="post-content">${escapeHTML(post.content)}</div>
 
             <div class="post-footer">
                 <div class="post-categories">
-                    ${post.Categories.map(cat =>
+                    ${post.categories.map(cat =>
         `<span class="category-badge">${escapeHTML(cat.Name)}</span>`
     ).join('')}
                 </div>
                 <div class="post-stats">
                     ${isAuthenticated ? `
-                        <button class="reaction-btn like-btn" data-post-id="${post.ID}" data-type="like">
+                        <button class="reaction-btn like-btn" data-post-id="${post.post_id}" data-type="like">
                             <span>👍</span>
-                            <span class="count">${post.LikeCount}</span>
+                            <span class="count">${post.like_count}</span>
                         </button>
-                        <button class="reaction-btn dislike-btn" data-post-id="${post.ID}" data-type="dislike">
+                        <button class="reaction-btn dislike-btn" data-post-id="${post.post_id}" data-type="dislike">
                             <span>👎</span>
-                            <span class="count">${post.DislikeCount}</span>
+                            <span class="count">${post.dislike_count}</span>
                         </button>
-                        <button class="reaction-btn comments-btn toggle-comments" data-post-id="${post.ID}">
+                        <button class="reaction-btn comments-btn toggle-comments" data-post-id="${post.post_id}">
                             <span>💬</span>
-                            <span class="count">${post.Comments ? post.Comments.length : 0}</span>
+                            <span class="count">${post.comments ? post.comments.length : 0}</span>
                         </button>
                     ` : `
-                        <span class="likes">👍 ${post.LikeCount}</span>
-                        <span class="dislikes">👎 ${post.DislikeCount}</span>
-                        <span class="comments">💬 ${post.Comments ? post.Comments.length : 0} comments</span>
+                        <span class="likes">👍 ${post.like_count}</span>
+                        <span class="dislikes">👎 ${post.dislike_count}</span>
+                        <span class="comments">💬 ${post.comments ? post.comments.length : 0} comments</span>
                     `}
                 </div>
             </div>
             
-            ${isAuthenticated ? components.commentForm(post.ID) : ''}
+            ${isAuthenticated ? components.commentForm(post.post_id) : ''}
             
-            <div class="comment-section" style="display: none;">
-                ${post.Comments && post.Comments.length > 0 ?
-            post.Comments.map(comment => components.comment(comment, isAuthenticated)).join('')
+            <div class="comment-section">
+                ${post.comments && post.comments.length > 0 ?
+            post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'
         }
             </div>
@@ -215,10 +215,10 @@ components.post = (post, isAuthenticated) => {
 };
 
 // Comment Form Component
-components.commentForm = (postId) => {
+components.commentForm = (post_id) => {
     return `
         <div class="comment-form">
-            <form class="create-comment-form" data-post-id="${postId}">
+            <form class="create-comment-form" data-post-id="${post_id}">
                 <textarea name="content" placeholder="Add a comment..." maxlength="249"></textarea>
                 <button type="submit">Post Comment</button>
             </form>
@@ -231,7 +231,7 @@ components.comment = (comment, isAuthenticated) => {
     return `
         <div class="comment" data-comment-id="${comment.ID}">
             <div class="comment-header">
-                <span class="comment-author">${escapeHTML(comment.Author.UserName)}</span>
+                <span class="comment-author">${escapeHTML(comment.Author.nickname)}</span>
                 <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
             </div>
             <p class="comment-content">${escapeHTML(comment.Content)}</p>
@@ -239,11 +239,11 @@ components.comment = (comment, isAuthenticated) => {
                 <div class="comment-reactions">
                     <button class="reaction-btn like-btn" data-comment-id="${comment.ID}" data-type="like">
                         <span>👍</span>
-                        <span class="count">${escapeHTML(comment.LikeCount)}</span>
+                        <span class="count">${escapeHTML(comment.like_count)}</span>
                     </button>
                     <button class="reaction-btn dislike-btn" data-comment-id="${comment.ID}" data-type="dislike">
                         <span>👎</span>
-                        <span class="count">${comment.DislikeCount}</span>
+                        <span class="count">${comment.Dislike_count}</span>
                     </button>
                 </div>
             ` : ''}

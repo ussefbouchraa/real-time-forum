@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -54,12 +55,22 @@ func createCategoriesTable() {
 	query := `
     CREATE TABLE IF NOT EXISTS categories(
         category_id TEXT PRIMARY KEY,
-        category_name TEXT NOT NULL
+        category_name TEXT NOT NULL UNIQUE
     );`
 
 	_, err := Db.Exec(query)
 	if err != nil {
 		log.Fatalf("Failed to create categories table: %v", err)
+	}
+
+	// Initialize default categories if they don't exist
+	defaultCategories := []string{"technology", "gaming", "science", "art & creativity", "general"}
+	for _, cat := range defaultCategories {
+		_, err := Db.Exec("INSERT OR IGNORE INTO categories (category_id, category_name) VALUES (?, ?)",
+			uuid.NewString(), cat)
+		if err != nil {
+			log.Printf("Warning: Failed to insert default category %s: %v", cat, err)
+		}
 	}
 }
 

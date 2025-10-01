@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"real-time-forum/modules/core"
+
+	"github.com/google/uuid"
 )
 
 func PostsHandler(w http.ResponseWriter, r *http.Request) {
@@ -22,27 +25,103 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid session", http.StatusUnauthorized)
 		return
 	}
+
+	log.Printf("✔️ Authenticated user_id: %s", userID)
 	switch r.Method {
 	case http.MethodPost:
-		var newPost struct {
-			Content    string   `json:"content"`
-			Categories []string `json:"categories"`
-		}
+		var newPost NewPost
 		if err := json.NewDecoder(r.Body).Decode(&newPost); err != nil {
-			log.Printf("Invalid JSON: %v", err)
-			http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+			log.Printf("❌Invalid JSON: %v", err)
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
 		// Validate content
-		if newPost.Content == "" {
-			log.Printf("Empty content")
-			http.Error(w, `{"error": "Post content cannot be empty"}`, http.StatusBadRequest)
+		err := validateNewPost(newPost)
+		if err != nil {
+			log.Printf("❌%v", err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		log.Printf("Received content: %s, categories: %v", newPost.Content, newPost.Categories)
+		log.Printf("✔️ Received content: %s, categories: %v", newPost.Content, newPost.Categories)
 
-		json.NewEncoder(w).Encode(map[string]string{"status": "ok", "content": newPost.Content})
+		// Start transaction
+		tx, err := core.Db.Begin()
+		if err != nil {
+			log.Printf("Transaction error: %v", err)
+			http.Error(w, `{"error": "Database error"}`, http.StatusInternalServerError)
+			return
+		}
+
+		// Generate post ID
+		postID := uuid.New().String()
+		log.Printf("Generated post_id: %s", postID)
+
+		// Insert post
+		_, err = tx.Exec("INSERT INTO posts (post_id, user_id, content, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
+			postID, userID, newPost.Content)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Insert post error: %v", err)
+			http.Error(w, `{"error": "Failed to create post"}`, http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("✔️ Post created with post_id: %s", postID)
+
+		// Validate and insert categories
+		for _, categoryName := range newPost.Categories {
+			var categoryID string
+			err = tx.QueryRow("SELECT category_id FROM categories WHERE category_name = ?", categoryName).Scan(&categoryID)
+			if err != nil {
+				tx.Rollback()
+				log.Printf("Invalid category %s: %v", categoryName, err)
+				http.Error(w, `{"error": "Invalid category: `+categoryName+`"}`, http.StatusBadRequest)
+				return
+			}
+			log.Printf("Found category_id %s for %s", categoryID, categoryName)
+
+			_, err = tx.Exec("INSERT INTO posts_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
+			if err != nil {
+				tx.Rollback()
+				log.Printf("Insert posts_categories error: %v", err)
+				http.Error(w, `{"error": "Failed to add categories"}`, http.StatusInternalServerError)
+				return
+			}
+		}
+		var nickname string
+		err = tx.QueryRow("SELECT nickname FROM users WHERE user_id = ?", userID).Scan(&nickname)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Fetch nickname error: %v", err)
+			http.Error(w, `{"error": "Failed to fetch user info"}`, http.StatusInternalServerError)
+			return
+		}
+		log.Printf("✔️ Categories linked to post_id: %s", postID)
+
+		// Commit transaction
+		if err := tx.Commit(); err != nil {
+			log.Printf("Commit error: %v", err)
+			http.Error(w, `{"error": "Failed to commit transaction"}`, http.StatusInternalServerError)
+			return
+		}
+		log.Printf("✔️ Transaction committed for post_id: %s", postID)
+
+		post := Post{
+			PostID:       postID,
+			Content:      newPost.Content,
+			CreatedAt:    time.Now(),
+			Author:       Author{Nickname: nickname},
+			Categories:   newPost.Categories,
+			LikeCount:    0,
+			DislikeCount: 0,
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "ok",
+			"post":   post,
+		})
 
 	case http.MethodGet:
 		// categories := r.URL.Query().Get("categories")
