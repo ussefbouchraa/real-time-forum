@@ -95,33 +95,33 @@ class RealTimeForum {
                     renders.Error(data.error)
                 }
                 break;
-            case "new_post":
-                break;
         }
     }
     // Router function to handle navigation
     router() {
-        // const path = window.location.pathname.replace('/', '') || 'home';
-        //  this.currentPage = path;
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
+
+        // Check session status
+        const sessionId = this.sessionID || localStorage.getItem('session_id');
+        this.isAuthenticated = !!sessionId;
 
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents()
 
-        // Redirect to login  or home depend authenticated if trying to access protected pages
+        // Redirect to login or home depending on authentication if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login'; return;
         }
-        if (this.isAuthenticated && authPages.includes(path)) {
+        if (this.isAuthenticated && authPages.includes(path)) {            
             window.location.hash = 'home'; return;
         }
 
         switch (path) {
-            case 'home':
+            case 'home': 
                 renders.Home(this.isAuthenticated, this.userData)
                 setups.HomeEvents(this);
                 break;
@@ -145,9 +145,6 @@ class RealTimeForum {
             // renderHome();
         }
     }
-
-
-
 
     // Setup event listeners
     setupEventListeners() {
@@ -260,12 +257,21 @@ class RealTimeForum {
     async handleCreatePost(postCreateForm) {
         const content = postCreateForm.querySelector('textarea[name="content"]').value;
         const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
+        
+        const sessionId = this.sessionID || localStorage.getItem('session_id');
+        
+        if (!sessionId) {
+            renders.Error('No session found. Please log in again.');
+            window.location.hash = 'login';
+            return;
+        }
+
         try {
             const response = await fetch('/api/posts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Session-ID': localStorage.getItem('session_id'),
+                    'Session-ID': sessionId,
                     'request-type': 'create_post'
                 },
                 body: JSON.stringify({ content, categories })
@@ -284,7 +290,6 @@ class RealTimeForum {
             // setting interactive elements
             // setups.PostsListEvents();
             postCreateForm.reset();
-            window.location.hash = 'home';
         } catch (err) {
             renders.Error(err.message);
             console.error('Post creation error:', err);

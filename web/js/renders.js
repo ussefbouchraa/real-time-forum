@@ -15,26 +15,27 @@ renders.Navigation = (isAuthenticated) => {
 renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
-    // try {
+    try {
     // Initial posts load
-    // const response = await fetch('/api/posts?page=1', {
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //         'Session-ID': localStorage.getItem('session_id')
-    //     }
-    // });
-    // if (!response.ok) throw new Error('Failed to fetch posts');
+    const response = await fetch('/api/posts', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'Session-ID': localStorage.getItem('session_id'),
+            'request-type' : 'initial-fetch'
+        }
+    });
+    if (!response.ok) throw new Error('Failed to fetch posts');
 
-    // const data = await response.json();
-    // userData.posts = data.posts;
+    const data = await response.json();
+    userData.posts = data.posts;
     mainContent.innerHTML = components.home(isAuthenticated, userData);
+    document.querySelector('.posts-loader').style.display = 'none';
 
-    // Setup infinite scroll after content is loaded
-    // if (isAuthenticated) setupInfiniteScroll();
-    // } catch (error) {
-    //     mainContent.innerHTML = components.errorPopup('Failed to load posts');
-    //     console.error('Error loading posts:', error);
-    // }
+    } catch (error) {
+        mainContent.innerHTML = components.errorPopup('Failed to load posts');
+        console.error('Error loading posts:', error);
+    }
 }
 
 // Render post list (used for filtering and updates)
@@ -57,7 +58,6 @@ renders.PostsList = (posts) => {
 renders.AddPost = (post) => {
     const postsContainer = document.querySelector('.posts-container');
     if (!postsContainer) return;
-    console.log(post);
 
     const postElement = document.createElement('div');
     postElement.innerHTML = components.post(post, true);

@@ -23,7 +23,7 @@ components.posts = (posts, isAuthenticated) => {
             <div class="posts-list">
                 ${posts.map(post => components.post(post, isAuthenticated)).join('')}
             </div>
-            <div class="posts-loader" style="display: none;">
+            <div class="posts-loader">
                 <div class="loading-spinner">Loading more posts...</div>
             </div>
         </section>
@@ -71,7 +71,7 @@ components.home = (isAuthenticated, userData = {}) => {
 components.postToggleSection = (userData, formError) => {
     return `
         <div class="post-toggle-wrapper">
-            <input type="radio" name="post-toggle" id="show-filter" checked hidden>
+            <input type="radio" name="post-toggle" id="show-filter" hidden>
             <input type="radio" name="post-toggle" id="show-create" hidden>
             <div class="toggle-buttons">
                 <label for="show-filter">🔍 Filter Posts</label>

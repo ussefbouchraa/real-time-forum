@@ -458,9 +458,11 @@ main {
 }
 
 .Welcome-msg {
+    margin-bottom: 2rem;
     padding: 1rem 2rem;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     color: white;
+    border-radius: 8px;
     text-align: center;
     font-weight: 500;
 }
@@ -468,24 +470,41 @@ main {
 /* Post Sections */
 .post-sections {
     position: relative;
-}
-
-.post-section {
-    padding: 2rem;
-    opacity: 0;
-    max-height: 0;
-    transform: translateY(-20px);
-    pointer-events: none;
-    transition: var(--transition);
     overflow: hidden;
 }
 
-.filter-section {
-    display: block;
+.post-section {
+    position: absolute;
+    width: 100%;
+    padding: 2rem;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(25px);
+    transition: opacity 0.4s ease,
+                transform 0.6s ease,
+                visibility 0.4s ease;
 }
 
+.filter-section,
 .create-section {
-    display: none;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+/* Show active section */
+#show-filter:checked ~ .post-sections .filter-section,
+#show-create:checked ~ .post-sections .create-section {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    position: relative;
+}
+
+/* Ensure proper spacing when a section is active */
+#show-filter:checked ~ .post-sections,
+#show-create:checked ~ .post-sections {
+    padding-bottom: 2rem;
 }
 
 /* Filter Section */
@@ -534,7 +553,7 @@ main {
 }
 
 .category-tag input[type="checkbox"]:checked+span {
-    color: var(--primary-color);
+    color: var(--primary-light);
     font-weight: 600;
 }
 
@@ -628,7 +647,6 @@ button[type="submit"]:active {
 .posts-container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 2rem;
 }
 
 .posts-title {

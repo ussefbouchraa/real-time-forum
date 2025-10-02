@@ -15,6 +15,13 @@ setups.NavigationEvents = () => {
 
 // Setup home page events
 setups.HomeEvents = (app) => {
+    document.addEventListener("submit", (e) => {
+    if (e.target && e.target.id === "create-post-form") {
+        e.preventDefault();
+        app.handleCreatePost(e.target);
+    }
+});
+    
     // Toggle between filter and create sections
     document.querySelectorAll('.toggle-buttons label').forEach(label => {
         label.addEventListener('click', (e) => {
@@ -23,6 +30,8 @@ setups.HomeEvents = (app) => {
                 document.querySelector('.filter-section').style.display = 'block';
                 document.querySelector('.create-section').style.display = 'none';
             } else if (target === 'show-create') {
+                console.log("sad");
+                
                 document.querySelector('.filter-section').style.display = 'none';
                 document.querySelector('.create-section').style.display = 'block';
             }
@@ -32,6 +41,7 @@ setups.HomeEvents = (app) => {
     // Handle post creation
     const postCreateForm = document.getElementById('create-post-form');
     if (postCreateForm) {
+        
         postCreateForm.addEventListener('submit', (e) => {
             e.preventDefault();
             app.handleCreatePost(postCreateForm);
