@@ -11,7 +11,7 @@ renders.Navigation = (isAuthenticated) => {
     }
 }
 
-// Render home page
+// Render home page with 3 initial posts
 renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();

@@ -20,14 +20,14 @@ func NewPostService(db *sql.DB) *PostService {
 }
 
 // CreatePost creates a new post with categories
-func (s *PostService) CreatePost(userID string, newPost NewPost) (Post, error) {
+func (s *PostService) CreatePost(userID string, newPost NewPost) (*Post, error) {
 	if err := validateNewPost(newPost); err != nil {
-		return Post{}, err
+		return &Post{}, err
 	}
 
 	tx, err := s.db.Begin()
 	if err != nil {
-		return Post{}, fmt.Errorf("transaction error: %v", err)
+		return &Post{}, fmt.Errorf("transaction error: %v", err)
 	}
 	defer func() {
 		if err != nil {
@@ -39,32 +39,32 @@ func (s *PostService) CreatePost(userID string, newPost NewPost) (Post, error) {
 	_, err = tx.Exec("INSERT INTO posts (post_id, user_id, content, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)",
 		postID, userID, newPost.Content)
 	if err != nil {
-		return Post{}, fmt.Errorf("insert post error: %v", err)
+		return &Post{}, fmt.Errorf("insert post error: %v", err)
 	}
 
 	for _, categoryName := range newPost.Categories {
 		var categoryID string
 		err = tx.QueryRow("SELECT category_id FROM categories WHERE category_name = ?", categoryName).Scan(&categoryID)
 		if err != nil {
-			return Post{}, fmt.Errorf("invalid category %s: %v", categoryName, err)
+			return &Post{}, fmt.Errorf("invalid category %s: %v", categoryName, err)
 		}
 		_, err = tx.Exec("INSERT INTO posts_categories (post_id, category_id) VALUES (?, ?)", postID, categoryID)
 		if err != nil {
-			return Post{}, fmt.Errorf("insert posts_categories error: %v", err)
+			return &Post{}, fmt.Errorf("insert posts_categories error: %v", err)
 		}
 	}
 
 	var nickname string
 	err = tx.QueryRow("SELECT nickname FROM users WHERE user_id = ?", userID).Scan(&nickname)
 	if err != nil {
-		return Post{}, fmt.Errorf("fetch nickname error: %v", err)
+		return &Post{}, fmt.Errorf("fetch nickname error: %v", err)
 	}
 
 	if err = tx.Commit(); err != nil {
-		return Post{}, fmt.Errorf("commit error: %v", err)
+		return &Post{}, fmt.Errorf("commit error: %v", err)
 	}
 
-	return Post{
+	return &Post{
 		PostID:       postID,
 		Content:      newPost.Content,
 		CreatedAt:    time.Now(),

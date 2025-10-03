@@ -43,7 +43,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		post, err := postService.CreatePost(userID, newPost)
 		if err != nil {
 			log.Printf("❌ Create post error: %v", err)
-			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf(`"%s"}`, err.Error()), http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
@@ -57,7 +57,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			posts, err := postService.GetInitialPosts()
 			if err != nil {
 				log.Printf("❌ Fetch posts error: %v", err)
-				http.Error(w, `{"error": "Failed to fetch posts"}`, http.StatusInternalServerError)
+				http.Error(w, `Failed to fetch posts`, http.StatusInternalServerError)
 				return
 			}
 			if len(posts) == 0 {

@@ -177,7 +177,7 @@ components.post = (post, isAuthenticated) => {
             <div class="post-footer">
                 <div class="post-categories">
                     ${post.categories.map(cat =>
-        `<span class="category-badge">${escapeHTML(cat.Name)}</span>`
+        `<span class="category-badge">${escapeHTML(cat)}</span>`
     ).join('')}
                 </div>
                 <div class="post-stats">

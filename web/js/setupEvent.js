@@ -29,9 +29,7 @@ setups.HomeEvents = (app) => {
             if (target === 'show-filter') {
                 document.querySelector('.filter-section').style.display = 'block';
                 document.querySelector('.create-section').style.display = 'none';
-            } else if (target === 'show-create') {
-                console.log("sad");
-                
+            } else if (target === 'show-create') {                
                 document.querySelector('.filter-section').style.display = 'none';
                 document.querySelector('.create-section').style.display = 'block';
             }

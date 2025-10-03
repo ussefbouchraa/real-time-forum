@@ -121,7 +121,7 @@ class RealTimeForum {
         }
 
         switch (path) {
-            case 'home': 
+            case 'home':             
                 renders.Home(this.isAuthenticated, this.userData)
                 setups.HomeEvents(this);
                 break;
@@ -285,9 +285,9 @@ class RealTimeForum {
                 throw new Error(errorText || `Failed to create post: ${response.status}`);
             }
             const data = await response.json();
-
+            console.log({...data.post});
+            
             renders.AddPost(data.post);
-            // setting interactive elements
             // setups.PostsListEvents();
             postCreateForm.reset();
         } catch (err) {
