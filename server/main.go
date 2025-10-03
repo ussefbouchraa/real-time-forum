@@ -49,6 +49,9 @@ func main() {
 	templates.Init()
 
 	core.InitDB(core.LoadConfig().DatabasePath)
+	// initialize post service
+	postService := posts.NewPostService(core.Db)
+	posts.SetPostService(postService)
 
 	// serve static files
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./web/css/"))))
