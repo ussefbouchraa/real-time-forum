@@ -31,7 +31,6 @@ renders.Home = async (isAuthenticated, userData = {}) => {
     userData.posts = data.posts;
     mainContent.innerHTML = components.home(isAuthenticated, userData);
     document.querySelector('.posts-loader').style.display = 'none';
-
     } catch (error) {
         mainContent.innerHTML = components.errorPopup('Failed to load posts');
         console.error('Error loading posts:', error);
@@ -52,6 +51,7 @@ renders.PostsList = (posts) => {
         <h2 class="posts-title">Posts</h2>
         ${posts.map(post => components.post(post, true)).join('')}
     `;
+    document.querySelector('comment-section').style.display = "none";
 }
 
 // Add a single new post to the list
@@ -64,6 +64,23 @@ renders.AddPost = (post) => {
     postElement.querySelector('.comment-section').style.display = 'none';
 
     postsContainer.insertBefore(postElement.children[0], postsContainer.firstChild);
+}
+
+// add a single new comment to a post
+renders.AddComment = (comment) => {
+    const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
+    if (!commentSection) return;
+
+    const commentElement = document.createElement('div');
+    commentElement.innerHTML = components.comment(comment, true);
+
+    commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);
+    const noCommentsMsg = commentSection.querySelector('.no-comments');
+    if (noCommentsMsg) {
+        console.log("TTT");
+        
+        noCommentsMsg.remove();
+    }
 }
 
 // Render login page

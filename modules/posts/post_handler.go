@@ -9,11 +9,18 @@ import (
 	"real-time-forum/modules/core"
 )
 
-var postService *PostService
+var (
+	postService    *PostService
+	commentService *CommentService
+)
 
 // SetPostService sets the service instance (called from main.go)
 func SetPostService(service *PostService) {
 	postService = service
+}
+
+func SetCommentService(service *CommentService) {
+	commentService = service
 }
 
 func PostsHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,18 +38,18 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("✔️ Authenticated user_id: %s", userID)
+	// log.Printf("✔️ Authenticated user_id: %s", userID)
 	switch r.Method {
 	case http.MethodPost:
-		var newPost NewPost
+		var newPost *NewPost
 		if err := json.NewDecoder(r.Body).Decode(&newPost); err != nil {
-			log.Printf("❌ Invalid JSON: %v", err)
+			// log.Printf("❌ Invalid JSON: %v", err)
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 		post, err := postService.CreatePost(userID, newPost)
 		if err != nil {
-			log.Printf("❌ Create post error: %v", err)
+			// log.Printf("❌ Create post error: %v", err)
 			http.Error(w, fmt.Sprintf(`"%s"}`, err.Error()), http.StatusBadRequest)
 			return
 		}
@@ -56,17 +63,17 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("request-type") == "initial-fetch" {
 			posts, err := postService.GetInitialPosts()
 			if err != nil {
-				log.Printf("❌ Fetch posts error: %v", err)
+				// log.Printf("❌ Fetch posts error: %v", err)
 				http.Error(w, `Failed to fetch posts`, http.StatusInternalServerError)
 				return
 			}
 			if len(posts) == 0 {
-				log.Printf("No posts found")
+				// log.Printf("No posts found")
 				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found"})
 				w.WriteHeader(http.StatusOK)
 				return
 			}
-			log.Printf("✔️ Fetched %d posts", len(posts))
+			// log.Printf("✔️ Fetched %d posts", len(posts))
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"status": "ok",
 				"posts":  posts,
@@ -83,5 +90,42 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 // CommentHandler handles the creation and retrieval of comments
 func CommentHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	// Comment handler implementation will go here
+	sessionID := r.Header.Get("Session-ID")
+	if sessionID == "" {
+		http.Error(w, "Session required", http.StatusUnauthorized)
+		return
+	}
+	var userID string
+	err := core.Db.QueryRow("SELECT user_id FROM sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP", sessionID).Scan(&userID)
+	if err != nil {
+		log.Printf("Session error for session_id %s: %v", sessionID, err)
+		http.Error(w, "Invalid session", http.StatusUnauthorized)
+		return
+	}
+
+	log.Printf("✔️ Authenticated user_id: %s", userID)
+	switch r.Method {
+	case http.MethodPost:
+		if r.Header.Get("request-type") == "create_comment" {
+			var newComment *NewComment
+			if err := json.NewDecoder(r.Body).Decode(&newComment); err != nil {
+				log.Printf("❌ Invalid JSON: %v", err)
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+			comment, err := commentService.CreateComment(userID, newComment.PostID, newComment.Content)
+			if err != nil {
+				log.Printf("❌ Create comment error: %v", err)
+				http.Error(w, fmt.Sprintf(`"%s"}`, err.Error()), http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status":  "ok",
+				"comment": comment,
+			})
+		}
+	default:
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+	}
 }

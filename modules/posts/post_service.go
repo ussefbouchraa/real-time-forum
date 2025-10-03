@@ -14,18 +14,26 @@ type PostService struct {
 	db *sql.DB // inject the DB
 }
 
+type CommentService struct {
+	db *sql.DB
+}
+
 // NewPostService creates a new service instance
 func NewPostService(db *sql.DB) *PostService {
 	return &PostService{db: db}
 }
 
+func NewCommentService(db *sql.DB) *CommentService {
+	return &CommentService{db: db}
+}
+
 // CreatePost creates a new post with categories
-func (s *PostService) CreatePost(userID string, newPost NewPost) (*Post, error) {
+func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error) {
 	if err := validateNewPost(newPost); err != nil {
 		return &Post{}, err
 	}
 
-	tx, err := s.db.Begin()
+	tx, err := ps.db.Begin()
 	if err != nil {
 		return &Post{}, fmt.Errorf("transaction error: %v", err)
 	}
@@ -76,7 +84,7 @@ func (s *PostService) CreatePost(userID string, newPost NewPost) (*Post, error) 
 }
 
 // GetInitialPosts fetches the 3 newest posts with categories, likes, etc.
-func (s *PostService) GetInitialPosts() ([]Post, error) {
+func (ps *PostService) GetInitialPosts() ([]Post, error) {
 	query := `
 		SELECT p.post_id, p.user_id, p.content, p.created_at, u.nickname,
 			   COALESCE(SUM(CASE WHEN pr.reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
@@ -88,7 +96,7 @@ func (s *PostService) GetInitialPosts() ([]Post, error) {
 		ORDER BY p.created_at DESC
 		LIMIT 3`
 
-	rows, err := s.db.Query(query)
+	rows, err := ps.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %v", err)
 	}
@@ -102,7 +110,7 @@ func (s *PostService) GetInitialPosts() ([]Post, error) {
 		}
 
 		// Fetch categories
-		catRows, err := s.db.Query(`
+		catRows, err := ps.db.Query(`
 			SELECT c.category_name
 			FROM posts_categories pc
 			JOIN categories c ON pc.category_id = c.category_id
@@ -121,6 +129,31 @@ func (s *PostService) GetInitialPosts() ([]Post, error) {
 		}
 		catRows.Close()
 
+		// Fetch comments
+		commentRows, err := ps.db.Query(`
+			SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.nickname,
+				   COALESCE(SUM(CASE WHEN cr.reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+				   COALESCE(SUM(CASE WHEN cr.reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+			FROM comments c
+			JOIN users u ON c.user_id = u.user_id
+			LEFT JOIN comments_reactions cr ON c.comment_id = cr.comment_id
+			WHERE c.post_id = ?
+			GROUP BY c.comment_id
+			ORDER BY c.created_at ASC`, p.PostID)
+		if err != nil {
+			return nil, fmt.Errorf("comment query error: %v", err)
+		}
+		p.Comments = []Comment{}
+		for commentRows.Next() {
+			var c Comment
+			if err := commentRows.Scan(&c.CommentID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.Author.Nickname, &c.LikeCount, &c.DislikeCount); err != nil {
+				commentRows.Close()
+				return nil, fmt.Errorf("comment scan error: %v", err)
+			}
+			p.Comments = append(p.Comments, c)
+		}
+		commentRows.Close()
+
 		posts = append(posts, p)
 	}
 	if err := rows.Err(); err != nil {
@@ -130,7 +163,7 @@ func (s *PostService) GetInitialPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func validateNewPost(newPost NewPost) error {
+func validateNewPost(newPost *NewPost) error {
 	if newPost.Content == "" {
 		return fmt.Errorf("Post content cannot be empty")
 	}
@@ -139,6 +172,62 @@ func validateNewPost(newPost NewPost) error {
 	}
 	if strings.TrimSpace(newPost.Content) == "" {
 		return fmt.Errorf("Post content cannot be just whitespace")
+	}
+	return nil
+}
+
+// CommentService methods
+func (cm *CommentService) CreateComment(userID, postID, content string) (*Comment, error) {
+	if err := validateComment(content); err != nil {
+		return &Comment{}, err
+	}
+	tx, err := cm.db.Begin()
+	if err != nil {
+		return &Comment{}, fmt.Errorf("transaction error: %v", err)
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		}
+	}()
+
+	commentID := uuid.New().String()
+	_, err = tx.Exec("INSERT INTO comments (comment_id, post_id, user_id, content, created_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)",
+		commentID, postID, userID, content)
+	if err != nil {
+		return &Comment{}, fmt.Errorf("insert comment error: %v", err)
+	}
+
+	var nickname string
+	err = tx.QueryRow("SELECT nickname FROM users WHERE user_id = ?", userID).Scan(&nickname)
+	if err != nil {
+		return &Comment{}, fmt.Errorf("fetch nickname error: %v", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return &Comment{}, fmt.Errorf("commit error: %v", err)
+	}
+
+	return &Comment{
+		CommentID: commentID,
+		PostID:    postID,
+		UserID:    userID,
+		Content:   content,
+		CreatedAt: time.Now(),
+		Author:    Author{Nickname: nickname},
+	}, nil
+}
+
+func validateComment(content string) error {
+	if content == "" {
+		return fmt.Errorf("comment content cannot be empty")
+	}
+	if len(content) > 700 {
+		return fmt.Errorf("comment content exceeds maximum length of 700 characters")
+	}
+	if strings.TrimSpace(content) == "" {
+		return fmt.Errorf("comment content cannot be just whitespace")
 	}
 	return nil
 }

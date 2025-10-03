@@ -116,12 +116,12 @@ class RealTimeForum {
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login'; return;
         }
-        if (this.isAuthenticated && authPages.includes(path)) {            
+        if (this.isAuthenticated && authPages.includes(path)) {
             window.location.hash = 'home'; return;
         }
 
         switch (path) {
-            case 'home':             
+            case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 setups.HomeEvents(this);
                 break;
@@ -253,13 +253,13 @@ class RealTimeForum {
         window.location.hash = 'login';
     }
 
-    // postToggle section
+    // fetch and render the new post on post creation form submit 
     async handleCreatePost(postCreateForm) {
         const content = postCreateForm.querySelector('textarea[name="content"]').value;
         const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
-        
+
         const sessionId = this.sessionID || localStorage.getItem('session_id');
-        
+
         if (!sessionId) {
             renders.Error('No session found. Please log in again.');
             window.location.hash = 'login';
@@ -285,8 +285,8 @@ class RealTimeForum {
                 throw new Error(errorText || `Failed to create post: ${response.status}`);
             }
             const data = await response.json();
-            console.log({...data.post});
-            
+            console.log({ ...data.post });
+
             renders.AddPost(data.post);
             // setups.PostsListEvents();
             postCreateForm.reset();
@@ -295,7 +295,7 @@ class RealTimeForum {
             console.error('Post creation error:', err);
         }
     }
-
+    // fetch and render posts on filter form submit 
     async handleFilterPosts(filterForm) {
         const categories = [...filterForm.querySelectorAll('input[name="category-filter"]:checked')].map(input => input.value);
         const onlyMyPosts = filterForm.querySelector('input[name="myPosts"]')?.checked || false;
@@ -332,6 +332,38 @@ class RealTimeForum {
         } catch (err) {
             renders.Error(err.message);
             console.error('Filter error:', err);
+        }
+    }
+    // fetch and render the new comment on post comment creation form submit 
+    async handleCreateComment(post_id, commentForm) {
+        const content = commentForm.querySelector('textarea[name="content"]').value;
+        try {
+            const response = await fetch('/api/comments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id'),
+                    'request-type': 'create_comment'
+                },
+                body: JSON.stringify({ post_id, content })
+            })
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(errorText || `Failed to create comment: ${response.status}`);
+                }
+            }
+            const data = await response.json();
+            console.log(data.comment);
+
+            renders.AddComment(data.comment);
+            commentForm.reset();
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Error creating comment:', err);
         }
     }
 

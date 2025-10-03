@@ -49,9 +49,11 @@ func main() {
 	templates.Init()
 
 	core.InitDB(core.LoadConfig().DatabasePath)
-	// initialize post service
+	// initialize post services
 	postService := posts.NewPostService(core.Db)
 	posts.SetPostService(postService)
+	commentService := posts.NewCommentService(core.Db)
+	posts.SetCommentService(commentService)
 
 	// serve static files
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./web/css/"))))
@@ -60,7 +62,7 @@ func main() {
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/ws", auth.WebSocketHandler)
 	http.HandleFunc("/api/posts", posts.PostsHandler)
-	http.HandleFunc("/api/comment", posts.CommentHandler)
+	http.HandleFunc("/api/comments", posts.CommentHandler)
 	http.HandleFunc("/ws/chat", chat.ChatWebSocketHandler)
 
 	// Start a background goroutine that periodically cleans up expired sessions

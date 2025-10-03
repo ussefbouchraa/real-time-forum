@@ -204,7 +204,7 @@ components.post = (post, isAuthenticated) => {
             
             ${isAuthenticated ? components.commentForm(post.post_id) : ''}
             
-            <div class="comment-section">
+            <div class="comment-section data-post-id="${post.post_id}">
                 ${post.comments && post.comments.length > 0 ?
             post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'
@@ -218,7 +218,7 @@ components.post = (post, isAuthenticated) => {
 components.commentForm = (post_id) => {
     return `
         <div class="comment-form">
-            <form class="create-comment-form" data-post-id="${post_id}">
+            <form class="create-comment-form" data-post-id="${post_id}" method="POST" action="/api/comments">
                 <textarea name="content" placeholder="Add a comment..." maxlength="249"></textarea>
                 <button type="submit">Post Comment</button>
             </form>
@@ -229,19 +229,19 @@ components.commentForm = (post_id) => {
 // Comment Component
 components.comment = (comment, isAuthenticated) => {
     return `
-        <div class="comment" data-comment-id="${comment.ID}">
+        <div class="comment" data-comment-id="${comment.comment_id}">
             <div class="comment-header">
-                <span class="comment-author">${escapeHTML(comment.Author.nickname)}</span>
-                <span class="post-date">${new Date(comment.CreatedAt).toLocaleString()}</span>
+                <span class="comment-author">${escapeHTML(comment.author.nickname)}</span>
+                <span class="post-date">${new Date(comment.created_at).toLocaleString()}</span>
             </div>
-            <p class="comment-content">${escapeHTML(comment.Content)}</p>
+            <p class="comment-content">${escapeHTML(comment.content)}</p>
             ${isAuthenticated ? `
                 <div class="comment-reactions">
-                    <button class="reaction-btn like-btn" data-comment-id="${comment.ID}" data-type="like">
+                    <button class="reaction-btn like-btn" data-comment-id="${comment.comment_id}" data-type="like">
                         <span>👍</span>
                         <span class="count">${escapeHTML(comment.like_count)}</span>
                     </button>
-                    <button class="reaction-btn dislike-btn" data-comment-id="${comment.ID}" data-type="dislike">
+                    <button class="reaction-btn dislike-btn" data-comment-id="${comment.comment_id}" data-type="dislike">
                         <span>👎</span>
                         <span class="count">${comment.Dislike_count}</span>
                     </button>

@@ -15,46 +15,36 @@ setups.NavigationEvents = () => {
 
 // Setup home page events
 setups.HomeEvents = (app) => {
+
+    // handle spa form submissions
+    // Handle post creation form submission
     document.addEventListener("submit", (e) => {
-    if (e.target && e.target.id === "create-post-form") {
-        e.preventDefault();
-        app.handleCreatePost(e.target);
-    }
-});
-    
-    // Toggle between filter and create sections
-    document.querySelectorAll('.toggle-buttons label').forEach(label => {
-        label.addEventListener('click', (e) => {
-            const target = e.target.getAttribute('for');
-            if (target === 'show-filter') {
-                document.querySelector('.filter-section').style.display = 'block';
-                document.querySelector('.create-section').style.display = 'none';
-            } else if (target === 'show-create') {                
-                document.querySelector('.filter-section').style.display = 'none';
-                document.querySelector('.create-section').style.display = 'block';
-            }
-        });
+        if (e.target && e.target.id === "create-post-form") {
+            e.preventDefault();
+            app.handleCreatePost(e.target);
+            // Handle filter form submission
+        } else if (e.target && e.target.id === "filter-form") {
+            e.preventDefault();
+            app.handleFilterPosts(e.target);
+            // Handle comment submission for all posts
+        } else if (e.target && e.target.classList.contains("create-comment-form")) {
+            e.preventDefault();
+            const postId = e.target.getAttribute("data-post-id");
+            app.handleCreateComment(postId, e.target);
+        }
     });
 
-    // Handle post creation
-    const postCreateForm = document.getElementById('create-post-form');
-    if (postCreateForm) {
-        
-        postCreateForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            app.handleCreatePost(postCreateForm);
-        });
-    }
+    document.addEventListener("click", (e) => {
+        // Toggle comments visibility
+        if (e.target && e.target.classList.contains("toggle-comments")) {
 
-    // Handle filtering
-    const filterForm = document.getElementById('filter-form');
-    if (filterForm) {
-        filterForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            app.handleFilterPosts(filterForm);
-        });
-    }
-    
+            const postElement = e.target.closest('.forum-post');
+            const commentSection = postElement.querySelector('.comment-section');
+
+            commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
+        }
+    });
+
     // Handle post reactions
     document.querySelectorAll('.reaction-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -70,22 +60,18 @@ setups.HomeEvents = (app) => {
         });
     });
 
-    // Toggle comments visibility
-    document.querySelectorAll('.toggle-comments').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const postElement = e.target.closest('.forum-post');
-            const commentSection = postElement.querySelector('.comment-section');
-            commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
-
-        });
-    });
-
-    // Handle comment submission
-    document.querySelectorAll('.create-comment-form').forEach(form => {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const postId = e.target.getAttribute('data-post-id');
-            // this.handleCreateComment(postId, e.target);
+    // setting toggle buttons :
+    // Toggle between filter and create sections
+    document.querySelectorAll('.toggle-buttons label').forEach(label => {
+        label.addEventListener('click', (e) => {
+            const target = e.target.getAttribute('for');
+            if (target === 'show-filter') {
+                document.querySelector('.filter-section').style.display = 'block';
+                document.querySelector('.create-section').style.display = 'none';
+            } else if (target === 'show-create') {
+                document.querySelector('.filter-section').style.display = 'none';
+                document.querySelector('.create-section').style.display = 'block';
+            }
         });
     });
 }
