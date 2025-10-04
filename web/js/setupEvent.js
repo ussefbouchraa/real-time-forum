@@ -36,12 +36,13 @@ setups.HomeEvents = (app) => {
 
     document.addEventListener("click", (e) => {
         // Toggle comments visibility
-        if (e.target && e.target.classList.contains("toggle-comments")) {
+        if (e.target && e.target.closest(".toggle-comments")) {
 
             const postElement = e.target.closest('.forum-post');
             const commentSection = postElement.querySelector('.comment-section');
-
-            commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
+            if (commentSection){                
+                commentSection.style.display = commentSection.style.display === 'block' ? 'none' : 'block';
+            }            
         }
     });
 

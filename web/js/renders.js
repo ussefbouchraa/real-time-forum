@@ -16,21 +16,21 @@ renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
     try {
-    // Initial posts load
-    const response = await fetch('/api/posts', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-            'Session-ID': localStorage.getItem('session_id'),
-            'request-type' : 'initial-fetch'
-        }
-    });
-    if (!response.ok) throw new Error('Failed to fetch posts');
+        // Initial posts load
+        const response = await fetch('/api/posts', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Session-ID': localStorage.getItem('session_id'),
+                'request-type': 'initial-fetch'
+            }
+        });
+        if (!response.ok) throw new Error('Failed to fetch posts');
 
-    const data = await response.json();
-    userData.posts = data.posts;
-    mainContent.innerHTML = components.home(isAuthenticated, userData);
-    document.querySelector('.posts-loader').style.display = 'none';
+        const data = await response.json();
+        userData.posts = data.posts;
+        mainContent.innerHTML = components.home(isAuthenticated, userData);
+        document.querySelector('.posts-loader').style.display = 'none';
     } catch (error) {
         mainContent.innerHTML = components.errorPopup('Failed to load posts');
         console.error('Error loading posts:', error);
@@ -68,18 +68,35 @@ renders.AddPost = (post) => {
 
 // add a single new comment to a post
 renders.AddComment = (comment) => {
-    const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
+    const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);    
     if (!commentSection) return;
 
     const commentElement = document.createElement('div');
     commentElement.innerHTML = components.comment(comment, true);
-
+    renders.updatePostStats(comment.post_id, "Comment");
+    
     commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);
     const noCommentsMsg = commentSection.querySelector('.no-comments');
     if (noCommentsMsg) {
-        console.log("TTT");
-        
         noCommentsMsg.remove();
+    }
+}
+
+renders.updatePostStats = (post_id, Statustype) => {    
+    switch (Statustype) {
+        case "LikeDislike":
+
+            break;
+        case "Comment":
+             const article = document.querySelector(`.forum-post[data-post-id="${post_id}"]`);
+            if (!article) return;
+
+            const commentBtn = article.querySelector(".comments-btn .count");
+            if (!commentBtn) return;
+
+            const currentCount = parseInt(commentBtn.textContent, 10) || 0;
+            commentBtn.textContent = currentCount + 1;
+            break;
     }
 }
 

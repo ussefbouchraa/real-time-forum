@@ -176,8 +176,8 @@ components.post = (post, isAuthenticated) => {
 
             <div class="post-footer">
                 <div class="post-categories">
-                    ${post.categories.map(cat =>
-        `<span class="category-badge">${escapeHTML(cat)}</span>`
+                    ${post.categories.map(catName =>
+        `<span class="category-badge">${escapeHTML(catName)}</span>`
     ).join('')}
                 </div>
                 <div class="post-stats">
@@ -191,7 +191,7 @@ components.post = (post, isAuthenticated) => {
                             <span class="count">${post.dislike_count}</span>
                         </button>
                         <button class="reaction-btn comments-btn toggle-comments" data-post-id="${post.post_id}">
-                            <span>💬</span>
+                            💬
                             <span class="count">${post.comments ? post.comments.length : 0}</span>
                         </button>
                     ` : `
@@ -204,7 +204,7 @@ components.post = (post, isAuthenticated) => {
             
             ${isAuthenticated ? components.commentForm(post.post_id) : ''}
             
-            <div class="comment-section data-post-id="${post.post_id}">
+            <div class="comment-section" data-post-id="${post.post_id}">
                 ${post.comments && post.comments.length > 0 ?
             post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'

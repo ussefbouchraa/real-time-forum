@@ -285,7 +285,6 @@ class RealTimeForum {
                 throw new Error(errorText || `Failed to create post: ${response.status}`);
             }
             const data = await response.json();
-            console.log({ ...data.post });
 
             renders.AddPost(data.post);
             // setups.PostsListEvents();
