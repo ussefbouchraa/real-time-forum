@@ -51,25 +51,28 @@ body {
 
 
 .chat-toggle-btn {
-  position: fixed;
-  bottom: 20px;   
-  right: 20px;    
-  z-index: 1000;  
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 50%;  
-  width: 50px;
-  height: 50px;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .chat-toggle-btn:hover {
-  background: var(--primary-hover);
+    background: var(--primary-hover);
 }
-.hide{ display: none;}
+
+.hide {
+    display: none;
+}
 
 .sidebar-container {
     position: fixed;
@@ -264,8 +267,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    overflow-y: auto;   
-  height: 310px; 
+    overflow-y: auto;
+    height: 310px;
 }
 
 .message {
@@ -481,8 +484,8 @@ main {
     visibility: hidden;
     transform: translateY(25px);
     transition: opacity 0.4s ease,
-                transform 0.6s ease,
-                visibility 0.4s ease;
+        transform 0.6s ease,
+        visibility 0.4s ease;
 }
 
 .filter-section,
@@ -493,8 +496,8 @@ main {
 }
 
 /* Show active section */
-#show-filter:checked ~ .post-sections .filter-section,
-#show-create:checked ~ .post-sections .create-section {
+#show-filter:checked~.post-sections .filter-section,
+#show-create:checked~.post-sections .create-section {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -502,8 +505,8 @@ main {
 }
 
 /* Ensure proper spacing when a section is active */
-#show-filter:checked ~ .post-sections,
-#show-create:checked ~ .post-sections {
+#show-filter:checked~.post-sections,
+#show-create:checked~.post-sections {
     padding-bottom: 2rem;
 }
 
@@ -533,7 +536,7 @@ main {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background:#daedf0;
+    background: #daedf0;
     border: 2px solid var(--border-color);
     border-radius: 20px;
     cursor: pointer;
@@ -812,6 +815,10 @@ button[type="submit"]:active {
     color: var(--text-color);
 }
 
+textarea {
+    resize: none !important;
+}
+
 .create-comment-form textarea:focus {
     outline: none;
     border-color: var(--primary-color);
@@ -826,7 +833,7 @@ button[type="submit"]:active {
 
 /* Comment Section */
 .comment-section {
-    display:none;
+    display: none;
     margin-top: 1.5rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--border-color);
