@@ -287,7 +287,6 @@ class RealTimeForum {
             const data = await response.json();
 
             renders.AddPost(data.post);
-            // setups.PostsListEvents();
             postCreateForm.reset();
         } catch (err) {
             renders.Error(err.message);
@@ -327,7 +326,6 @@ class RealTimeForum {
             }
             const data = await response.json();
             renders.PostsList(data.posts);
-            // setups.PostsListEvents(); // setting interactive elements like, comment, etc.
         } catch (err) {
             renders.Error(err.message);
             console.error('Filter error:', err);
@@ -356,13 +354,50 @@ class RealTimeForum {
                 }
             }
             const data = await response.json();
-            console.log(data.comment);
 
             renders.AddComment(data.comment);
             commentForm.reset();
         } catch (err) {
             renders.Error(err.message);
             console.error('Error creating comment:', err);
+        }
+    }
+
+    //fetch on scroll 
+    async fetchMorePosts() {
+        const postsList = document.querySelector('.posts-list');
+        if (!postsList) return
+        let lastPost = postsList.lastElementChild;
+        console.log(lastPost);
+
+        const lastPostId = lastPost.getAttribute('data-post-id');
+        
+        try {
+            // Initial posts load
+            const response = await fetch('/api/posts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id'),
+                    'request-type': 'fetch-3-posts',
+                    'Post-ID': lastPostId
+                }
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
+                }
+                const errorText = await response.text();
+                throw new Error(errorText || `Failed to create post: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log(data.posts);
+            
+            data.posts.forEach(post => renders.AddPost(post, "append"));
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Post fetch error:', err);
         }
     }
 

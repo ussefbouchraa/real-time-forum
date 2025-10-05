@@ -60,8 +60,14 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		})
 
 	case http.MethodGet:
-		if r.Header.Get("request-type") == "initial-fetch" {
-			posts, err := postService.GetInitialPosts()
+		if r.Header.Get("request-type") == "fetch-3-posts" {
+			PostId := ""
+			if r.Header.Get("Post-ID") != "" {
+				PostId = r.Header.Get("Post-ID")
+			} else {
+				_ = PostId
+			}
+			posts, err := postService.GetPosts(PostId)
 			if err != nil {
 				// log.Printf("❌ Fetch posts error: %v", err)
 				http.Error(w, `Failed to fetch posts`, http.StatusInternalServerError)
@@ -69,8 +75,8 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			if len(posts) == 0 {
 				// log.Printf("No posts found")
-				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found"})
 				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found"})
 				return
 			}
 			// log.Printf("✔️ Fetched %d posts", len(posts))

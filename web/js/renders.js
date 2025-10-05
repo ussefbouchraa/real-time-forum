@@ -22,17 +22,29 @@ renders.Home = async (isAuthenticated, userData = {}) => {
             headers: {
                 'Content-Type': 'application/json',
                 'Session-ID': localStorage.getItem('session_id'),
-                'request-type': 'initial-fetch'
+                'request-type': 'fetch-3-posts'
             }
         });
-        if (!response.ok) throw new Error('Failed to fetch posts');
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.hash = 'login';
+                throw new Error('Invalid session, please log in');
+            }
+            const errorText = await response.text();
+            console.log(errorText);
+            throw new Error(errorText || `Failed to load post: ${response.status}`);
+        }
 
         const data = await response.json();
-        userData.posts = data.posts;
+        if (!data.error) {
+            userData.posts = data.posts;
+            mainContent.innerHTML = components.home(isAuthenticated, userData);
+            document.querySelector('.posts-loader').style.display = 'none';
+            return
+        }
         mainContent.innerHTML = components.home(isAuthenticated, userData);
-        document.querySelector('.posts-loader').style.display = 'none';
     } catch (error) {
-        mainContent.innerHTML = components.errorPopup('Failed to load posts');
+        mainContent.innerHTML = components.errorPopup(error);
         console.error('Error loading posts:', error);
     }
 }
@@ -55,26 +67,32 @@ renders.PostsList = (posts) => {
 }
 
 // Add a single new post to the list
-renders.AddPost = (post) => {
-    const postsContainer = document.querySelector('.posts-container');
-    if (!postsContainer) return;
+renders.AddPost = (post, mode = "prepend") => {
+    const postsList = document.querySelector('.posts-list');  // Change to inner list
+    if (!postsList) return;
 
+    const postHTML = components.post(post, true);
     const postElement = document.createElement('div');
-    postElement.innerHTML = components.post(post, true);
-    postElement.querySelector('.comment-section').style.display = 'none';
+    postElement.innerHTML = postHTML;
+    const actualPost = postElement.children[0];
+    actualPost.querySelector('.comment-section').style.display = 'none';
 
-    postsContainer.insertBefore(postElement.children[0], postsContainer.firstChild);
-}
+    if (mode === "append") {
+        postsList.appendChild(actualPost);  // Append to inner
+    } else {
+        postsList.insertBefore(actualPost, postsList.firstChild);  // Prepend to inner
+    }
+};
 
 // add a single new comment to a post
 renders.AddComment = (comment) => {
-    const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);    
+    const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
     if (!commentSection) return;
 
     const commentElement = document.createElement('div');
     commentElement.innerHTML = components.comment(comment, true);
     renders.updatePostStats(comment.post_id, "Comment");
-    
+
     commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);
     const noCommentsMsg = commentSection.querySelector('.no-comments');
     if (noCommentsMsg) {
@@ -82,13 +100,13 @@ renders.AddComment = (comment) => {
     }
 }
 
-renders.updatePostStats = (post_id, Statustype) => {    
+renders.updatePostStats = (post_id, Statustype) => {
     switch (Statustype) {
         case "LikeDislike":
 
             break;
         case "Comment":
-             const article = document.querySelector(`.forum-post[data-post-id="${post_id}"]`);
+            const article = document.querySelector(`.forum-post[data-post-id="${post_id}"]`);
             if (!article) return;
 
             const commentBtn = article.querySelector(".comments-btn .count");
@@ -129,64 +147,3 @@ renders.Error = (message) => {
     }
 }
 
-// Setup infinite scroll
-function setupInfiniteScroll() {
-    let page = 1;
-    let loading = false;
-    let hasMore = true;
-
-    const loadMorePosts = async () => {
-        if (loading || !hasMore) return;
-        loading = true;
-
-        try {
-            const response = await fetch(`/api/posts?page=${page + 1}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Session-ID': localStorage.getItem('session_id')
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to fetch more posts');
-
-            const data = await response.json();
-            if (data.posts.length === 0) {
-                hasMore = false;
-                return;
-            }
-
-            const postsContainer = document.querySelector('.posts-container');
-            data.posts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.innerHTML = components.post(post, true);
-                postsContainer.appendChild(postElement.firstChild);
-            });
-
-            page++;
-        } catch (error) {
-            console.error('Error loading more posts:', error);
-            renders.Error('Failed to load more posts');
-        } finally {
-            loading = false;
-        }
-    };
-
-    // Throttle scroll handler
-    let ticking = false;
-    const scrollHandler = () => {
-        if (!ticking) {
-            window.requestAnimationFrame(() => {
-                const scrolled = window.scrollY + window.innerHeight;
-                const threshold = document.documentElement.scrollHeight - 500;
-
-                if (scrolled >= threshold) {
-                    loadMorePosts();
-                }
-                ticking = false;
-            });
-            ticking = true;
-        }
-    };
-
-    window.addEventListener('scroll', scrollHandler);
-}

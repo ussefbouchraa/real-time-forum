@@ -83,30 +83,49 @@ func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error
 	}, nil
 }
 
-// GetInitialPosts fetches the 3 newest posts with categories, likes, etc.
-func (ps *PostService) GetInitialPosts() ([]Post, error) {
-	query := `
-		SELECT p.post_id, p.user_id, p.content, p.created_at, u.nickname,
-			   COALESCE(SUM(CASE WHEN pr.reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-			   COALESCE(SUM(CASE WHEN pr.reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-		FROM posts p
-		JOIN users u ON p.user_id = u.user_id
-		LEFT JOIN posts_reactions pr ON p.post_id = pr.post_id
-		GROUP BY p.post_id
-		ORDER BY p.created_at DESC
-		LIMIT 3`
+// fetch more posts
+func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
+	limit := 3
 
-	rows, err := ps.db.Query(query)
+	baseQuery := `
+        SELECT p.post_id, p.user_id, p.content, p.created_at, u.nickname,
+               COALESCE(SUM(CASE WHEN pr.reaction_type = 1 THEN 1 ELSE 0 END),0) AS like_count,
+               COALESCE(SUM(CASE WHEN pr.reaction_type = -1 THEN 1 ELSE 0 END),0) AS dislike_count
+        FROM posts p
+        JOIN users u ON p.user_id = u.user_id
+        LEFT JOIN posts_reactions pr ON p.post_id = pr.post_id`
+
+	var whereQu string
+	var args []interface{}
+	if lastPostID != "" {
+		// fetch the timestamp of the last post we already fetched
+		var lastCreatedAt time.Time
+		err := ps.db.QueryRow(`SELECT created_at FROM posts WHERE post_id = ?`, lastPostID).Scan(&lastCreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid last_post_id: %w", err)
+		}
+		whereQu = " WHERE p.created_at < ?"
+		args = append(args, lastCreatedAt)
+
+	}
+
+	query := fmt.Sprintf("%s%s GROUP BY p.post_id ORDER BY p.created_at DESC LIMIT ?", baseQuery, whereQu)
+	args = append(args, limit) // limit is always the last arg
+	rows, err := ps.db.Query(query, args...)
 	if err != nil {
-		return nil, fmt.Errorf("query error: %v", err)
+		return nil, fmt.Errorf("posts query error: %w", err)
 	}
 	defer rows.Close()
 
+	// scan posts
+
 	var posts []Post
 	for rows.Next() {
+
 		var p Post
-		if err := rows.Scan(&p.PostID, &p.UserID, &p.Content, &p.CreatedAt, &p.Author.Nickname, &p.LikeCount, &p.DislikeCount); err != nil {
-			return nil, fmt.Errorf("scan error: %v", err)
+		if err := rows.Scan(&p.PostID, &p.UserID, &p.Content, &p.CreatedAt,
+			&p.Author.Nickname, &p.LikeCount, &p.DislikeCount); err != nil {
+			return nil, fmt.Errorf("scan post: %w", err)
 		}
 
 		// Fetch categories
@@ -159,7 +178,9 @@ func (ps *PostService) GetInitialPosts() ([]Post, error) {
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows error: %v", err)
 	}
-
+	if lastPostID != "" {
+		return posts[1:], nil
+	}
 	return posts, nil
 }
 

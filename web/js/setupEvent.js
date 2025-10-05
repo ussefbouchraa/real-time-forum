@@ -40,9 +40,9 @@ setups.HomeEvents = (app) => {
 
             const postElement = e.target.closest('.forum-post');
             const commentSection = postElement.querySelector('.comment-section');
-            if (commentSection){                
+            if (commentSection) {
                 commentSection.style.display = commentSection.style.display === 'block' ? 'none' : 'block';
-            }            
+            }
         }
     });
 
@@ -74,6 +74,23 @@ setups.HomeEvents = (app) => {
                 document.querySelector('.create-section').style.display = 'block';
             }
         });
+    });
+    // fetch more posts on scroll
+    let isFetching = false;
+    window.addEventListener('scroll', () => {
+        if (isFetching) return;
+        
+        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+        if (nearBottom) {
+            isFetching = true;
+
+            (async () => {
+                await app.fetchMorePosts();
+                setTimeout(() => {
+                    isFetching = false;
+                }, 2000)
+            })();
+        }
     });
 }
 
