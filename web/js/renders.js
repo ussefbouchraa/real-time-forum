@@ -42,6 +42,8 @@ renders.Home = async (isAuthenticated, userData = {}) => {
             document.querySelector('.posts-loader').style.display = 'none';
             return
         }
+        console.log(data.posts);
+        
         mainContent.innerHTML = components.home(isAuthenticated, userData);
     } catch (error) {
         mainContent.innerHTML = components.errorPopup(error);

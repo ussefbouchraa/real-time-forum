@@ -13,6 +13,7 @@ type Post struct {
 	LikeCount    int            `json:"like_count"`
 	DislikeCount int            `json:"dislike_count"`
 	Reactions    []PostReaction `json:"reactions,omitempty"`
+	CommentCount int            `json:"comment_count,omitempty"`
 }
 
 type Comment struct {

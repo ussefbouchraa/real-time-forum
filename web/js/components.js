@@ -192,12 +192,12 @@ components.post = (post, isAuthenticated) => {
                         </button>
                         <button class="reaction-btn comments-btn toggle-comments" data-post-id="${post.post_id}">
                             💬
-                            <span class="count">${post.comments ? post.comments.length : 0}</span>
+                            <span class="count">${post.comments ? post.comment_count : 0}</span>
                         </button>
                     ` : `
                         <span class="likes">👍 ${post.like_count}</span>
                         <span class="dislikes">👎 ${post.dislike_count}</span>
-                        <span class="comments">💬 ${post.comments ? post.comments.length : 0} comments</span>
+                        <span class="comments">💬 ${post.comments ? post.comment_count : 0} comments</span>
                     `}
                 </div>
             </div>
@@ -205,10 +205,15 @@ components.post = (post, isAuthenticated) => {
             ${isAuthenticated ? components.commentForm(post.post_id) : ''}
             
             <div class="comment-section" data-post-id="${post.post_id}">
-                ${post.comments && post.comments.length > 0 ?
+                ${post.comments && post.comment_count > 0 ?
             post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'
         }
+            <div class="comments-footer">
+                <button class="load-more-comments btn-secondary" data-post-id="${post.post_id}">
+                    Load More Comments
+                </button>
+            </div>
             </div>
         </article>
     `;

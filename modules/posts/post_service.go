@@ -148,6 +148,14 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 		}
 		catRows.Close()
 
+		// Count comments for this post
+		var commentCount int
+		err = ps.db.QueryRow(`SELECT COUNT(*) FROM comments WHERE post_id = ?`, p.PostID).Scan(&commentCount)
+		if err != nil {
+			return nil, fmt.Errorf("count comments error: %v", err)
+		}
+		p.CommentCount = commentCount
+		
 		// Fetch comments
 		commentRows, err := ps.db.Query(`
 			SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.nickname,
@@ -158,7 +166,8 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 			LEFT JOIN comments_reactions cr ON c.comment_id = cr.comment_id
 			WHERE c.post_id = ?
 			GROUP BY c.comment_id
-			ORDER BY c.created_at ASC`, p.PostID)
+			ORDER BY c.created_at ASC
+			LIMIT 3`, p.PostID)
 		if err != nil {
 			return nil, fmt.Errorf("comment query error: %v", err)
 		}

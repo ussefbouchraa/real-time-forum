@@ -1041,6 +1041,50 @@ textarea {
     animation: slideIn 0.3s ease;
 }
 
+.load-more-comments {
+    display: block;
+    margin: 1.5rem auto 0;  /* Center, space from comments */
+    padding: 10px 24px;
+    background: var(--bg-color);  /* Light bg like cards */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    width: fit-content;
+}
+
+.load-more-comments:hover {
+    background: rgba(var(--primary-color), 0.05);  /* Subtle primary tint */
+    border-color: var(--primary-light);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.load-more-comments:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: var(--bg-color);
+}
+
+.comments-footer {
+    text-align: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);  /* Separator line */
+}
+
+@media (max-width: 768px) {
+    .load-more-comments {
+        padding: 8px 20px;
+        font-size: 13px;
+    }
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(100%);
