@@ -368,10 +368,9 @@ class RealTimeForum {
         const postsList = document.querySelector('.posts-list');
         if (!postsList) return
         let lastPost = postsList.lastElementChild;
-        console.log(lastPost);
 
         const lastPostId = lastPost.getAttribute('data-post-id');
-        
+
         try {
             // Initial posts load
             const response = await fetch('/api/posts', {
@@ -380,7 +379,7 @@ class RealTimeForum {
                     'Content-Type': 'application/json',
                     'Session-ID': localStorage.getItem('session_id'),
                     'request-type': 'fetch-3-posts',
-                    'Post-ID': lastPostId
+                    'Last-Post-ID': lastPostId
                 }
             });
             if (!response.ok) {
@@ -389,15 +388,74 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 }
                 const errorText = await response.text();
-                throw new Error(errorText || `Failed to create post: ${response.status}`);
+                throw new Error(errorText || `Failed to fetch post: ${response.status}`);
             }
             const data = await response.json();
-            console.log(data.posts);
-            
-            data.posts.forEach(post => renders.AddPost(post, "append"));
+
+            // if there are no posts to fetch no more
+            if (data.error) {
+                return
+            }
+
+            if (Array.isArray(data.posts)) {
+                data.posts.forEach(post => renders.AddPost(post, "append"));
+            } else {
+                renders.AddPost(data.posts, "append")
+            }
         } catch (err) {
             renders.Error(err.message);
             console.error('Post fetch error:', err);
+        }
+    }
+
+    //fetch on click
+    async fetchMoreComments() {
+        const commentList = document.querySelectorAll('.comment-section .comment');
+        if (!commentList) return;
+
+        const lastComment = commentList[commentList.length - 1]
+        const lastCommentId = lastComment.getAttribute('data-comment-id');
+
+        const ParentPost = lastComment.closest('.comment-section')
+        console.log(ParentPost);
+        
+        if (!ParentPost) return console.error('No parent found')
+        const postId = ParentPost.getAttribute('data-post-id');
+            console.log(postId);
+            console.log(lastCommentId);
+            
+            
+        try {
+            // Initial posts load
+            const response = await fetch('/api/posts', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id'),
+                    'request-type': 'fetch-3-comments',
+                    'Post-ID': postId,
+                    'Last-Comment-ID': lastCommentId
+                }
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
+                }
+                const errorText = await response.text();
+                throw new Error(errorText || `Failed to fetch comment: ${response.status}`);
+            }
+            const data = await response.json();
+            // if there are no posts to fetch no more
+            if (data.error) {
+                return
+            }
+            console.log(data.posts);
+
+            data.posts.forEach(post => renders.AddComment(post, "append"));
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Comment fetch error:', err);
         }
     }
 

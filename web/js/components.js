@@ -83,9 +83,9 @@ components.postToggleSection = (userData, formError) => {
 
             ${formError ? components.errorPopup(formError) : ''}
             
-        <!-- post filtring form -->
-
+            
             <div class="post-sections">
+        <!-- post filtring form -->
                 <div class="post-section filter-section">
                     <form id="filter-form" method="GET" action="/api/posts">
                         <div class="filter-options">
@@ -127,8 +127,8 @@ components.postToggleSection = (userData, formError) => {
                     </form>
                 </div>
 
-    <!-- post creation form -->
-
+                
+        <!-- post creation form -->
                 <div class="post-section create-section">
                     <form id="create-post-form" method="POST" action="/api/posts">
                         <textarea name="content" placeholder="Write your post..." maxlength="5000"></textarea>
@@ -209,11 +209,12 @@ components.post = (post, isAuthenticated) => {
             post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'
         }
+        
+            </div>
             <div class="comments-footer">
                 <button class="load-more-comments btn-secondary" data-post-id="${post.post_id}">
                     Load More Comments
                 </button>
-            </div>
             </div>
         </article>
     `;

@@ -86,19 +86,18 @@ func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error
 // fetch more posts
 func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 	limit := 3
-
 	baseQuery := `
         SELECT p.post_id, p.user_id, p.content, p.created_at, u.nickname,
                COALESCE(SUM(CASE WHEN pr.reaction_type = 1 THEN 1 ELSE 0 END),0) AS like_count,
                COALESCE(SUM(CASE WHEN pr.reaction_type = -1 THEN 1 ELSE 0 END),0) AS dislike_count
         FROM posts p
         JOIN users u ON p.user_id = u.user_id
-        LEFT JOIN posts_reactions pr ON p.post_id = pr.post_id`
+        LEFT JOIN posts_reactions pr ON p.post_id = pr.post_id
+    `
 
 	var whereQu string
 	var args []interface{}
 	if lastPostID != "" {
-		// fetch the timestamp of the last post we already fetched
 		var lastCreatedAt time.Time
 		err := ps.db.QueryRow(`SELECT created_at FROM posts WHERE post_id = ?`, lastPostID).Scan(&lastCreatedAt)
 		if err != nil {
@@ -106,34 +105,29 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 		}
 		whereQu = " WHERE p.created_at < ?"
 		args = append(args, lastCreatedAt)
-
 	}
 
 	query := fmt.Sprintf("%s%s GROUP BY p.post_id ORDER BY p.created_at DESC LIMIT ?", baseQuery, whereQu)
-	args = append(args, limit) // limit is always the last arg
+	args = append(args, limit)
 	rows, err := ps.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("posts query error: %w", err)
 	}
 	defer rows.Close()
 
-	// scan posts
-
 	var posts []Post
 	for rows.Next() {
-
 		var p Post
-		if err := rows.Scan(&p.PostID, &p.UserID, &p.Content, &p.CreatedAt,
-			&p.Author.Nickname, &p.LikeCount, &p.DislikeCount); err != nil {
+		if err := rows.Scan(&p.PostID, &p.UserID, &p.Content, &p.CreatedAt, &p.Author.Nickname, &p.LikeCount, &p.DislikeCount); err != nil {
 			return nil, fmt.Errorf("scan post: %w", err)
 		}
 
 		// Fetch categories
 		catRows, err := ps.db.Query(`
-			SELECT c.category_name
-			FROM posts_categories pc
-			JOIN categories c ON pc.category_id = c.category_id
-			WHERE pc.post_id = ?`, p.PostID)
+            SELECT c.category_name
+            FROM posts_categories pc
+            JOIN categories c ON pc.category_id = c.category_id
+            WHERE pc.post_id = ?`, p.PostID)
 		if err != nil {
 			return nil, fmt.Errorf("category query error: %v", err)
 		}
@@ -148,49 +142,76 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 		}
 		catRows.Close()
 
-		// Count comments for this post
-		var commentCount int
-		err = ps.db.QueryRow(`SELECT COUNT(*) FROM comments WHERE post_id = ?`, p.PostID).Scan(&commentCount)
+		// Fetch comment count
+		err = ps.db.QueryRow(`SELECT COUNT(*) FROM comments WHERE post_id = ?`, p.PostID).Scan(&p.CommentCount)
 		if err != nil {
 			return nil, fmt.Errorf("count comments error: %v", err)
 		}
-		p.CommentCount = commentCount
-		
-		// Fetch comments
-		commentRows, err := ps.db.Query(`
-			SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.nickname,
-				   COALESCE(SUM(CASE WHEN cr.reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
-				   COALESCE(SUM(CASE WHEN cr.reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
-			FROM comments c
-			JOIN users u ON c.user_id = u.user_id
-			LEFT JOIN comments_reactions cr ON c.comment_id = cr.comment_id
-			WHERE c.post_id = ?
-			GROUP BY c.comment_id
-			ORDER BY c.created_at ASC
-			LIMIT 3`, p.PostID)
+
+		// Fetch initial comments (first 3)
+		p.Comments, err = ps.GetComments(p.PostID, "", 3)
 		if err != nil {
-			return nil, fmt.Errorf("comment query error: %v", err)
+			return nil, fmt.Errorf("initial comments fetch error: %v", err)
 		}
-		p.Comments = []Comment{}
-		for commentRows.Next() {
-			var c Comment
-			if err := commentRows.Scan(&c.CommentID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.Author.Nickname, &c.LikeCount, &c.DislikeCount); err != nil {
-				commentRows.Close()
-				return nil, fmt.Errorf("comment scan error: %v", err)
-			}
-			p.Comments = append(p.Comments, c)
-		}
-		commentRows.Close()
 
 		posts = append(posts, p)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows error: %v", err)
 	}
-	if lastPostID != "" {
-		return posts[1:], nil
+	if lastPostID != "" && len(posts) > 0 {
+		return posts[1:], nil // Skip the last post if paginating
 	}
 	return posts, nil
+}
+
+// GetComments fetches paginated comments for a post
+func (ps *PostService) GetComments(postID string, lastCommentID string, limit int) ([]Comment, error) {
+	baseQuery := `
+        SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.nickname,
+               COALESCE(SUM(CASE WHEN cr.reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+               COALESCE(SUM(CASE WHEN cr.reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+        FROM comments c
+        JOIN users u ON c.user_id = u.user_id
+        LEFT JOIN comments_reactions cr ON c.comment_id = cr.comment_id
+        WHERE c.post_id = ?
+    `
+
+	var where string
+	var args []interface{}
+	args = append(args, postID)
+
+	if lastCommentID != "" {
+		var lastCreatedAt time.Time
+		err := ps.db.QueryRow(`SELECT created_at FROM comments WHERE comment_id = ?`, lastCommentID).Scan(&lastCreatedAt)
+		if err != nil {
+			return nil, fmt.Errorf("invalid last_comment_id: %w", err)
+		}
+		where = " AND c.created_at > ?"
+		args = append(args, lastCreatedAt)
+	}
+
+	query := baseQuery + where + " GROUP BY c.comment_id ORDER BY c.created_at ASC LIMIT ?"
+	args = append(args, limit)
+
+	rows, err := ps.db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("comments query error: %w", err)
+	}
+	defer rows.Close()
+
+	var comments []Comment
+	for rows.Next() {
+		var c Comment
+		if err := rows.Scan(&c.CommentID, &c.PostID, &c.UserID, &c.Content, &c.CreatedAt, &c.Author.Nickname, &c.LikeCount, &c.DislikeCount); err != nil {
+			return nil, fmt.Errorf("comment scan error: %v", err)
+		}
+		comments = append(comments, c)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows error: %v", err)
+	}
+	return comments, nil
 }
 
 func validateNewPost(newPost *NewPost) error {

@@ -33,16 +33,34 @@ setups.HomeEvents = (app) => {
             app.handleCreateComment(postId, e.target);
         }
     });
-
+    let isFetchingComments = false;
     document.addEventListener("click", (e) => {
         // Toggle comments visibility
+
         if (e.target && e.target.closest(".toggle-comments")) {
 
             const postElement = e.target.closest('.forum-post');
             const commentSection = postElement.querySelector('.comment-section');
+            const commentsFoter = postElement.querySelector('.comments-footer');
+
             if (commentSection) {
                 commentSection.style.display = commentSection.style.display === 'block' ? 'none' : 'block';
+                if (postElement.querySelectorAll('.comment-section .comment').length === 0 ){
+                    return;
+                }
+                commentsFoter.style.display = commentsFoter.style.display ===  'block' ? 'none' : 'block';
             }
+        } else if (e.target && e.target.closest(".load-more-comments")) {
+            // fetch more posts on scroll
+            if (isFetchingComments) return;
+            isFetchingComments = true;
+
+            (async () => {
+                await app.fetchMoreComments();
+                setTimeout(() => {
+                    isFetchingComments = false;
+                }, 2000)
+            })();
         }
     });
 
@@ -76,19 +94,19 @@ setups.HomeEvents = (app) => {
         });
     });
     // fetch more posts on scroll
-    let isFetching = false;
+    let isFetchingPosts = false;
     window.addEventListener('scroll', () => {
-        if (isFetching) return;
-        
+        if (isFetchingPosts) return;
+
         const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
         if (nearBottom) {
-            isFetching = true;
+            isFetchingPosts = true;
 
             (async () => {
                 await app.fetchMorePosts();
                 setTimeout(() => {
-                    isFetching = false;
-                }, 2000)
+                    isFetchingPosts = false;
+                }, 1500)
             })();
         }
     });

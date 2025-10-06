@@ -881,6 +881,10 @@ textarea {
     padding: 0.25rem 0.5rem;
 }
 
+.comments-footer{
+    display: none;
+}
+
 .no-comments {
     text-align: center;
     color: var(--text-secondary);

@@ -42,7 +42,6 @@ renders.Home = async (isAuthenticated, userData = {}) => {
             document.querySelector('.posts-loader').style.display = 'none';
             return
         }
-        console.log(data.posts);
         
         mainContent.innerHTML = components.home(isAuthenticated, userData);
     } catch (error) {
@@ -87,7 +86,7 @@ renders.AddPost = (post, mode = "prepend") => {
 };
 
 // add a single new comment to a post
-renders.AddComment = (comment) => {
+renders.AddComment = (comment ,mode = "prepend") => {
     const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
     if (!commentSection) return;
 
@@ -95,7 +94,11 @@ renders.AddComment = (comment) => {
     commentElement.innerHTML = components.comment(comment, true);
     renders.updatePostStats(comment.post_id, "Comment");
 
-    commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);
+    if (mode === "append") {
+        commentSection.appendChild(commentElement.children[0]);  // Append to inner
+    } else {
+        commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);  // Prepend to inner
+    }
     const noCommentsMsg = commentSection.querySelector('.no-comments');
     if (noCommentsMsg) {
         noCommentsMsg.remove();
