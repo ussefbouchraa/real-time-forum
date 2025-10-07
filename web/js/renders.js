@@ -98,11 +98,11 @@ renders.AddComment = (comment ,mode = "prepend") => {
 
     const commentElement = document.createElement('div');
     commentElement.innerHTML = components.comment(comment, true);
-    renders.updatePostStats(comment.post_id, "Comment");
 
     if (mode === "append") {
         commentSection.appendChild(commentElement.children[0]);  // Append to inner
     } else {
+        renders.updatePostStats(comment.post_id, "Comment");
         commentSection.insertBefore(commentElement.children[0], commentSection.firstChild);  // Prepend to inner
     }
     const noCommentsMsg = commentSection.querySelector('.no-comments');
