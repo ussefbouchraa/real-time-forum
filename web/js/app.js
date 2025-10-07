@@ -123,10 +123,7 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                if (!window.__homeEventsInitialized) {
-                    setups.HomeEvents(this);
-                    window.__homeEventsInitialized = true;
-                }
+                setups.HomeEvents(this);
                 break;
             case 'login':
                 renders.Login()
@@ -397,7 +394,6 @@ class RealTimeForum {
 
             // if there are no posts to fetch no more
             if (data.error) {
-                renders.Error(data.error);
                 return
             }
 
@@ -422,13 +418,13 @@ class RealTimeForum {
 
         const ParentPost = lastComment.closest('.comment-section')
         console.log(ParentPost);
-
+        
         if (!ParentPost) return console.error('No parent found')
         const postId = ParentPost.getAttribute('data-post-id');
-        console.log(postId);
-        console.log(lastCommentId);
-
-
+            console.log(postId);
+            console.log(lastCommentId);
+            
+            
         try {
             // Initial posts load
             const response = await fetch('/api/posts', {
@@ -454,17 +450,9 @@ class RealTimeForum {
             if (data.error) {
                 return
             }
+            console.log(data.posts);
 
-            if (!data.comments || data.comments.length === 0) {
-                const commentsFooter = document.querySelector(`.load-more-comments[data-post-id="${postId}"]`);
-                commentsFooter.style.display = commentsFooter.style.display === 'block' ? 'none' : 'block';
-                throw new Error("✅No more comments to show");
-                
-                return;
-            }
-
-
-            data.comments.forEach(post => renders.AddComment(post, "append"));
+            data.posts.forEach(post => renders.AddComment(post, "append"));
         } catch (err) {
             renders.Error(err.message);
             console.error('Comment fetch error:', err);

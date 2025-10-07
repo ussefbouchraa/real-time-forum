@@ -1,9 +1,7 @@
 package posts
 
 import (
-	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,15 +65,14 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			posts, err := postService.GetPosts(LastPostId)
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(map[string]string{"error": "✅No more posts to show"})
-					return
-				}
 				http.Error(w, `Failed to fetch posts`, http.StatusInternalServerError)
 				return
 			}
-
+			if len(posts) == 0 {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found"})
+				return
+			}
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"status": "ok",
 				"posts":  posts,

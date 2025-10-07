@@ -70,24 +70,18 @@ renders.PostsList = (posts) => {
 // Add a single new post to the list
 renders.AddPost = (post, mode = "prepend") => {
     const postsList = document.querySelector('.posts-list');  // Change to inner list
-    
     if (!postsList) return;
 
     const postHTML = components.post(post, true);
     const postElement = document.createElement('div');
     postElement.innerHTML = postHTML;
     const actualPost = postElement.children[0];
-    // actualPost.querySelector('.comment-section').style.display = 'none';
+    actualPost.querySelector('.comment-section').style.display = 'none';
 
     if (mode === "append") {
         postsList.appendChild(actualPost);  // Append to inner
     } else {
         postsList.insertBefore(actualPost, postsList.firstChild);  // Prepend to inner
-    }
-
-    const noPosts = document.querySelector('.posts-list .no-post')
-    if (noPosts){
-        noPosts.style.display = 'none';
     }
 };
 

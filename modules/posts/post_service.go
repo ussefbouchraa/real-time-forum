@@ -94,7 +94,7 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
         JOIN users u ON p.user_id = u.user_id
         LEFT JOIN posts_reactions pr ON p.post_id = pr.post_id
     `
-	
+
 	var whereQu string
 	var args []interface{}
 	if lastPostID != "" {
