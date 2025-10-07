@@ -13,18 +13,17 @@ export function escapeHTML(str) {
 
 // Posts Component
 components.posts = (posts, isAuthenticated) => {
-    if (!posts || posts.length === 0) {
-        return `<section class="posts-container"><p>No posts available. Be the first to post!</p></section>`;
-    }
-
+    const postsLen = document.querySelector('.posts-list ')
     return `
         <section class="posts-container" id="posts-container">
             <h2 class="posts-title">All Posts</h2>
             <div class="posts-list">
-                ${posts.map(post => components.post(post, isAuthenticated)).join('')}
+                ${(!posts || posts.length === 0) ? `<p class="no-post">No posts available. Be the first to post!</p>` : posts.map(post => components.post(post, isAuthenticated)).join('')}
             </div>
             <div class="posts-loader">
-                <div class="loading-spinner">Loading more posts...</div>
+                <div class="loading-spinner">
+                ${(!posts || posts.length === 0) ? `` : `Loading more posts...`}
+                </div>
             </div>
         </section>
     `;
@@ -56,16 +55,16 @@ components.navbar = (isAuthenticated = false) => {
 // Home/Layout Component
 components.home = (isAuthenticated, userData = {}) => {
 
-    const posts = userData.posts || [];
-    const formError = userData.form_error || '';
+    const posts = userData.posts != null ? userData.posts : [];
 
     return `
-        ${isAuthenticated ? components.postToggleSection(userData, formError) : ''}
+        ${isAuthenticated ? components.postToggleSection(userData) : ''}
         ${components.posts(posts, isAuthenticated)}
         ${components.chatSidebar()}
         <button class="chat-toggle-btn">💬</button>
     `;
 };
+
 
 // Post Toggle Section Component
 components.postToggleSection = (userData, formError) => {
@@ -209,13 +208,12 @@ components.post = (post, isAuthenticated) => {
             post.comments.map(comment => components.comment(comment, isAuthenticated)).join('')
             : '<p class="no-comments">No comments yet.</p>'
         }
-        
-            </div>
-            <div class="comments-footer">
-                <button class="load-more-comments btn-secondary" data-post-id="${post.post_id}">
-                    Load More Comments
-                </button>
-            </div>
+        </div>
+        <div class="comments-footer">
+            <button class="load-more-comments btn-secondary" data-post-id="${post.post_id}">
+                Load More Comments
+            </button>
+        </div>
         </article>
     `;
 };
