@@ -8,6 +8,7 @@ class RealTimeForum {
         this.currentPage = 'home';
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.isLoggingOut = false;
+        this.activeFilters = null; // Track active filters
         this.activeChatUserId = null;
         this.chatMessages = {};
         this.sessionID = null;
@@ -369,22 +370,37 @@ class RealTimeForum {
     //fetch on scroll 
     async fetchMorePosts() {
         const postsList = document.querySelector('.posts-list');
-        if (!postsList) return
-        let lastPost = postsList.lastElementChild;
-
-        const lastPostId = lastPost.getAttribute('data-post-id');
+        if (!postsList) return;
+        const lastPost = postsList.lastElementChild;
+        const lastPostId = lastPost ? lastPost.getAttribute('data-post-id') : '';
 
         try {
-            // Initial posts load
-            const response = await fetch('/api/posts', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Session-ID': localStorage.getItem('session_id'),
-                    'request-type': 'fetch-3-posts',
-                    'Last-Post-ID': lastPostId
+            let url = '/api/posts';
+            const headers = {
+                'Content-Type': 'application/json',
+                'Session-ID': localStorage.getItem('session_id'),
+                'Last-Post-ID': lastPostId
+            };
+
+            // Use filter_posts if filters are active
+            if (this.activeFilters) {
+                const params = new URLSearchParams();
+                if (this.activeFilters.categories.length) {
+                    params.append('categories', this.activeFilters.categories.join(','));
                 }
-            });
+                if (this.activeFilters.onlyMyPosts) {
+                    params.append('myPosts', 'true');
+                }
+                if (this.activeFilters.onlyMyLikedPosts) {
+                    params.append('likedPosts', 'true');
+                }
+                url = `/api/posts?${params.toString()}`;
+                headers['request-type'] = 'filter_posts';
+            } else {
+                headers['request-type'] = 'fetch-3-posts';
+            }
+
+            const response = await fetch(url, { method: 'GET', headers });
             if (!response.ok) {
                 if (response.status === 401) {
                     window.location.hash = 'login';
@@ -455,7 +471,7 @@ class RealTimeForum {
                 commentsFooter.style.display = commentsFooter.style.display === 'block' ? 'none' : 'block';
                 throw new Error("✅No more comments to show");
             }
-            
+
             data.comments.forEach(comment => renders.AddComment(comment, "append"));
         } catch (err) {
             renders.Error(err.message);

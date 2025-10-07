@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"real-time-forum/modules/core"
 )
@@ -103,9 +104,39 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 				"status":   "ok",
 				"comments": comments,
 			})
-		} else {
-			// TODO: Handle other GET cases (filtering by categories)
-			http.Error(w, "Not implemented", http.StatusNotImplemented)
+		} else if r.Header.Get("request-type") == "filter_posts" {
+			// Extract filters from query params
+			categoriesStr := r.URL.Query().Get("categories")
+			var categories []string
+			if categoriesStr != "" {
+				categories = strings.Split(categoriesStr, ",")
+			}
+			onlyMyPosts := r.URL.Query().Get("myPosts") == "true"
+			onlyMyLikedPosts := r.URL.Query().Get("likedPosts") == "true"
+
+			PostId := ""
+			if r.Header.Get("Post-ID") != "" {
+				PostId = r.Header.Get("Post-ID")
+			} else {
+				_ = PostId
+			}
+
+			// Use the authenticated userID from session check (already done at top)
+			posts, err := postService.GetFilteredPosts(userID, categories, onlyMyPosts, onlyMyLikedPosts, PostId)
+			if err != nil {
+				log.Printf("❌ Filter posts error: %v", err)
+				http.Error(w, `Failed to fetch filtered posts`, http.StatusInternalServerError)
+				return
+			}
+			if len(posts) == 0 {
+				w.WriteHeader(http.StatusOK)
+				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found matching filters"})
+				return
+			}
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"status": "ok",
+				"posts":  posts,
+			})
 		}
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
