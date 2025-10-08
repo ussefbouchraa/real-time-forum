@@ -142,6 +142,7 @@ class RealTimeForum {
                 break;
             default:
                 renders.Error("NOT FOUND")
+                // renders.StatusPage
             // renderHome();
         }
     }
@@ -299,7 +300,7 @@ class RealTimeForum {
         }
     }
 
-    closeChat() {
+    closeChat() {WS
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
