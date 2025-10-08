@@ -277,6 +277,9 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 		return nil, fmt.Errorf("rows error: %v", err)
 	}
 
+	if lastPostID != "" && len(posts) > 0 {
+		return posts[1:], nil // Skip the last post if paginating
+	}
 	return posts, nil
 }
 

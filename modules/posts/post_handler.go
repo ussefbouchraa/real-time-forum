@@ -70,7 +70,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
 					w.WriteHeader(http.StatusOK)
-					json.NewEncoder(w).Encode(map[string]string{"error": "✅No more posts to show"})
+					json.NewEncoder(w).Encode(map[string]string{"error": "✅No posts to show"})
 					return
 				}
 				http.Error(w, `Failed to fetch posts`, http.StatusInternalServerError)
@@ -115,8 +115,8 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			onlyMyLikedPosts := r.URL.Query().Get("likedPosts") == "true"
 
 			PostId := ""
-			if r.Header.Get("Post-ID") != "" {
-				PostId = r.Header.Get("Post-ID")
+			if r.Header.Get("Last-Post-ID") != "" {
+				PostId = r.Header.Get("Last-Post-ID")
 			} else {
 				_ = PostId
 			}
@@ -130,7 +130,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			if len(posts) == 0 {
 				w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(map[string]string{"error": "No posts found matching filters"})
+				json.NewEncoder(w).Encode(map[string]string{"error": "✅No posts to show"})
 				return
 			}
 			json.NewEncoder(w).Encode(map[string]interface{}{

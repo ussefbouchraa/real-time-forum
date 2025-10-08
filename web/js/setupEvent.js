@@ -98,7 +98,7 @@ setups.HomeEvents = (app) => {
     window.addEventListener('scroll', () => {
         if (isFetchingPosts) return;
 
-        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 100;
+        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 150;
         if (nearBottom) {
             
             isFetchingPosts = true;

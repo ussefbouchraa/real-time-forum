@@ -62,7 +62,9 @@ renders.PostsList = (posts) => {
 
     postsContainer.innerHTML = `
         <h2 class="posts-title">Posts</h2>
+        <div class="posts-list">
         ${posts.map(post => components.post(post, true)).join('')}
+        </div>
     `;
     document.querySelector('comment-section').style.display = "none";
 }
@@ -80,9 +82,9 @@ renders.AddPost = (post, mode = "prepend") => {
     // actualPost.querySelector('.comment-section').style.display = 'none';
 
     if (mode === "append") {
-        postsList.appendChild(actualPost);  // Append to inner
+        postsList.appendChild(actualPost); // prepend when its the creation of a post
     } else {
-        postsList.insertBefore(actualPost, postsList.firstChild);  // Prepend to inner
+        postsList.insertBefore(actualPost, postsList.firstChild); // append when fetching new posts
     }
 
     const noPosts = document.querySelector('.posts-list .no-post')

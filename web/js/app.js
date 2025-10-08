@@ -304,6 +304,12 @@ class RealTimeForum {
         const onlyMyLikedPosts = filterForm.querySelector('input[name="likedPosts"]')?.checked || false;
         console.log({ categories, onlyMyPosts, onlyMyLikedPosts });
 
+        // Store active filters
+        this.activeFilters = {
+            categories,
+            onlyMyPosts,
+            onlyMyLikedPosts
+        };
         try {
             const params = new URLSearchParams();
             if (categories.length) params.append('categories', categories.join(','));
@@ -370,10 +376,13 @@ class RealTimeForum {
     //fetch on scroll 
     async fetchMorePosts() {
         const postsList = document.querySelector('.posts-list');
+        console.log(postsList);
+        
         if (!postsList) return;
         const lastPost = postsList.lastElementChild;
         const lastPostId = lastPost ? lastPost.getAttribute('data-post-id') : '';
-
+        console.log(lastPostId);
+        
         try {
             let url = '/api/posts';
             const headers = {
@@ -394,6 +403,7 @@ class RealTimeForum {
                 if (this.activeFilters.onlyMyLikedPosts) {
                     params.append('likedPosts', 'true');
                 }
+                
                 url = `/api/posts?${params.toString()}`;
                 headers['request-type'] = 'filter_posts';
             } else {
