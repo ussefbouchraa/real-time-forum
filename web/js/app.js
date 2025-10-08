@@ -335,9 +335,10 @@ class RealTimeForum {
                 }
             }
             const data = await response.json();
-
+            
             if (!data.posts || data.posts.length === 0) {
                 document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
+                return
             } else {
                 document.querySelector(`.loading-spinner`).style.display = "block";
                 document.querySelector(`.posts-loader`).style.display = "block";
@@ -429,6 +430,7 @@ class RealTimeForum {
 
             if (!data.posts || data.posts.length === 0 || data.error) {
                 document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
+                return
             } else {
                 document.querySelector(`.loading-spinner`).style.display = "block";
                 document.querySelector(`.posts-loader`).style.display = "block";

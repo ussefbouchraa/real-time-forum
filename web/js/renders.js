@@ -65,6 +65,11 @@ renders.PostsList = (posts) => {
         <div class="posts-list">
         ${posts.map(post => components.post(post, true)).join('')}
         </div>
+        <div class="posts-loader">
+            <div class="loading-spinner">
+                ${(!posts || posts.length === 0) ? `No more posts` : `Loading more posts...`}
+            </div>
+        </div>
     `;
 }
 

@@ -45,10 +45,10 @@ setups.HomeEvents = (app) => {
 
             if (commentSection) {
                 commentSection.style.display = commentSection.style.display === 'block' ? 'none' : 'block';
-                if (postElement.querySelectorAll('.comment-section .comment').length === 0 ){
+                if (postElement.querySelectorAll('.comment-section .comment').length === 0) {
                     return;
                 }
-                commentsFoter.style.display = commentsFoter.style.display ===  'block' ? 'none' : 'block';
+                commentsFoter.style.display = commentsFoter.style.display === 'block' ? 'none' : 'block';
             }
         } else if (e.target && e.target.closest(".load-more-comments")) {
             // fetch more posts on scroll
@@ -101,12 +101,15 @@ setups.HomeEvents = (app) => {
 
         const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 80;
         if (nearBottom) {
-            
+
             isFetchingPosts = true;
 
             (async () => {
-                document.querySelector(`.posts-loader`).style.display = "block";
-                document.querySelector(`.loading-spinner`).style.display = "block";
+                const postLoader = document.querySelector(`.posts-loader`)
+                const loadingSpinner = document.querySelector(`.loading-spinner`)
+                if (postLoader) postLoader.style.display = "block";
+                if (loadingSpinner) loadingSpinner.style.display = "block";
+
                 await app.fetchMorePosts();
                 setTimeout(() => {
                     isFetchingPosts = false;
