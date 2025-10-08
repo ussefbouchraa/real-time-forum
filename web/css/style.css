@@ -885,7 +885,7 @@ textarea {
     display: none;
 }
 
-.no-comments {
+.no-comments , .loading-spinner{
     text-align: center;
     color: var(--text-secondary);
     font-style: italic;

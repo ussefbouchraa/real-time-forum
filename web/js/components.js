@@ -13,7 +13,6 @@ export function escapeHTML(str) {
 
 // Posts Component
 components.posts = (posts, isAuthenticated) => {
-    const postsLen = document.querySelector('.posts-list ')
     return `
         <section class="posts-container" id="posts-container">
             <h2 class="posts-title">All Posts</h2>
@@ -22,7 +21,7 @@ components.posts = (posts, isAuthenticated) => {
             </div>
             <div class="posts-loader">
                 <div class="loading-spinner">
-                ${(!posts || posts.length === 0) ? `` : `Loading more posts...`}
+                ${(!posts || posts.length === 0) ? `No more posts` : `Loading more posts...`}
                 </div>
             </div>
         </section>

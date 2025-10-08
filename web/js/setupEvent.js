@@ -99,16 +99,18 @@ setups.HomeEvents = (app) => {
     window.addEventListener('scroll', () => {
         if (isFetchingPosts) return;
 
-        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 150;
+        const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 80;
         if (nearBottom) {
             
             isFetchingPosts = true;
 
             (async () => {
+                document.querySelector(`.posts-loader`).style.display = "block";
+                document.querySelector(`.loading-spinner`).style.display = "block";
                 await app.fetchMorePosts();
                 setTimeout(() => {
                     isFetchingPosts = false;
-                }, 1500)
+                }, 2000)
             })();
         }
     });

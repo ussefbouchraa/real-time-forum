@@ -1,3 +1,4 @@
+import { components } from './components.js';
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 
@@ -333,7 +334,15 @@ class RealTimeForum {
                     throw new Error(errorText || `Failed to create post: ${response.status}`);
                 }
             }
-            const data = await response.json();            
+            const data = await response.json();
+
+            if (!data.posts || data.posts.length === 0) {
+                document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
+            } else {
+                document.querySelector(`.loading-spinner`).style.display = "block";
+                document.querySelector(`.posts-loader`).style.display = "block";
+            }
+            
             renders.PostsList(data.posts);
         } catch (err) {
             renders.Error(err.message);
@@ -375,11 +384,11 @@ class RealTimeForum {
     //fetch on scroll 
     async fetchMorePosts() {
         const postsList = document.querySelector('.posts-list');
-        
+
         if (!postsList) return;
         const lastPost = postsList.lastElementChild;
         const lastPostId = lastPost ? lastPost.getAttribute('data-post-id') : '';
-        
+
         try {
             let url = '/api/posts';
             const headers = {
@@ -400,7 +409,7 @@ class RealTimeForum {
                 if (this.activeFilters.onlyMyLikedPosts) {
                     params.append('likedPosts', 'true');
                 }
-                
+
                 url = `/api/posts?${params.toString()}`;
                 headers['request-type'] = 'filter_posts';
             } else {
@@ -418,11 +427,12 @@ class RealTimeForum {
             }
             const data = await response.json();
 
-            // if there are no posts to fetch no more
-            if (data.error) {
-                renders.Error(data.error);
-                return
-            }
+            if (!data.posts || data.posts.length === 0 || data.error) {
+                document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
+            } else {
+                document.querySelector(`.loading-spinner`).style.display = "block";
+                document.querySelector(`.posts-loader`).style.display = "block";
+            }            
 
             if (Array.isArray(data.posts)) {
                 data.posts.forEach(post => renders.AddPost(post, "append"));
@@ -439,7 +449,7 @@ class RealTimeForum {
     async fetchMoreComments(postId) {
         const parentPost = document.querySelector(`.comment-section[data-post-id="${postId}"]`);
         const commentList = parentPost.querySelectorAll(`.comment`)
-        
+
         if (!commentList) return;
 
         const lastComment = commentList[commentList.length - 1]
@@ -466,17 +476,10 @@ class RealTimeForum {
                 throw new Error(errorText || `Failed to fetch comment: ${response.status}`);
             }
             const data = await response.json();
-            if (!data.comments || data.comments.length === 0) {
-                console.log("TT");
-                
+            if (!data.comments || data.comments.length === 0 || data.error) {
                 const commentsFooter = document.querySelector(`.load-more-comments[data-post-id="${postId}"]`);
                 commentsFooter.outerHTML = '<p class="no-comments">No more comments.</p>';
                 commentsFooter.style.display = commentsFooter.style.display === 'none' ? 'block' : 'none';
-                return
-            }
-            
-            // if there are no posts to fetch no more
-            if (data.error) {
                 return
             }
 
