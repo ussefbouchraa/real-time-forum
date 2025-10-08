@@ -52,11 +52,12 @@ setups.HomeEvents = (app) => {
             }
         } else if (e.target && e.target.closest(".load-more-comments")) {
             // fetch more posts on scroll
+            const postId = e.target.closest('[data-post-id]')?.getAttribute('data-post-id');
             if (isFetchingComments) return;
             isFetchingComments = true;
 
             (async () => {
-                await app.fetchMoreComments();
+                await app.fetchMoreComments(postId);
                 setTimeout(() => {
                     isFetchingComments = false;
                 }, 2000)

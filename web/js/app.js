@@ -302,7 +302,6 @@ class RealTimeForum {
         const categories = [...filterForm.querySelectorAll('input[name="category-filter"]:checked')].map(input => input.value);
         const onlyMyPosts = filterForm.querySelector('input[name="myPosts"]')?.checked || false;
         const onlyMyLikedPosts = filterForm.querySelector('input[name="likedPosts"]')?.checked || false;
-        console.log({ categories, onlyMyPosts, onlyMyLikedPosts });
 
         // Store active filters
         this.activeFilters = {
@@ -334,7 +333,7 @@ class RealTimeForum {
                     throw new Error(errorText || `Failed to create post: ${response.status}`);
                 }
             }
-            const data = await response.json();
+            const data = await response.json();            
             renders.PostsList(data.posts);
         } catch (err) {
             renders.Error(err.message);
@@ -376,12 +375,10 @@ class RealTimeForum {
     //fetch on scroll 
     async fetchMorePosts() {
         const postsList = document.querySelector('.posts-list');
-        console.log(postsList);
         
         if (!postsList) return;
         const lastPost = postsList.lastElementChild;
         const lastPostId = lastPost ? lastPost.getAttribute('data-post-id') : '';
-        console.log(lastPostId);
         
         try {
             let url = '/api/posts';
@@ -439,17 +436,14 @@ class RealTimeForum {
     }
 
     //fetch on click
-    async fetchMoreComments() {
-        const commentList = document.querySelectorAll('.comment-section .comment');
+    async fetchMoreComments(postId) {
+        const parentPost = document.querySelector(`.comment-section[data-post-id="${postId}"]`);
+        const commentList = parentPost.querySelectorAll(`.comment`)
+        
         if (!commentList) return;
 
         const lastComment = commentList[commentList.length - 1]
         const lastCommentId = lastComment.getAttribute('data-comment-id');
-
-        const ParentPost = lastComment.closest('.comment-section')
-
-        if (!ParentPost) return console.error('No parent found')
-        const postId = ParentPost.getAttribute('data-post-id');
 
         try {
             // Initial posts load

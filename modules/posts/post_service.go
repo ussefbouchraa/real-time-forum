@@ -293,6 +293,14 @@ func validateNewPost(newPost *NewPost) error {
 	if strings.TrimSpace(newPost.Content) == "" {
 		return fmt.Errorf("Post content cannot be just whitespace")
 	}
+	if len(newPost.Categories) == 0 {
+		return fmt.Errorf("at least one category must be selected")
+	}
+	for _, c := range newPost.Categories {
+		if strings.TrimSpace(c) == "" {
+			return fmt.Errorf("Category cannot be empty or whitespace")
+		}
+	}
 	return nil
 }
 

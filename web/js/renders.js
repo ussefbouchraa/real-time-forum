@@ -66,7 +66,6 @@ renders.PostsList = (posts) => {
         ${posts.map(post => components.post(post, true)).join('')}
         </div>
     `;
-    document.querySelector('comment-section').style.display = "none";
 }
 
 // Add a single new post to the list
