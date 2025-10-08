@@ -60,7 +60,7 @@ setups.HomeEvents = (app) => {
                 await app.fetchMoreComments(postId);
                 setTimeout(() => {
                     isFetchingComments = false;
-                }, 2000)
+                }, 1000)
             })();
         }
     });

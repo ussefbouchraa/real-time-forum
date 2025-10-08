@@ -466,14 +466,18 @@ class RealTimeForum {
                 throw new Error(errorText || `Failed to fetch comment: ${response.status}`);
             }
             const data = await response.json();
+            if (!data.comments || data.comments.length === 0) {
+                console.log("TT");
+                
+                const commentsFooter = document.querySelector(`.load-more-comments[data-post-id="${postId}"]`);
+                commentsFooter.outerHTML = '<p class="no-comments">No more comments.</p>';
+                commentsFooter.style.display = commentsFooter.style.display === 'none' ? 'block' : 'none';
+                return
+            }
+            
             // if there are no posts to fetch no more
             if (data.error) {
                 return
-            }
-            if (!data.comments || data.comments.length === 0) {
-                const commentsFooter = document.querySelector(`.load-more-comments[data-post-id="${postId}"]`);
-                commentsFooter.style.display = commentsFooter.style.display === 'block' ? 'none' : 'block';
-                throw new Error("✅No more comments to show");
             }
 
             data.comments.forEach(comment => renders.AddComment(comment, "append"));
