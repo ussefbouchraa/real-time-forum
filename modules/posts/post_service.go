@@ -164,7 +164,6 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 	return posts, nil
 }
 
-// In modules/posts/post_service.go
 func (ps *PostService) GetFilteredPosts(userID string, categories []string, onlyMyPosts, onlyMyLikedPosts bool, lastPostID string) ([]Post, error) {
 	limit := 3
 
@@ -283,6 +282,58 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 	return posts, nil
 }
 
+func (ps *PostService) AddOrUpdatePostReaction(userID, postID string, reactionType int) error {
+	if reactionType != 1 && reactionType != -1 {
+		return fmt.Errorf("invalid reaction_type: must be 1 (like) or -1 (dislike)")
+	}
+
+	// Check if post exists
+	var exists bool
+	err := ps.db.QueryRow("SELECT EXISTS(SELECT 1 FROM posts WHERE post_id = ?)", postID).Scan(&exists)
+	if err != nil || !exists {
+		return fmt.Errorf("post not found: %w", err)
+	}
+
+	// Check if user already has a reaction
+	var currentReaction int
+	err = ps.db.QueryRow("SELECT reaction_type FROM posts_reactions WHERE post_id = ? AND user_id = ?", postID, userID).Scan(&currentReaction)
+	if err == sql.ErrNoRows {
+		// No existing reaction, insert new
+		_, err = ps.db.Exec(
+			"INSERT INTO posts_reactions (post_id, user_id, reaction_type) VALUES (?, ?, ?)",
+			postID, userID, reactionType,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert post reaction: %w", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to check post reaction: %w", err)
+	}
+
+	// Existing reaction found
+	if currentReaction == reactionType {
+		// Same reaction, remove it (toggle off)
+		_, err = ps.db.Exec(
+			"DELETE FROM posts_reactions WHERE post_id = ? AND user_id = ?",
+			postID, userID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to remove post reaction: %w", err)
+		}
+	} else {
+		// Different reaction, update it
+		_, err = ps.db.Exec(
+			"UPDATE posts_reactions SET reaction_type = ? WHERE post_id = ? AND user_id = ?",
+			reactionType, postID, userID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update post reaction: %w", err)
+		}
+	}
+	return nil
+}
+
 func validateNewPost(newPost *NewPost) error {
 	if newPost.Content == "" {
 		return fmt.Errorf("Post content cannot be empty")
@@ -394,6 +445,58 @@ func (ps *PostService) GetComments(postID string, lastCommentID string, limit in
 		return nil, fmt.Errorf("rows error: %v", err)
 	}
 	return comments, nil
+}
+
+func (ps *PostService) AddOrUpdateCommentReaction(userID, commentID string, reactionType int) error {
+	if reactionType != 1 && reactionType != -1 {
+		return fmt.Errorf("invalid reaction_type: must be 1 (like) or -1 (dislike)")
+	}
+
+	// Check if comment exists
+	var exists bool
+	err := ps.db.QueryRow("SELECT EXISTS(SELECT 1 FROM comments WHERE comment_id = ?)", commentID).Scan(&exists)
+	if err != nil || !exists {
+		return fmt.Errorf("comment not found: %w", err)
+	}
+
+	// Check if user already has a reaction
+	var currentReaction int
+	err = ps.db.QueryRow("SELECT reaction_type FROM comments_reactions WHERE comment_id = ? AND user_id = ?", commentID, userID).Scan(&currentReaction)
+	if err == sql.ErrNoRows {
+		// No existing reaction, insert new
+		_, err = ps.db.Exec(
+			"INSERT INTO comments_reactions (comment_id, user_id, reaction_type) VALUES (?, ?, ?)",
+			commentID, userID, reactionType,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert comment reaction: %w", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to check comment reaction: %w", err)
+	}
+
+	// Existing reaction found
+	if currentReaction == reactionType {
+		// Same reaction, remove it
+		_, err = ps.db.Exec(
+			"DELETE FROM comments_reactions WHERE comment_id = ? AND user_id = ?",
+			commentID, userID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to remove comment reaction: %w", err)
+		}
+	} else {
+		// Different reaction, update it
+		_, err = ps.db.Exec(
+			"UPDATE comments_reactions SET reaction_type = ? WHERE comment_id = ? AND user_id = ?",
+			reactionType, commentID, userID,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to update comment reaction: %w", err)
+		}
+	}
+	return nil
 }
 
 func validateComment(content string) error {

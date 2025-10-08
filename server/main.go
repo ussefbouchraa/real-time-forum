@@ -63,6 +63,7 @@ func main() {
 	http.HandleFunc("/ws", auth.WebSocketHandler)
 	http.HandleFunc("/api/posts", posts.PostsHandler)
 	http.HandleFunc("/api/comments", posts.CommentHandler)
+	http.HandleFunc("/api/reactions", posts.ReactionHandler)
 	http.HandleFunc("/ws/chat", chat.ChatWebSocketHandler)
 
 	// Start a background goroutine that periodically cleans up expired sessions

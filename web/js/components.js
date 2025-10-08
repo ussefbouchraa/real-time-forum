@@ -180,11 +180,11 @@ components.post = (post, isAuthenticated) => {
                 </div>
                 <div class="post-stats">
                     ${isAuthenticated ? `
-                        <button class="reaction-btn like-btn" data-post-id="${post.post_id}" data-type="like">
+                        <button class="reaction-btn like-btn" data-post-id="${post.post_id}" data-type="1">
                             <span>👍</span>
                             <span class="count">${post.like_count}</span>
                         </button>
-                        <button class="reaction-btn dislike-btn" data-post-id="${post.post_id}" data-type="dislike">
+                        <button class="reaction-btn dislike-btn" data-post-id="${post.post_id}" data-type="-1">
                             <span>👎</span>
                             <span class="count">${post.dislike_count}</span>
                         </button>
@@ -240,13 +240,13 @@ components.comment = (comment, isAuthenticated) => {
             <p class="comment-content">${escapeHTML(comment.content)}</p>
             ${isAuthenticated ? `
                 <div class="comment-reactions">
-                    <button class="reaction-btn like-btn" data-comment-id="${comment.comment_id}" data-type="like">
+                    <button class="reaction-btn like-btn" data-comment-id="${comment.comment_id}" data-type="1">
                         <span>👍</span>
-                        <span class="count">${escapeHTML(comment.like_count)}</span>
+                        <span class="count">${comment.like_count || 0}</span>
                     </button>
-                    <button class="reaction-btn dislike-btn" data-comment-id="${comment.comment_id}" data-type="dislike">
+                    <button class="reaction-btn dislike-btn" data-comment-id="${comment.comment_id}" data-type="-1">
                         <span>👎</span>
-                        <span class="count">${comment.Dislike_count}</span>
+                        <span class="count">${comment.dislike_count || 0}</span>
                     </button>
                 </div>
             ` : ''}

@@ -492,6 +492,47 @@ class RealTimeForum {
         }
     }
 
+    async handleReaction({ postId, commentId, reactionType }) {
+
+    try {
+        const response = await fetch('/api/reactions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Session-ID': localStorage.getItem('session_id')
+            },
+            body: JSON.stringify({
+                post_id: postId || '',
+                comment_id: commentId || '',
+                reaction_type: reactionType // 1 for like, -1 for dislike
+            })
+        });
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.hash = 'login';
+                throw new Error('Invalid session, please log in');
+            }
+            const errorText = await response.text();
+            throw new Error(errorText || `Failed to add reaction: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        if (data.status === 'ok') {
+            const selector = postId 
+                ? `.forum-post[data-post-id="${postId}"]`
+                : `.comment[data-comment-id="${commentId}"]`;
+            const container = document.querySelector(selector);
+            if (container) {
+                container.querySelector('.like-btn').textContent = `👍 ${data.like_count}`;
+                container.querySelector('.dislike-btn').textContent = `👎 ${data.dislike_count}`;
+            }
+        }
+    } catch (err) {
+        renders.Error(err.message);
+        console.error('Reaction error:', err);
+    }
+}
+
     // Open chat with a user
     openChat(userId) {
         this.activeChatUserId = userId;

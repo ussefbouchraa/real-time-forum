@@ -63,21 +63,19 @@ setups.HomeEvents = (app) => {
                 }, 1000)
             })();
         }
-    });
-
-    // Handle post reactions
-    document.querySelectorAll('.reaction-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const postId = e.target.closest('[data-post-id]')?.getAttribute('data-post-id');
-            const commentId = e.target.closest('[data-comment-id]')?.getAttribute('data-comment-id');
-            const type = e.target.getAttribute('data-type');
-
-            if (postId) {
-                // this.handlePostReaction(postId, type);
-            } else if (commentId) {
-                // this.handleCommentReaction(commentId, type);
+        // Handle reaction buttons
+        const reactionBtn = e.target.closest('.reaction-btn');
+        if (reactionBtn) {
+            const postId = reactionBtn.getAttribute('data-post-id') || '';
+            const commentId = reactionBtn.getAttribute('data-comment-id') || '';
+            const reactionType = parseInt(reactionBtn.getAttribute('data-type'), 10);
+            if ((postId || commentId) && !postId !== !commentId && !isNaN(reactionType)) {
+                app.handleReaction({ postId, commentId, reactionType });
+            } else {
+                console.error('Invalid reaction data:', { postId, commentId, reactionType });
+                renders.Error('Invalid reaction. Please try again.');
             }
-        });
+        }
     });
 
     // setting toggle buttons :

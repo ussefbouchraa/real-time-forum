@@ -185,3 +185,89 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
 	}
 }
+
+// In modules/posts/post_handler.go
+func ReactionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionID := r.Header.Get("Session-ID")
+	if sessionID == "" {
+		http.Error(w, `{"error": "Session required"}`, http.StatusUnauthorized)
+		return
+	}
+	var userID string
+	err := core.Db.QueryRow("SELECT user_id FROM sessions WHERE session_id = ? AND expires_at > CURRENT_TIMESTAMP", sessionID).Scan(&userID)
+	if err != nil {
+		log.Printf("Session error for session_id %s: %v", sessionID, err)
+		http.Error(w, `{"error": "Invalid session"}`, http.StatusUnauthorized)
+		return
+	}
+
+	var reaction NewReaction
+	if err := json.NewDecoder(r.Body).Decode(&reaction); err != nil {
+		log.Printf("Invalid JSON: %v", err)
+		http.Error(w, `{"error": "Invalid JSON"}`, http.StatusBadRequest)
+		return
+	}
+
+	if reaction.PostID == "" && reaction.CommentID == "" {
+		http.Error(w, `{"error": "post_id or comment_id required"}`, http.StatusBadRequest)
+		return
+	}
+	if reaction.PostID != "" && reaction.CommentID != "" {
+		http.Error(w, `{"error": "cannot provide both post_id and comment_id"}`, http.StatusBadRequest)
+		return
+	}
+
+	var updatedCounts struct {
+		LikeCount    int `json:"like_count"`
+		DislikeCount int `json:"dislike_count"`
+	}
+
+	if reaction.PostID != "" {
+		err = postService.AddOrUpdatePostReaction(userID, reaction.PostID, reaction.ReactionType)
+		if err != nil {
+			log.Printf("Post reaction error: %v", err)
+			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+			return
+		}
+		// Fetch updated counts
+		err = postService.db.QueryRow(`
+            SELECT COALESCE(SUM(CASE WHEN reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+                   COALESCE(SUM(CASE WHEN reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+            FROM posts_reactions WHERE post_id = ?`, reaction.PostID).Scan(&updatedCounts.LikeCount, &updatedCounts.DislikeCount)
+		if err != nil {
+			log.Printf("Failed to fetch post reaction counts: %v", err)
+			http.Error(w, `{"error": "Failed to fetch reaction counts"}`, http.StatusInternalServerError)
+			return
+		}
+	} else {
+		err = postService.AddOrUpdateCommentReaction(userID, reaction.CommentID, reaction.ReactionType)
+		if err != nil {
+			log.Printf("Comment reaction error: %v", err)
+			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
+			return
+		}
+		// Fetch updated counts
+		err = postService.db.QueryRow(`
+            SELECT COALESCE(SUM(CASE WHEN reaction_type = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+                   COALESCE(SUM(CASE WHEN reaction_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+            FROM comments_reactions WHERE comment_id = ?`, reaction.CommentID).Scan(&updatedCounts.LikeCount, &updatedCounts.DislikeCount)
+		if err != nil {
+			log.Printf("Failed to fetch comment reaction counts: %v", err)
+			http.Error(w, `{"error": "Failed to fetch reaction counts"}`, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":        "ok",
+		"like_count":    updatedCounts.LikeCount,
+		"dislike_count": updatedCounts.DislikeCount,
+	})
+}
