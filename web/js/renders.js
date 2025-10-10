@@ -57,20 +57,24 @@ renders.Users = (users) => {
 
     const onlineUsersList = document.getElementById('online-users-list');
     if (!onlineUsersList) return;
-    onlineUsersList.innerHTML = users.map(user => { user.isOnline = true; return components.userListItem(user)}).join('');
+    onlineUsersList.innerHTML = users.map(user => { user.isOnline = true; return components.userListItem(user) }).join('');
 
     const offlineUsersList = document.getElementById('conversations-list')
     if (!offlineUsersList) return;
-    offlineUsersList.innerHTML = users.map(user => components.userListItem(user)).join('')
+    offlineUsersList.innerHTML = users.map(user => { user.isOnline = false; return components.userListItem(user) }).join('');
 
     // Setup click event for user items to open chat
-    onlineUsersList.onclick = (e) => {
-        const item = e.target.closest('.user-list-item');
+
+    const handleClick = (e) => {
+        const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
         if (item) {
-            const userId = item.getAttribute('data-user-id');
-            window.forumApp.openChat(userId);
+            const userId = item.getAttribute('data-user-id')
+            window.forumApp.openChat(userId)
         }
-    };
+    }
+
+    onlineUsersList.onclick = handleClick
+    offlineUsersList.onclick = handleClick
 }
 
 // Render Status Page
@@ -78,6 +82,6 @@ renders.StatusPage = () => {
     const mainContent = document.getElementById('main-content')
     if (mainContent) {
         mainContent.innerHTML = components.statusPage()
-        
+
     }
 }
