@@ -10,6 +10,7 @@ class RealTimeForum {
         this.isLoggingOut = false;
         this.activeChatUserId = null;
         this.chatMessages = {};
+        this.userList = [];
         this.sessionID = null;
         this.chatWS = null; // Chat WebSocket
         this.init();
@@ -29,6 +30,10 @@ class RealTimeForum {
                     type: "user_have_session",
                     data: { user: { session_id: session } }
                 }));
+                setTimeout(() => {
+                    this.ws.send(JSON.stringify({ type: "users_list" }));
+                }, 2000);
+
             }
         });
 
@@ -78,8 +83,8 @@ class RealTimeForum {
             case "session_response":
             case "login_response":
                 if (data.status === "ok") {
-                    localStorage.setItem("session_id", data.user.user.session_id);
-                    this.userData = data.user.user;
+                    localStorage.setItem("session_id", data.data.user.session_id);
+                    this.userData = data.data.user;
                     this.isAuthenticated = true;
                     window.location.hash = 'home';
                 } else {
@@ -90,10 +95,11 @@ class RealTimeForum {
                     renders.Error(data.error)
                 }
                 break;
-            case "online_users":
-                // if (data.status === "ok") {
-                //     renders.OnlineUsers(data.users);
-                // }
+            case "users_list":
+                if (data.status === "ok") {
+                    this.userList = data.data;
+                    renders.Users(this.userList);
+                } else { renders.Error(data.error) }
                 break
 
             case "new_post":
@@ -122,9 +128,6 @@ class RealTimeForum {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 setups.HomeEvents();
-                const onlineUsers = [{ id: "1", nickname: "Alice", isOnline: true }, { id: "2", nickname: "Bob", isOnline: true }];
-                renders.OnlineUsers(onlineUsers);
-                // this.ws.send(JSON.stringify({ type: "get_online_users" }));
                 break;
             case 'login':
                 renders.Login()
@@ -141,9 +144,9 @@ class RealTimeForum {
                 this.handleLogout();
                 break;
             default:
+
+                // renders.StatusPage()
                 renders.Error("NOT FOUND")
-                // renders.StatusPage
-            // renderHome();
         }
     }
 
@@ -300,7 +303,7 @@ class RealTimeForum {
         }
     }
 
-    closeChat() {WS
+    closeChat() {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';

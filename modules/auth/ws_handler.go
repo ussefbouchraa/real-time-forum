@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -46,7 +45,7 @@ type WSResponse struct {
 	Type   string      `json:"type"`
 	Status string      `json:"status"`
 	Error  string      `json:"error,omitempty"`
-	Data   interface{} `json:"user,omitempty"`
+	Data   interface{} `json:"data,omitempty"`
 }
 
 func writeResponse(conn *websocket.Conn, msgType string, status string, data interface{}, errMsg string) {
@@ -159,6 +158,15 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			writeResponse(conn, "login_response", status, response, errMsg)
+
+		// Get all users 
+		case "users_list":
+    		users, err := GetAllUsers()
+			if err != nil {
+				writeResponse(conn, "users_list", "error", "", err.Error())
+				continue
+			}
+			writeResponse(conn, "users_list", "ok", users, "")
 
 		}
 	}

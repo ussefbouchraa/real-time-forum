@@ -3,7 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"net/http"
-
+    "fmt"
 	"github.com/gorilla/websocket"
 )
 
@@ -51,6 +51,7 @@ func ChatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
             })
             continue
         }
+        fmt.Println("Received message:", chatMsg)
 
         // Echo the message back to the sender
         conn.WriteJSON(ChatWSResponse{

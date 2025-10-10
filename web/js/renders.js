@@ -52,12 +52,16 @@ renders.Error = (message) => {
         }, 5000);
     }
 }
-// Render online users in the sidebar
-renders.OnlineUsers = (users) => {
+// Render users in the sidebar
+renders.Users = (users) => {
 
     const onlineUsersList = document.getElementById('online-users-list');
     if (!onlineUsersList) return;
-    onlineUsersList.innerHTML = users.map(user => components.userListItem(user)).join('');
+    onlineUsersList.innerHTML = users.map(user => { user.isOnline = true; return components.userListItem(user)}).join('');
+
+    const offlineUsersList = document.getElementById('conversations-list')
+    if (!offlineUsersList) return;
+    offlineUsersList.innerHTML = users.map(user => components.userListItem(user)).join('')
 
     // Setup click event for user items to open chat
     onlineUsersList.onclick = (e) => {
@@ -67,4 +71,13 @@ renders.OnlineUsers = (users) => {
             window.forumApp.openChat(userId);
         }
     };
+}
+
+// Render Status Page
+renders.StatusPage = () => {
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+        mainContent.innerHTML = components.statusPage()
+        
+    }
 }

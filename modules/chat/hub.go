@@ -1,35 +1,50 @@
 package chat
 
 import (
-    "real-time-forum/modules/core"
+    "encoding/json"
+    "sync"
+    "github.com/gorilla/websocket"
 )
 
-// UserStatus holds user info and online status.
-type UserStatus struct {
-    UserID   string `json:"user_id"`
-    Nickname string `json:"nickname"`
-    Online   bool   `json:"online"`
+type Hub struct {
+    Clients map[string]*websocket.Conn // userID → connection
+    Mu      sync.Mutex
 }
 
-// GetAllUsersWithStatus returns all users with their online status.
-func GetAllUsersWithStatus(hub *Hub) () {
-    rows, err := core.Db.Query("SELECT user_id, nickname FROM users")
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+var hub = Hub{Clients: make(map[string]*websocket.Conn)}
 
-    var users []UserStatus
-    for rows.Next() {
-        var userID, nickname string
-        if err := rows.Scan(&userID, &nickname); err != nil {
-            return nil, err
-        }
-        users = append(users, UserStatus{
-            UserID:   userID,
-            Nickname: nickname,
-            Online:   hub.IsUserOnline(userID),
-        })
+// when new user connects
+func AddUser(userID string, conn *websocket.Conn) {
+    hub.Mu.Lock()
+    hub.Clients[userID] = conn
+    hub.Mu.Unlock()
+    BroadcastOnlineUsers()
+}
+
+// when user disconnects
+func RemoveUser(userID string) {
+    hub.Mu.Lock()
+    delete(hub.Clients, userID)
+    hub.Mu.Unlock()
+    BroadcastOnlineUsers()
+}
+
+// send updated user list to everyone
+func BroadcastOnlineUsers() {
+    hub.Mu.Lock()
+    defer hub.Mu.Unlock()
+
+    var users []string
+    for id := range hub.Clients {
+        users = append(users, id)
     }
-    return users, nil
+
+    msg, _ := json.Marshal(map[string]interface{}{
+        "type": "users_list",
+        "data": users,
+    })
+
+    for _, conn := range hub.Clients {
+        conn.WriteMessage(websocket.TextMessage, msg)
+    }
 }

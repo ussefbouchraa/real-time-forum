@@ -15,6 +15,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type UserStatus struct {
+	UserID   string `json:"user_id"`
+    Nickname string `json:"nickname"`  
+    Online   bool   `json:"is_online"` 
+}
+
 func RegisterUser(data UserPayload) error {
 	data.User.FirstName = strings.TrimSpace(data.User.FirstName)
 	data.User.LastName = strings.TrimSpace(data.User.LastName)
@@ -266,28 +272,3 @@ func GetUserFromSessionID(sessionID string) (UserPayload, error) {
 	return user, nil
 }
 
-// func getUserData(SessionID string ) {
-
-// var Data UserPayload
-
-// 	err := core.Db.QueryRow(
-// 		`SELECT user_id, first_name, last_name, nickname, age, gender, email, password
-// 		 FROM users
-// 		 WHERE email = ? OR nickname = ?`,
-// 		emailOrNickname, emailOrNickname,
-// 	).Scan(
-// 		&Data.User.UserID,
-// 		&Data.User.FirstName,
-// 		&Data.User.LastName,
-// 		&Data.User.Nickname,
-// 		&Data.User.Age,
-// 		&Data.User.Gender,
-// 		&Data.User.Email,
-// 		&hashedPwd,
-// 	)
-// 	if err != nil {
-// 		return UserPayload{}, err.error()
-// 	}
-
-// 	return Data, nil
-// }

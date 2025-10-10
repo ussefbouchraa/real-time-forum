@@ -358,8 +358,8 @@ components.profile = (userData) => {
 };
 
 // User List Item Component (for private messages)
-components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
-    const displayName = user.nickname || `${user.firstname} ${user.lastname}`;
+components.userListItem = (user, lastMessage = null) => {
+    const displayName = user.nickname || "unknown";
     const statusClass = user.isOnline ? 'online' : 'offline';
     const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
     const lastMessagePreview = lastMessage ?
@@ -376,7 +376,6 @@ components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
             </div>
             <div class="message-info">
                 <div class="last-time">${lastMessageTime}</div>
-                ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
             </div>
         </div>
     `;
@@ -439,4 +438,44 @@ components.errorPopup = (message) => {
 // Loading Component
 components.loading = () => {
     return `<div class="loading-spinner">Loading...</div>`;
+};
+
+// Status Page Component (for 404, maintenance, etc.)
+components.statusPage = (statusCode = "404", title = "Page Not Found", message = "The page you're looking for doesn't exist.") => {
+    const statusMessages = {
+        "404": {
+            title: "Page Not Found",
+            message: "The page you're looking for doesn't exist.",
+            icon: "🔍"
+        },
+        "403": {
+            title: "Access Denied",
+            message: "You don't have permission to access this page.",
+            icon: "🚫"
+        },
+        "500": {
+            title: "Server Error",
+            message: "Something went wrong on our end. Please try again later.",
+            icon: "⚙️"
+        },
+
+    };
+
+    const statusInfo = statusMessages[statusCode]
+
+
+    return `
+        <div class="status-page">
+            <div class="status-content">
+                <div class="status-icon">${statusInfo.icon}</div>
+                <h1 class="status-code">${statusCode}</h1>
+                <h2 class="status-title">${escapeHTML(statusInfo.title)}</h2>
+                <p class="status-message">${escapeHTML(statusInfo.message)}</p>
+                <div class="status-actions">
+                    <a href="#home" data-link class="btn btn-primary">Go Home</a>
+                    <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
+                </div>
+            </div>
+        </div>
+    `;
 };

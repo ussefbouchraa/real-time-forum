@@ -206,19 +206,6 @@ body {
     color: var(--text-secondary);
 }
 
-.unread-count {
-    background: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
 .chat-container {
     position: fixed;
     bottom: 0;
@@ -1180,5 +1167,100 @@ button[type="submit"]:active {
     .chat-container {
         width: 100%;
         right: 0;
+    }
+}
+
+/* Status Page Styles */
+.status-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.status-content {
+    text-align: center;
+    max-width: 500px;
+}
+
+.status-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.status-code {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #333;
+    margin: 0 0 0.5rem 0;
+}
+
+.status-title {
+    font-size: 1.5rem;
+    color: #555;
+    margin: 0 0 1rem 0;
+}
+
+.status-message {
+    font-size: 1.1rem;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 2rem;
+}
+
+.status-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .status-code {
+        font-size: 2.5rem;
+    }
+    
+    .status-title {
+        font-size: 1.25rem;
+    }
+    
+    .status-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn {
+        width: 200px;
     }
 }
