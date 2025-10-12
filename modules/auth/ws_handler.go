@@ -4,14 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
+
+	"real-time-forum/modules/chat"
+
 	"github.com/gorilla/websocket"
+)
+
+var (
+	clients = make(map[string]*websocket.Conn)
+	mutex   = &sync.Mutex{}
 )
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+
 	},
 }
 
@@ -73,6 +82,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	var currentUserID string
+
+	defer func() {
+		mutex.Lock()
+		if currentUserID != "" {
+			delete(clients, currentUserID)
+			fmt.Printf("Client disconnected and removed: %s\n", currentUserID)
+		}
+		mutex.Unlock()
+	}()
+
 	for {
 		var msg ClientWSMessage
 
@@ -103,6 +123,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response.User.Email = sessionData.User.Email
 			response.User.Age = sessionData.User.Age
 			response.User.Gender = sessionData.User.Gender
+
+			currentUserID = sessionData.User.UserID
+			mutex.Lock()
+			clients[currentUserID] = conn
+			mutex.Unlock()
+			fmt.Printf("Client reconnected and registered: %s\n", currentUserID)
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":
@@ -155,13 +181,53 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					response.User.Age = user.User.Age
 					response.User.Gender = user.User.Gender
 
+					currentUserID = user.User.UserID
+					mutex.Lock()
+					clients[currentUserID] = conn
+					mutex.Unlock()
+					fmt.Printf("Client logged in and registered: %s\n", currentUserID)
 				}
 			}
 			writeResponse(conn, "login_response", status, response, errMsg)
 
-		// Get all users 
+		case "private_message":
+			if currentUserID == "" {
+				writeResponse(conn, "private_message", "error", nil, "User not authenticated")
+				continue
+			}
+
+			preparedMsg, err := chat.ProcessPrivateMessage(currentUserID, msg.Data)
+			if err != nil {
+				writeResponse(conn, "private_message", "error", nil, "Invalid message format")
+				continue
+			}
+
+			mutex.Lock()
+			recipientConn, ok := clients[preparedMsg.RecipientID]
+			mutex.Unlock()
+			if ok { writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")}
+			
+		case "get_chat_history":
+			if currentUserID == "" {
+				writeResponse(conn, "chat_history_response", "error", nil, "User not authenticated")
+				continue
+			}
+			var payload struct {
+				WithUserID string `json:"with_user_id"`
+			}
+			if err := json.Unmarshal(msg.Data, &payload); err != nil {
+				writeResponse(conn, "chat_history_response", "error", nil, "Invalid request format")
+				continue
+			}
+			history, err := chat.GetChatHistory(currentUserID, payload.WithUserID)
+			if err != nil {
+				writeResponse(conn, "chat_history_response", "error", nil, "Could not retrieve chat history")
+				continue
+			}
+			writeResponse(conn, "chat_history_response", "ok", history, "")
+		// Get all users
 		case "users_list":
-    		users, err := GetAllUsers()
+			users, err := GetAllUsers()
 			if err != nil {
 				writeResponse(conn, "users_list", "error", "", err.Error())
 				continue

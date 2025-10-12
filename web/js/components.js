@@ -358,17 +358,17 @@ components.profile = (userData) => {
 };
 
 // User List Item Component (for private messages)
-components.userListItem = (user, lastMessage = null) => {
-    const displayName = user.nickname || "unknown";
-    const statusClass = user.isOnline ? 'online' : 'offline';
+components.userListItem = (user, lastMessage = null, isOnline = false) => {
+    const displayName = escapeHTML(user.nickname) || "unknown";
+    const statusClass = isOnline ? 'online' : 'offline';
     const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
     const lastMessagePreview = lastMessage ?
         (lastMessage.content.length > 30 ?
-            lastMessage.content.substring(0, 30) + '...' : lastMessage.content) :
+            escapeHTML(lastMessage.content.substring(0, 30)) + '...' : escapeHTML(lastMessage.content)) :
         'No messages yet';
 
     return `
-        <div class="user-list-item" data-user-id="${user.id}">
+        <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
             <div class="user-avatar ${statusClass}"></div>
             <div class="user-info">
                 <div class="user-name">${displayName}</div>
@@ -404,11 +404,10 @@ components.chatSidebar = () => {
             <div id="chat-messages" class="chat-messages"></div>
             <div class="chat-input">
                 <textarea id="message-input" placeholder="Type your message..."></textarea>
-                <button id="send-message" class="close-btn">close</button>
-                <button id="send-message">Send</button>
+                <button id="send-message-btn">Send</button>
             </div>
         </div>
-        <\div>
+    <\div>
     `;
 };
 
@@ -417,10 +416,10 @@ components.chatMessage = (message, isOwn = false) => {
     return `
         <div class="message ${isOwn ? 'own-message' : 'other-message'}">
             <div class="message-header">
-                <span class="message-sender">${isOwn ? 'You' : message.senderName}</span>
-                <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                <span class="message-sender">${escapeHTML(message.senderName)}</span>
+                <span class="message-time">${escapeHTML(message.timestamp)}</span>
             </div>
-            <div class="message-content">${message.content}</div>
+            <div class="message-content">${escapeHTML(message.content)}</div>
         </div>
     `;
 };

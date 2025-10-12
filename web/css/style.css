@@ -276,8 +276,10 @@ body {
 .message-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.25rem;
     font-size: 0.8rem;
+    gap: 10px;
+    margin-bottom: 0.25rem;
+    align-items: center;
 }
 
 .message-sender {

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"real-time-forum/modules/auth"
-	"real-time-forum/modules/chat"
 	"real-time-forum/modules/core"
 	"real-time-forum/modules/posts"
 	"real-time-forum/modules/templates"
@@ -21,7 +20,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set security headers
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;")
+		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws://localhost:8080; object-src 'none'; frame-ancestors 'none';")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 
 	if r.Method != http.MethodGet {
@@ -57,7 +56,6 @@ func main() {
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/ws", auth.WebSocketHandler)
 	http.HandleFunc("/posts", posts.PostsHandler)
-	http.HandleFunc("/ws/chat", chat.ChatWebSocketHandler)
 
 	// Start a background goroutine that periodically cleans up expired sessions
 	// using the indexed 'expires_at' column to keep the database search performant

@@ -53,17 +53,19 @@ renders.Error = (message) => {
     }
 }
 // Render users in the sidebar
-renders.Users = (users) => {
+renders.Users = (users, user) => {
+    // Filter out the current user so they don't see themselves in the list
+
+    const onlineUsers = users.filter(u => u.id !== user.user_id);
+    const offlineUsers = users.filter(u => u.id !== user.user_id)
 
     const onlineUsersList = document.getElementById('online-users-list');
     if (!onlineUsersList) return;
-    onlineUsersList.innerHTML = users.map(user => { user.isOnline = true; return components.userListItem(user) }).join('');
-
+    onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user, null, true)).join('');
     const offlineUsersList = document.getElementById('conversations-list')
     if (!offlineUsersList) return;
-    offlineUsersList.innerHTML = users.map(user => { user.isOnline = false; return components.userListItem(user) }).join('');
+    offlineUsersList.innerHTML = offlineUsers.map(user => components.userListItem(user, null, false)).join('');
 
-    // Setup click event for user items to open chat
 
     const handleClick = (e) => {
         const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
@@ -76,6 +78,13 @@ renders.Users = (users) => {
     onlineUsersList.onclick = handleClick
     offlineUsersList.onclick = handleClick
 }
+
+// Render a single chat message
+renders.ChatMessage = (message, isOwn) => {
+    const senderName = isOwn ? 'You' : message.sender_nickname;
+    const timestamp = new Date(message.created_at).toLocaleTimeString();
+    return components.chatMessage({ ...message, senderName, timestamp }, isOwn);
+};
 
 // Render Status Page
 renders.StatusPage = () => {

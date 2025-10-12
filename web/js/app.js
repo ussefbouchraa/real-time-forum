@@ -11,8 +11,6 @@ class RealTimeForum {
         this.activeChatUserId = null;
         this.chatMessages = {};
         this.userList = [];
-        this.sessionID = null;
-        this.chatWS = null; // Chat WebSocket
         this.init();
     }
 
@@ -24,16 +22,12 @@ class RealTimeForum {
 
     setupWS() {
         this.ws.addEventListener("open", () => {
-            const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
+            const session = localStorage.getItem('session_id');
             if (session) {
                 this.ws.send(JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: session } }
                 }));
-                setTimeout(() => {
-                    this.ws.send(JSON.stringify({ type: "users_list" }));
-                }, 2000);
-
             }
         });
 
@@ -89,8 +83,7 @@ class RealTimeForum {
                     window.location.hash = 'home';
                 } else {
                     localStorage.removeItem("session_id");
-                    // this.isAuthenticated = false;
-                    // window.location.hash = 'login';
+
                     this.sessionID = null;
                     renders.Error(data.error)
                 }
@@ -98,10 +91,34 @@ class RealTimeForum {
             case "users_list":
                 if (data.status === "ok") {
                     this.userList = data.data;
-                    renders.Users(this.userList);
+                    renders.Users(this.userList, this.userData);
                 } else { renders.Error(data.error) }
-                break
+                break;
 
+            case "private_message":
+                if (data.status === "ok") {
+                    // Only display if the message is for the active chat or from the active chat user
+                    if (data.data.sender_id === this.activeChatUserId || data.data.recipient_id === this.userData.user_id) {
+                        this.displayChatMessage(data.data, false);
+                    }
+                } else {
+                    renders.Error(data.error);
+                }
+                break;
+
+            case "chat_history_response":
+                if (data.status === "ok") {
+                    const messages = data.data || [];
+                    const chatMessagesContainer = document.getElementById('chat-messages');
+                    chatMessagesContainer.innerHTML = ''; // Clear old messages
+                    messages.forEach(msg => {
+                        const isOwn = msg.sender_id === this.userData.user_id;
+                        this.displayChatMessage(msg, isOwn);
+                    });
+                } else {
+                    renders.Error(data.error);
+                }
+                break;
             case "new_post":
                 break;
         }
@@ -116,7 +133,7 @@ class RealTimeForum {
 
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
-
+        
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login'; return;
         }
@@ -124,10 +141,12 @@ class RealTimeForum {
             window.location.hash = 'home'; return;
         }
 
+        if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
+
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                setups.HomeEvents();
+                setups.HomeEvents(this);
                 break;
             case 'login':
                 renders.Login()
@@ -173,7 +192,7 @@ class RealTimeForum {
             }
             if (e.target.closest('.chat-toggle-btn')) this.toggleSideBar();
             if (e.target.closest('.close-btn')) this.closeChat();
-            if (e.target.closest('#send-message')) this.sendMessage();
+            if (e.target.id === 'send-message-btn') this.sendMessage();
         });
 
 
@@ -229,77 +248,67 @@ class RealTimeForum {
             this.ws.close();
             this.ws = null;
         }
-        this.closeChat();
         window.location.hash = 'login';
     }
 
-    // --- Chat Functions ---
+    // --- Chat window Functions ---
 
     openChat(userId) {
-        this.activeChatUserId = userId;
 
-        const userItems = document.querySelectorAll('.user-list-item');
-        let userInfo = null;
-        userItems.forEach(item => {
-            if (item.getAttribute('data-user-id') === userId) {
-                const userNameElement = item.querySelector('.user-name');
-                if (userNameElement) {
-                    userInfo = { id: userId, name: userNameElement.textContent };
-                }
-            }
-        });
-
-        if (userInfo) {
-            const chatContainer = document.getElementById('active-chat-container');
-            chatContainer.style.display = 'block';
-            document.getElementById('chat-with-user').textContent = `Chat with ${userInfo.name}`;
+        const user = this.userList.find(u => u.id === userId);
+        if (!user) {
+            console.error("Cannot open chat: User not found in list.", userId);
+            return;
         }
+        this.activeChatUserId = userId;
+        const chatContainer = document.getElementById('active-chat-container');
+        chatContainer.style.display = 'block';
+        document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
 
-        // Create chat WebSocket
-        this.chatWS = new WebSocket("ws://localhost:8080/ws/chat");
-
-        // Listen for chat messages
-        this.chatWS.addEventListener("message", (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === "chat_message" && data.status === "ok") {
-                console.log("New chat message:", data.message);
-                this.displayChatMessage(data.message);
-            } else if (data.status === "error") {
-                renders.Error(data.error);
-            }
-        });
-
-        //handle chat WebSocket closure
-        this.chatWS.addEventListener("close", () => {
-            console.warn("Chat connection closed.");
-        });
+        // Clear previous messages and prepare for new chat
+        document.getElementById('chat-messages').innerHTML = '';
+        
+        // Request message history from the server
+        this.sendWS(JSON.stringify({
+            type: "get_chat_history",
+            data: { with_user_id: userId }
+        }));
     }
-
-
 
     sendMessage() {
         const input = document.getElementById('message-input');
         const messageText = input.value.trim();
         if (messageText && this.activeChatUserId) {
-            if (this.chatWS && this.chatWS.readyState === WebSocket.OPEN) {
-                this.chatWS.send(JSON.stringify({
-                    from: this.userData.nickname,
-                    to: this.activeChatUserId,
-                    message: messageText
-                }));
-            }
+            const payload = {
+                type: "private_message",
+                data: {
+                    recipient_id: this.activeChatUserId,
+                    content: messageText,
+                }
+            };
+            this.sendWS(JSON.stringify(payload));
+
+            // Optimistically display the message on our own screen
+            const messageData = {
+                sender_id: this.userData.user_id,
+                sender_nickname: 'You', // Display 'You' for own messages
+                content: messageText,
+                created_at: new Date().toISOString() // Use created_at for consistency
+            };
+            this.displayChatMessage(messageData, true);
+
             input.value = '';
         }
     }
 
-    displayChatMessage(message) {
+    displayChatMessage(message, isOwn) {
         // Append message to chat UI
         const chatMessagesContainer = document.getElementById('chat-messages');
         if (chatMessagesContainer) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-message';
-            msgDiv.textContent = `${message.from}: ${message.message}`;
-            chatMessagesContainer.appendChild(msgDiv);
+            const messageEl = document.createElement('div');
+            messageEl.innerHTML = renders.ChatMessage(message, isOwn);
+            chatMessagesContainer.appendChild(messageEl.firstElementChild);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll to the latest message
         }
     }
 
@@ -309,10 +318,6 @@ class RealTimeForum {
         if (chatContainer) chatContainer.style.display = 'none';
         document.getElementById('chat-messages').innerHTML = '';
         document.getElementById('message-input').value = '';
-        if (this.chatWS) {
-            this.chatWS.close();
-            this.chatWS = null;
-        }
     }
 
     toggleSideBar() {
@@ -324,4 +329,3 @@ class RealTimeForum {
 document.addEventListener('DOMContentLoaded', () => {
     window.forumApp = new RealTimeForum();
 });
-

@@ -5,28 +5,25 @@ import (
 )
 
 type User struct {
-    ID       int    `json:"id"`
-    Nickname string `json:"nickname"`
-    IsOnline bool   `json:"isOnline"`
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
+	IsOnline bool   `json:"isOnline"`
 }
 
-var i = 0
 func GetAllUsers() ([]User, error) {
-    rows, err := core.Db.Query("SELECT nickname FROM users ORDER BY nickname ASC")
-    if err != nil {
+	rows, err := core.Db.Query("SELECT user_id, nickname FROM users ORDER BY nickname ASC")
+	if err != nil {
 		return nil, err
-    }
-    defer rows.Close()
-    
-    var users []User
-    for rows.Next() {
-        var u User
-        if err := rows.Scan( &u.Nickname); err != nil {
-            return nil, err
-        }
-        i++ ; u.ID = i;
-        u.IsOnline = false
-        users = append(users, u)
-    }
-    return users, nil
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Nickname); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, nil
 }
