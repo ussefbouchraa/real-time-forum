@@ -46,8 +46,6 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 		fmt.Printf("Error saving private message to DB: %v\n", err)
 		return nil, err
 	}
-
-	fmt.Printf("Message from %s to %s: %s\n", senderNickname, pm.RecipientID, pm.Content)
 	return &pm, nil
 }
 

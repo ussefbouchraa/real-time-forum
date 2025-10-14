@@ -20,7 +20,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-
+		return true
 	},
 }
 
@@ -128,7 +128,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			mutex.Lock()
 			clients[currentUserID] = conn
 			mutex.Unlock()
-			fmt.Printf("Client reconnected and registered: %s\n", currentUserID)
+
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":
@@ -205,8 +205,10 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			mutex.Lock()
 			recipientConn, ok := clients[preparedMsg.RecipientID]
 			mutex.Unlock()
-			if ok { writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")}
-			
+			if ok {
+				writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")
+			}
+
 		case "get_chat_history":
 			if currentUserID == "" {
 				writeResponse(conn, "chat_history_response", "error", nil, "User not authenticated")
@@ -227,7 +229,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "chat_history_response", "ok", history, "")
 		// Get all users
 		case "users_list":
-			users, err := GetAllUsers()
+			users, err := GetUsers()
 			if err != nil {
 				writeResponse(conn, "users_list", "error", "", err.Error())
 				continue

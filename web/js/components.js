@@ -358,20 +358,21 @@ components.profile = (userData) => {
 };
 
 // User List Item Component (for private messages)
-components.userListItem = (user, lastMessage = null, isOnline = false) => {
-    const displayName = escapeHTML(user.nickname) || "unknown";
-    const statusClass = isOnline ? 'online' : 'offline';
+components.userListItem = (user, lastMessage , isOnline) => {
+    console.log( "-------", lastMessage);
+    
+    const userName = escapeHTML(user.nickname) || "unknown";
+    const userStatus = isOnline ? 'online' : 'offline';
     const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
     const lastMessagePreview = lastMessage ?
-        (lastMessage.content.length > 30 ?
-            escapeHTML(lastMessage.content.substring(0, 30)) + '...' : escapeHTML(lastMessage.content)) :
-        'No messages yet';
+        (lastMessage.length > 30 ?
+            escapeHTML(lastMessage.substring(0, 30)) + '...' : escapeHTML(lastMessage)) : 'No messages yet';
 
     return `
         <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
-            <div class="user-avatar ${statusClass}"></div>
+            <div class="user-avatar ${userStatus}"></div>
             <div class="user-info">
-                <div class="user-name">${displayName}</div>
+                <div class="user-name">${userName}</div>
                 <div class="last-message">${lastMessagePreview}</div>
             </div>
             <div class="message-info">

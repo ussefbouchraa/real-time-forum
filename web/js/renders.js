@@ -56,15 +56,18 @@ renders.Error = (message) => {
 renders.Users = (users, user) => {
     // Filter out the current user so they don't see themselves in the list
 
+    
     const onlineUsers = users.filter(u => u.id !== user.user_id);
     const offlineUsers = users.filter(u => u.id !== user.user_id)
 
+
+
     const onlineUsersList = document.getElementById('online-users-list');
     if (!onlineUsersList) return;
-    onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user, null, true)).join('');
+    onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user, user.lastMsg, true)).join('');
     const offlineUsersList = document.getElementById('conversations-list')
     if (!offlineUsersList) return;
-    offlineUsersList.innerHTML = offlineUsers.map(user => components.userListItem(user, null, false)).join('');
+    offlineUsersList.innerHTML = offlineUsers.map(user => components.userListItem(user,  user.lastMsg, false)).join('');
 
 
     const handleClick = (e) => {
