@@ -88,6 +88,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		mutex.Lock()
 		if currentUserID != "" {
 			delete(clients, currentUserID)
+			broadcastUsersList()
 			fmt.Printf("Client disconnected and removed: %s\n", currentUserID)
 		}
 		mutex.Unlock()
@@ -100,7 +101,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-
 		switch msg.Type {
 		case "user_have_session":
 			session, err := decodeMessage[UserPayload](msg.Data)
@@ -127,6 +127,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			currentUserID = sessionData.User.UserID
 			mutex.Lock()
 			clients[currentUserID] = conn
+			broadcastUsersList()
 			mutex.Unlock()
 
 			writeResponse(conn, "session_response", "ok", response, "")
@@ -184,6 +185,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					currentUserID = user.User.UserID
 					mutex.Lock()
 					clients[currentUserID] = conn
+					broadcastUsersList()
 					mutex.Unlock()
 					fmt.Printf("Client logged in and registered: %s\n", currentUserID)
 				}
@@ -229,13 +231,9 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "chat_history_response", "ok", history, "")
 		// Get all users
 		case "users_list":
-			users, err := GetUsers()
-			if err != nil {
-				writeResponse(conn, "users_list", "error", "", err.Error())
-				continue
-			}
-			writeResponse(conn, "users_list", "ok", users, "")
-
+				broadcastUsersList()
 		}
 	}
 }
+
+

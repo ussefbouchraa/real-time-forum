@@ -54,21 +54,18 @@ renders.Error = (message) => {
 }
 // Render users in the sidebar
 renders.Users = (users, user) => {
-    // Filter out the current user so they don't see themselves in the list
+    // Filter out the current user so they don't see themselves in the list 
 
-    
-    const onlineUsers = users.filter(u => u.id !== user.user_id);
-    const offlineUsers = users.filter(u => u.id !== user.user_id)
-
-
+    const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
+    const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)
 
     const onlineUsersList = document.getElementById('online-users-list');
-    if (!onlineUsersList) return;
-    onlineUsersList.innerHTML = onlineUsers.map(user => components.userListItem(user, user.lastMsg, true)).join('');
     const offlineUsersList = document.getElementById('conversations-list')
-    if (!offlineUsersList) return;
-    offlineUsersList.innerHTML = offlineUsers.map(user => components.userListItem(user,  user.lastMsg, false)).join('');
-
+    if (!onlineUsersList || !offlineUsersList) return 
+    
+    onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u)).join('');
+    offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u)).join('');
+    
 
     const handleClick = (e) => {
         const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
@@ -78,8 +75,9 @@ renders.Users = (users, user) => {
         }
     }
 
-    onlineUsersList.onclick = handleClick
-    offlineUsersList.onclick = handleClick
+     onlineUsersList.onclick = handleClick 
+     offlineUsersList.onclick = handleClick 
+
 }
 
 // Render a single chat message

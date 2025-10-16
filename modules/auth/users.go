@@ -5,42 +5,43 @@ import (
 )
 
 type User struct {
-	ID       string `json:"id"`
-	Nickname string `json:"nickname"`
-	LastMsg  string `json:"lastMsg"`
-	IsOnline bool   `json:"isOnline"`
+	ID         string `json:"id"`
+	Nickname   string `json:"nickname"`
+	LastMsg    string `json:"lastMsg"`
+	Created_at string `json:"created_at"`
+	IsOnline   bool   `json:"isOnline"`
 }
 
 // GetUsers fetches all users and fills LastMsg
-func GetUsers() ( []User, error) {
+func GetUsers() ([]User, error) {
 	users, err := GetOnlyUsers()
 	if err != nil {
 		return nil, err
 	}
 	for i := range users {
-		last := GetLastMessage(users[i].ID)
-		users[i].LastMsg = last          
+		last, timeStamp := GetLastMessage(users[i].ID)
+		users[i].LastMsg = last
+		users[i].Created_at = timeStamp
 	}
 	return users, err
 }
 
-
 // GetLastMessage returns the latest message content for a user
-func GetLastMessage(userID string) string {
-	var lastMsg string
+func GetLastMessage(userID string) (string, string) {
+	var lastMsg, created_at string
 
 	query := `
-		SELECT content
+		SELECT content, created_at
 		FROM private_messages
 		WHERE sender_id = ? OR recipient_id = ?
 		ORDER BY created_at DESC
 		LIMIT 1;
 	`
-	err := core.Db.QueryRow(query, userID, userID).Scan(&lastMsg)
+	err := core.Db.QueryRow(query, userID, userID).Scan(&lastMsg, &created_at)
 	if err != nil {
-		return ""
+		return "", ""
 	}
-	return lastMsg
+	return lastMsg, created_at
 }
 
 // GetOnlyUsers fetches all users from the database
@@ -70,3 +71,18 @@ func GetOnlyUsers() ([]User, error) {
 	return users, nil
 }
 
+
+
+func broadcastUsersList() {
+	users, _ := GetUsers()
+
+	for i := range users {
+		if _, ok := clients[users[i].ID]; ok {
+			users[i].IsOnline = true
+		}
+	}
+	// Send updated list to all connected clients
+	for _, conn := range clients {
+		writeResponse(conn, "users_list", "ok", users, "")
+	}
+}
