@@ -287,7 +287,10 @@ class RealTimeForum {
                 }
             };
             this.sendWS(JSON.stringify(payload));
-
+            this.sendWS(JSON.stringify({
+                    type: "get_chat_history",
+                    data: { with_user_id: this.activeChatUserId }
+                }));
             // Optimistically display the message on our own screen
             const messageData = {
                 sender_id: this.userData.user_id,
@@ -295,6 +298,7 @@ class RealTimeForum {
                 content: messageText,
                 created_at: new Date().toISOString() // Use created_at for consistency
             };
+            
             this.displayChatMessage(messageData, true);
 
             input.value = '';
@@ -310,7 +314,10 @@ class RealTimeForum {
             chatMessagesContainer.appendChild(messageEl.firstElementChild);
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll to the latest message
         }
-    }
+        
+    document.querySelector('.last-message').textContent = message.content  
+    document.querySelector('.last-time').textContent = new Date(message.created_at).toLocaleTimeString()
+}
 
     closeChat() {
         this.activeChatUserId = null;

@@ -3,6 +3,7 @@ package chat
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"real-time-forum/modules/core"
 
@@ -18,7 +19,7 @@ type PrivateMessagePayload struct {
 	CreatedAt      string `json:"created_at,omitempty"`
 }
 
-// ProcessPrivateMessage decodes, saves, and prepares a private message for delivery.
+// ProcessPrivateMessage decodes, savmessage.timestamp)es, and prepares a private message for delivery.
 func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*PrivateMessagePayload, error) {
 	var pm PrivateMessagePayload
 	if err := json.Unmarshal(rawPayload, &pm); err != nil {
@@ -35,12 +36,14 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 
 	pm.SenderID = senderID
 	pm.SenderNickname = senderNickname
+	pm.CreatedAt = time.Now().Format(time.RFC3339)
 
+	
 	// Save the message to the database
 	messageID := uuid.New().String()
 	_, err = core.Db.Exec(
-		"INSERT INTO private_messages (message_id, sender_id, recipient_id, content) VALUES (?, ?, ?, ?)",
-		messageID, pm.SenderID, pm.RecipientID, pm.Content,
+		"INSERT INTO private_messages (message_id, sender_id, recipient_id, content, created_at) VALUES (?, ?, ?, ?, ?)",
+		messageID, pm.SenderID, pm.RecipientID, pm.Content, pm.CreatedAt,
 	)
 	if err != nil {
 		fmt.Printf("Error saving private message to DB: %v\n", err)
