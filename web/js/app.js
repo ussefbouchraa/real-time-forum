@@ -321,7 +321,7 @@ class RealTimeForum {
                 lastMsgEl.textContent = content.length > 25 ? content.substring(0, 25) + '...' : content;
             }
             if (lastTimeEl) {
-                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString();
+                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
             }
         }
     }
