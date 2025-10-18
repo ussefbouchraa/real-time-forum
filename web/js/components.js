@@ -376,6 +376,7 @@ components.userListItem = (user) => {
             </div>
             <div class="message-info">
                 <div class="last-time">${lastMessageTime}</div>
+                <span class="notification-dot hidden"></span>
             </div>
         </div>
     `;
@@ -416,8 +417,8 @@ components.chatMessage = (message, isOwn = false) => {
     return `
         <div class="message ${isOwn ? 'own-message' : 'other-message'}">
             <div class="message-header">
-                <span class="message-sender">${escapeHTML(message.senderName)}</span>
-                <span class="message-time">${escapeHTML(message.timestamp)}</span>
+                <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
+                <span class="message-time">${new Date(message.created_at).toLocaleTimeString()}</span>
             </div>
             <div class="message-content">${escapeHTML(message.content)}</div>
         </div>

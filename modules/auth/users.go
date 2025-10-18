@@ -47,12 +47,9 @@ func GetLastMessage(userID string) (string, string) {
 // GetOnlyUsers fetches all users from the database
 func GetOnlyUsers() ([]User, error) {
 	rows, err := core.Db.Query(`
-		SELECT u.user_id, u.nickname
-		FROM users u
-		LEFT JOIN private_messages m 
-		ON u.user_id = m.sender_id OR u.user_id = m.recipient_id
-		GROUP BY u.user_id
-		ORDER BY MAX(m.created_at) DESC, u.nickname ASC
+		SELECT user_id, nickname
+		FROM users
+		ORDER BY nickname ASC
 	`)
 	if err != nil {
 		return nil, err
@@ -70,8 +67,6 @@ func GetOnlyUsers() ([]User, error) {
 
 	return users, nil
 }
-
-
 
 func broadcastUsersList() {
 	users, _ := GetUsers()

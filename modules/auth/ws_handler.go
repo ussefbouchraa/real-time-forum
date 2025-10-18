@@ -205,11 +205,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			mutex.Lock()
+			// Send to recipient
 			recipientConn, ok := clients[preparedMsg.RecipientID]
-			mutex.Unlock()
 			if ok {
 				writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")
 			}
+			// send back to the sender for confirmation and UI update
+			senderConn, ok := clients[currentUserID]
+			if ok {
+				writeResponse(senderConn, "private_message", "ok", preparedMsg, "")
+			}
+			mutex.Unlock()
 
 		case "get_chat_history":
 			if currentUserID == "" {
@@ -231,9 +237,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "chat_history_response", "ok", history, "")
 		// Get all users
 		case "users_list":
-				broadcastUsersList()
+			broadcastUsersList()
 		}
 	}
 }
-
-

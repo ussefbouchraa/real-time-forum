@@ -82,9 +82,8 @@ renders.Users = (users, user) => {
 
 // Render a single chat message
 renders.ChatMessage = (message, isOwn) => {
-    const senderName = isOwn ? 'You' : message.sender_nickname;
-    const timestamp = new Date(message.created_at).toLocaleTimeString();
-    return components.chatMessage({ ...message, senderName, timestamp }, isOwn);
+    message.sender_nickname = isOwn ? 'You' : message.sender_nickname;
+    return components.chatMessage(message, isOwn);
 };
 
 // Render Status Page

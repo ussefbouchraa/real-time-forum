@@ -9,7 +9,6 @@ class RealTimeForum {
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.isLoggingOut = false;
         this.activeChatUserId = null;
-        this.chatMessages = {};
         this.userList = [];
         this.init();
     }
@@ -97,9 +96,18 @@ class RealTimeForum {
 
             case "private_message":
                 if (data.status === "ok") {
-                    // Only display if the message is for the active chat or from the active chat user
-                    if (data.data.sender_id === this.activeChatUserId || data.data.recipient_id === this.userData.user_id) {
-                        this.displayChatMessage(data.data, false);
+                    const msg = data.data;
+                    const isOwn = msg.sender_id === this.userData.user_id;
+                    const otherUserId = isOwn ? msg.recipient_id : msg.sender_id;
+
+                    // Always update the last message preview in the sidebar
+                    this.updateLastMessage(otherUserId, msg.content, msg.created_at);
+
+                    // If the chat is open, display the message.
+                    if (otherUserId === this.activeChatUserId) {
+                        this.displayChatMessage(msg, isOwn);
+                    } else if (!isOwn) { // Otherwise, if it's a message from someone else, show a notification.
+                        this.showNotification(otherUserId);
                     }
                 } else {
                     renders.Error(data.error);
@@ -261,6 +269,7 @@ class RealTimeForum {
             return;
         }
         this.activeChatUserId = userId;
+        this.hideNotification(userId); // Hide notification when chat is opened
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
@@ -287,19 +296,6 @@ class RealTimeForum {
                 }
             };
             this.sendWS(JSON.stringify(payload));
-            this.sendWS(JSON.stringify({
-                    type: "get_chat_history",
-                    data: { with_user_id: this.activeChatUserId }
-                }));
-            // Optimistically display the message on our own screen
-            const messageData = {
-                sender_id: this.userData.user_id,
-                sender_nickname: 'You', // Display 'You' for own messages
-                content: messageText,
-                created_at: new Date().toISOString() // Use created_at for consistency
-            };
-            
-            this.displayChatMessage(messageData, true);
 
             input.value = '';
         }
@@ -314,10 +310,35 @@ class RealTimeForum {
             chatMessagesContainer.appendChild(messageEl.firstElementChild);
             chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll to the latest message
         }
-        
-    document.querySelector('.last-message').textContent = message.content  
-    document.querySelector('.last-time').textContent = new Date(message.created_at).toLocaleTimeString()
-}
+    }
+
+    updateLastMessage(userId, content, timestamp) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            const lastMsgEl = userItem.querySelector('.last-message');
+            const lastTimeEl = userItem.querySelector('.last-time');
+            if (lastMsgEl) {
+                lastMsgEl.textContent = content.length > 25 ? content.substring(0, 25) + '...' : content;
+            }
+            if (lastTimeEl) {
+                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString();
+            }
+        }
+    }
+
+    showNotification(userId) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.notification-dot')?.classList.remove('hidden');
+        }
+    }
+
+    hideNotification(userId) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.notification-dot')?.classList.add('hidden');
+        }
+    }
 
     closeChat() {
         this.activeChatUserId = null;
