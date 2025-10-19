@@ -38,7 +38,6 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 	pm.SenderNickname = senderNickname
 	pm.CreatedAt = time.Now().Format(time.RFC3339)
 
-	
 	// Save the message to the database
 	messageID := uuid.New().String()
 	_, err = core.Db.Exec(
@@ -63,15 +62,16 @@ func GetNicknameByUserID(userID string) (string, error) {
 }
 
 // GetChatHistory retrieves the message history between two users.
-func GetChatHistory(user1ID, user2ID string) ([]PrivateMessagePayload, error) {
+func GetChatHistory(user1ID, user2ID string, limit, offset int) ([]PrivateMessagePayload, error) {
 	query := `
         SELECT m.sender_id, u.nickname, m.content, m.created_at
         FROM private_messages m
         JOIN users u ON u.user_id = m.sender_id
         WHERE (m.sender_id = ? AND m.recipient_id = ?) OR (m.sender_id = ? AND m.recipient_id = ?)
-        ORDER BY m.created_at ASC
+        ORDER BY m.created_at DESC
+		LIMIT ? OFFSET ?
     `
-	rows, err := core.Db.Query(query, user1ID, user2ID, user2ID, user1ID)
+	rows, err := core.Db.Query(query, user1ID, user2ID, user2ID, user1ID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

@@ -224,12 +224,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			var payload struct {
 				WithUserID string `json:"with_user_id"`
+				Limit      int    `json:"limit"`
+				Offset     int    `json:"offset"`
 			}
 			if err := json.Unmarshal(msg.Data, &payload); err != nil {
 				writeResponse(conn, "chat_history_response", "error", nil, "Invalid request format")
 				continue
 			}
-			history, err := chat.GetChatHistory(currentUserID, payload.WithUserID)
+			if payload.Limit == 0 {
+				payload.Limit = 10
+			} // Default to 10
+			history, err := chat.GetChatHistory(currentUserID, payload.WithUserID, payload.Limit, payload.Offset)
 			if err != nil {
 				writeResponse(conn, "chat_history_response", "error", nil, "Could not retrieve chat history")
 				continue

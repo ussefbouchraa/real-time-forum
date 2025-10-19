@@ -1,6 +1,19 @@
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 
+// Throttle utility to limit how often a function can be called.
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
 class RealTimeForum {
     constructor() {
         this.isAuthenticated = false;
@@ -9,6 +22,8 @@ class RealTimeForum {
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.isLoggingOut = false;
         this.activeChatUserId = null;
+        this.chatOffsets = {}; // Stores message offset for each chat
+        this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
         this.init();
     }
@@ -116,13 +131,29 @@ class RealTimeForum {
 
             case "chat_history_response":
                 if (data.status === "ok") {
-                    const messages = data.data || [];
+                    const messages = data.data || []; // Messages arrive sorted DESC
+                    const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
+
+                    if (messages.length === 0) {
+                        this.isLoadingMessages = false; // No more messages to load
+                        return;
+                    }
+
                     const chatMessagesContainer = document.getElementById('chat-messages');
-                    chatMessagesContainer.innerHTML = ''; // Clear old messages
-                    messages.forEach(msg => {
+                    const oldScrollHeight = chatMessagesContainer.scrollHeight;
+
+                    messages.reverse(); // Reverse to prepend in correct chronological order
+                    const messagesHTML = messages.map(msg => {
                         const isOwn = msg.sender_id === this.userData.user_id;
-                        this.displayChatMessage(msg, isOwn);
-                    });
+                        return renders.ChatMessage(msg, isOwn);
+                    }).join('');
+
+                    chatMessagesContainer.insertAdjacentHTML('afterbegin', messagesHTML);
+                    this.chatOffsets[this.activeChatUserId] += messages.length;
+
+                    if (isInitialLoad) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                    else chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight - oldScrollHeight;
+                    this.isLoadingMessages = false;
                 } else {
                     renders.Error(data.error);
                 }
@@ -154,6 +185,9 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
+                // Attach scroll listener only after the chat container is rendered
+                const chatMessagesContainer = document.getElementById('chat-messages');
+                if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
                 setups.HomeEvents(this);
                 break;
             case 'login':
@@ -269,6 +303,7 @@ class RealTimeForum {
             return;
         }
         this.activeChatUserId = userId;
+        this.chatOffsets[userId] = 0; // Reset offset when opening a new chat
         this.hideNotification(userId); // Hide notification when chat is opened
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
@@ -276,11 +311,16 @@ class RealTimeForum {
 
         // Clear previous messages and prepare for new chat
         document.getElementById('chat-messages').innerHTML = '';
-        
-        // Request message history from the server
+        this.loadMoreMessages();
+    }
+
+    loadMoreMessages() {
+        if (!this.activeChatUserId || this.isLoadingMessages) return;
+        this.isLoadingMessages = true;
+        const offset = this.chatOffsets[this.activeChatUserId] || 0;
         this.sendWS(JSON.stringify({
             type: "get_chat_history",
-            data: { with_user_id: userId }
+            data: { with_user_id: this.activeChatUserId, limit: 10, offset: offset }
         }));
     }
 
@@ -351,6 +391,14 @@ class RealTimeForum {
     toggleSideBar() {
         const sidebar = document.querySelector('.sidebar-container');
         if (sidebar) sidebar.classList.toggle('hide');
+    }
+
+    handleChatScroll(e) {
+        // If we are already loading or not at the top, do nothing.
+        if (this.isLoadingMessages || e.target.scrollTop !== 0) {
+            return;
+        }
+        this.loadMoreMessages();
     }
 }
 
