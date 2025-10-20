@@ -4,8 +4,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
+
+	"real-time-forum/modules/chat"
 
 	"github.com/gorilla/websocket"
+)
+
+// type ClientWSMessage struct {
+// 	Type string          `json:"type"`
+// 	Data json.RawMessage `json:"data"`
+// }
+
+// type UserPayload struct {
+// 	User struct {
+// 		EmailOrNickname string `json:"email_or_nickname,omitempty"`
+// 		SessionID       string `json:"session_id,omitempty"`
+// 		UserID          string `json:"user_id,omitempty"`
+// 		Nickname        string `json:"nickname,omitempty"`
+// 		FirstName       string `json:"first_name,omitempty"`
+// 		LastName        string `json:"last_name,omitempty"`
+// 		Email           string `json:"email,omitempty"`
+// 		Age             int    `json:"age,omitempty"`
+// 		Gender          string `json:"gender,omitempty"`
+// 		Password        string `json:"password,omitempty"`
+// 	} `json:"user"`
+// }
+
+// type WSResponse struct {
+// 	Type   string      `json:"type"`
+// 	Status string      `json:"status"`
+// 	Error  string      `json:"error,omitempty"`
+// 	Data   interface{} `json:"user,omitempty"`
+// }
+
+var (
+	clients = make(map[string]*websocket.Conn)
+	mutex   = &sync.Mutex{}
 )
 
 var upgrader = websocket.Upgrader{
@@ -47,6 +82,18 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
+	var currentUserID string
+
+	defer func() {
+		mutex.Lock()
+		if currentUserID != "" {
+			delete(clients, currentUserID)
+			broadcastUsersList()
+			fmt.Printf("Client disconnected and removed: %s\n", currentUserID)
+		}
+		mutex.Unlock()
+	}()
+
 	for {
 		var msg ClientWSMessage
 
@@ -54,7 +101,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			break
 		}
-
 		switch msg.Type {
 		case "user_have_session":
 			session, err := decodeMessage[UserPayload](msg.Data)
@@ -77,6 +123,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response.User.Email = sessionData.User.Email
 			response.User.Age = sessionData.User.Age
 			response.User.Gender = sessionData.User.Gender
+
+			currentUserID = sessionData.User.UserID
+			mutex.Lock()
+			clients[currentUserID] = conn
+			broadcastUsersList()
+			mutex.Unlock()
+
 			writeResponse(conn, "session_response", "ok", response, "")
 
 		case "register":
@@ -129,33 +182,67 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					response.User.Age = user.User.Age
 					response.User.Gender = user.User.Gender
 
+					currentUserID = user.User.UserID
+					mutex.Lock()
+					clients[currentUserID] = conn
+					broadcastUsersList()
+					mutex.Unlock()
+					fmt.Printf("Client logged in and registered: %s\n", currentUserID)
 				}
 			}
 			writeResponse(conn, "login_response", status, response, errMsg)
 
-			// case "profile":
-			// session, err := decodeMessage[UserPayload](msg.Data)
-			// if err != nil {
-			// 	writeResponse(conn, "session_response", "error", "", "Invalid data format : session")
-			// 	continue
-			// }
-			// data, err := getUserData(session.User.SessionID)
-			// if err != nil {
-			// 	writeResponse(conn, "profile_response", "error", "", err.Error())
-			// 	continue
-			// }
+		case "private_message":
+			if currentUserID == "" {
+				writeResponse(conn, "private_message", "error", nil, "User not authenticated")
+				continue
+			}
 
-			// // valid session → send success
-			// var response UserPayload
-			// response.User.Nickname = data.User.Nickname
-			// response.User.Email = data.User.Email
-			// response.User.FirstName = data.User.FirstName
-			// response.User.LastName = data.User.LastName
-			// response.User.Age = data.User.Age
-			// response.User.Gender = data.User.Gender
+			preparedMsg, err := chat.ProcessPrivateMessage(currentUserID, msg.Data)
+			if err != nil {
+				writeResponse(conn, "private_message", "error", nil, "Invalid message format")
+				continue
+			}
 
-			// writeResponse(conn, "profile_response", "ok", response, "")
+			mutex.Lock()
+			// Send to recipient
+			recipientConn, ok := clients[preparedMsg.RecipientID]
+			if ok {
+				writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")
+			}
+			// send back to the sender for confirmation and UI update
+			senderConn, ok := clients[currentUserID]
+			if ok {
+				writeResponse(senderConn, "private_message", "ok", preparedMsg, "")
+			}
+			mutex.Unlock()
 
+		case "get_chat_history":
+			if currentUserID == "" {
+				writeResponse(conn, "chat_history_response", "error", nil, "User not authenticated")
+				continue
+			}
+			var payload struct {
+				WithUserID string `json:"with_user_id"`
+				Limit      int    `json:"limit"`
+				Offset     int    `json:"offset"`
+			}
+			if err := json.Unmarshal(msg.Data, &payload); err != nil {
+				writeResponse(conn, "chat_history_response", "error", nil, "Invalid request format")
+				continue
+			}
+			if payload.Limit == 0 {
+				payload.Limit = 10
+			} // Default to 10
+			history, err := chat.GetChatHistory(currentUserID, payload.WithUserID, payload.Limit, payload.Offset)
+			if err != nil {
+				writeResponse(conn, "chat_history_response", "error", nil, "Could not retrieve chat history")
+				continue
+			}
+			writeResponse(conn, "chat_history_response", "ok", history, "")
+		// Get all users
+		case "users_list":
+			broadcastUsersList()
 		}
 	}
 }

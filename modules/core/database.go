@@ -24,6 +24,7 @@ func InitDB(path string) {
 
 	createUsersTable()
 	createPostsTable()
+    createPrvMsgsTable()
 	createCommentsTable()
 	createCategoriesTable()
 	createPostsCategoriesTable()
@@ -179,4 +180,21 @@ func createSessionsTable() {
 	if err != nil {
 		log.Fatalf("Failed to create index on sessions: %v", err)
 	}
+}
+
+func createPrvMsgsTable() {
+    query := `
+    CREATE TABLE IF NOT EXISTS private_messages (
+        message_id TEXT PRIMARY KEY,
+        sender_id TEXT NOT NULL,
+        recipient_id TEXT NOT NULL,
+        content TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sender_id) REFERENCES users(user_id),
+        FOREIGN KEY (recipient_id) REFERENCES users(user_id)
+);`
+    _, err := Db.Exec(query)
+    if err != nil {
+        log.Fatalf("Failed to create messages table: %v", err)
+    }
 }

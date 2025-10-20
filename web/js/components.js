@@ -367,30 +367,29 @@ components.profile = (userData) => {
                 </div>
             </div>
         </div>
-        ${components.chatSidebar()}
-        <button class="chat-toggle-btn">💬</button>    `;
+   `;
 };
 
 // User List Item Component (for private messages)
-components.userListItem = (user, unreadCount = 0, lastMessage = null) => {
-    const displayName = user.nickname || `${user.firstname} ${user.lastname}`;
-    const statusClass = user.isOnline ? 'online' : 'offline';
-    const lastMessageTime = lastMessage ? new Date(lastMessage.timestamp).toLocaleTimeString() : '';
-    const lastMessagePreview = lastMessage ?
-        (lastMessage.content.length > 30 ?
-            lastMessage.content.substring(0, 30) + '...' : lastMessage.content) :
-        'No messages yet';
+components.userListItem = (user) => {
+    
+    const userName = escapeHTML(user.nickname) || "unknown";
+    const userStatus = user.isOnline ? 'online' : 'offline';
+    const lastMessageTime = user.lastMsg ? new Date(user.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : '';
+    const lastMessagePreview = user.lastMsg?
+        (user.lastMsg.length > 30 ?
+            escapeHTML(user.lastMsg.substring(0, 30)) + '...' : escapeHTML(user.lastMsg)) : 'No messages yet';
 
     return `
-        <div class="user-list-item" data-user-id="${user.id}">
-            <div class="user-avatar ${statusClass}"></div>
+        <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
+            <div class="user-avatar ${userStatus}"></div>
             <div class="user-info">
-                <div class="user-name">${displayName}</div>
+                <div class="user-name">${userName}</div>
                 <div class="last-message">${lastMessagePreview}</div>
             </div>
             <div class="message-info">
                 <div class="last-time">${lastMessageTime}</div>
-                ${unreadCount > 0 ? `<div class="unread-count">${unreadCount}</div>` : ''}
+                <span class="notification-dot hidden"></span>
             </div>
         </div>
     `;
@@ -413,17 +412,16 @@ components.chatSidebar = () => {
 
         <div id="active-chat-container" class="chat-container">
             <div class="chat-header">
-                <h3 id="chat-with-user">Select a user to chat</h3>
+                <h3 id="chat-with-user">??</h3>
                 <button id="close-chat" class="close-btn">×</button>
             </div>
             <div id="chat-messages" class="chat-messages"></div>
             <div class="chat-input">
                 <textarea id="message-input" placeholder="Type your message..."></textarea>
-                <button id="send-message" class="close-btn">close</button>
-                <button id="send-message">Send</button>
+                <button id="send-message-btn">Send</button>
             </div>
         </div>
-        <\div>
+    <\div>
     `;
 };
 
@@ -432,10 +430,10 @@ components.chatMessage = (message, isOwn = false) => {
     return `
         <div class="message ${isOwn ? 'own-message' : 'other-message'}">
             <div class="message-header">
-                <span class="message-sender">${isOwn ? 'You' : message.senderName}</span>
-                <span class="message-time">${new Date(message.timestamp).toLocaleTimeString()}</span>
+                <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
+                <span class="message-time">${new Date(message.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
             </div>
-            <div class="message-content">${message.content}</div>
+            <div class="message-content">${escapeHTML(message.content)}</div>
         </div>
     `;
 };
@@ -453,4 +451,44 @@ components.errorPopup = (message) => {
 // Loading Component
 components.loading = () => {
     return `<div class="loading-spinner">Loading...</div>`;
+};
+
+// Status Page Component (for 404, maintenance, etc.)
+components.statusPage = (statusCode = "404", title = "Page Not Found", message = "The page you're looking for doesn't exist.") => {
+    const statusMessages = {
+        "404": {
+            title: "Page Not Found",
+            message: "The page you're looking for doesn't exist.",
+            icon: "🔍"
+        },
+        "403": {
+            title: "Access Denied",
+            message: "You don't have permission to access this page.",
+            icon: "🚫"
+        },
+        "500": {
+            title: "Server Error",
+            message: "Something went wrong on our end. Please try again later.",
+            icon: "⚙️"
+        },
+
+    };
+
+    const statusInfo = statusMessages[statusCode]
+
+
+    return `
+        <div class="status-page">
+            <div class="status-content">
+                <div class="status-icon">${statusInfo.icon}</div>
+                <h1 class="status-code">${statusCode}</h1>
+                <h2 class="status-title">${escapeHTML(statusInfo.title)}</h2>
+                <p class="status-message">${escapeHTML(statusInfo.message)}</p>
+                <div class="status-actions">
+                    <a href="#home" data-link class="btn btn-primary">Go Home</a>
+                    <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
+                </div>
+            </div>
+        </div>
+    `;
 };

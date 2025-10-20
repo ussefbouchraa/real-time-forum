@@ -164,3 +164,45 @@ renders.Error = (message) => {
     }
 }
 
+// Render users in the sidebar
+renders.Users = (users, user) => {
+    // Filter out the current user so they don't see themselves in the list 
+
+    const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
+    const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)
+
+    const onlineUsersList = document.getElementById('online-users-list');
+    const offlineUsersList = document.getElementById('conversations-list')
+    if (!onlineUsersList || !offlineUsersList) return 
+    
+    onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u)).join('');
+    offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u)).join('');
+    
+
+    const handleClick = (e) => {
+        const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
+        if (item) {
+            const userId = item.getAttribute('data-user-id')
+            window.forumApp.openChat(userId)
+        }
+    }
+
+     onlineUsersList.onclick = handleClick 
+     offlineUsersList.onclick = handleClick 
+
+}
+
+// Render a single chat message
+renders.ChatMessage = (message, isOwn) => {
+    message.sender_nickname = isOwn ? 'You' : message.sender_nickname;
+    return components.chatMessage(message, isOwn);
+};
+
+// Render Status Page
+renders.StatusPage = () => {
+    const mainContent = document.getElementById('main-content')
+    if (mainContent) {
+        mainContent.innerHTML = components.statusPage()
+
+    }
+}
