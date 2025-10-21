@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"real-time-forum/modules/chat"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -88,7 +87,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		mutex.Lock()
 		if currentUserID != "" {
 			delete(clients, currentUserID)
-			broadcastUsersList()
+			BroadcastUsersList()
 			fmt.Printf("Client disconnected and removed: %s\n", currentUserID)
 		}
 		mutex.Unlock()
@@ -127,7 +126,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			currentUserID = sessionData.User.UserID
 			mutex.Lock()
 			clients[currentUserID] = conn
-			broadcastUsersList()
+			BroadcastUsersList()
 			mutex.Unlock()
 
 			writeResponse(conn, "session_response", "ok", response, "")
@@ -185,7 +184,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					currentUserID = user.User.UserID
 					mutex.Lock()
 					clients[currentUserID] = conn
-					broadcastUsersList()
+					BroadcastUsersList()
 					mutex.Unlock()
 					fmt.Printf("Client logged in and registered: %s\n", currentUserID)
 				}
@@ -242,7 +241,21 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "chat_history_response", "ok", history, "")
 		// Get all users
 		case "users_list":
-			broadcastUsersList()
+			BroadcastUsersList()
 		}
+	}
+}
+
+func BroadcastUsersList() {
+	users, _ := chat.GetUsers()
+
+	for i := range users {
+		if _, ok := clients[users[i].ID]; ok {
+			users[i].IsOnline = true
+		}
+	}
+	// Send updated list to all connected clients
+	for _, conn := range clients {
+		writeResponse(conn, "users_list", "ok", users, "")
 	}
 }

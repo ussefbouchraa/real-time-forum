@@ -94,7 +94,7 @@ setups.HomeEvents = (app) => {
                 }
             };
         }
-        chatMessagesContainer.addEventListener('scroll', throttle(app.handleChatScroll.bind(app), 200));
+        chatMessagesContainer.addEventListener('scroll', throttle(app.handleChatScroll.bind(app), 180));
     }
 
 }
