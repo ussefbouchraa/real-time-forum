@@ -185,12 +185,14 @@ class RealTimeForum {
             window.location.hash = 'home'; return;
         }
 
-        if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
-
+        
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 // Attach scroll listener only after the chat container is rendered
+                setTimeout(()=>{
+                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
+                },1000)
                 const chatMessagesContainer = document.getElementById('chat-messages');
                 if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
 
@@ -248,7 +250,7 @@ class RealTimeForum {
             // Close chat button
             if (e.target.closest('.close-btn')) this.closeChat();
             // Send message button
-            if (e.target.closest('#send-message')) this.sendMessage();
+            if (e.target.closest('#send-message-btn')) this.sendMessage();
 
         });
 

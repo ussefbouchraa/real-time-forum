@@ -63,6 +63,7 @@ setups.HomeEvents = (app) => {
                 }, 1000)
             })();
         }
+        
         // Handle reaction buttons
         const reactionBtn = e.target.closest('.reaction-btn');
         if (reactionBtn) {
@@ -83,13 +84,15 @@ setups.HomeEvents = (app) => {
     document.querySelectorAll('.toggle-buttons label').forEach(label => {
         label.addEventListener('click', (e) => {
             const target = e.target.getAttribute('for');
+            if (target === 'show-create') {
+                console.log("ASD");
+                document.querySelector('.create-section').style.display = 'block';
+                document.querySelector('.filter-section').style.display = 'none';
+            }
             if (target === 'show-filter') {
                 document.querySelector('.filter-section').style.display = 'block';
                 document.querySelector('.create-section').style.display = 'none';
-            } else if (target === 'show-create') {
-                document.querySelector('.filter-section').style.display = 'none';
-                document.querySelector('.create-section').style.display = 'block';
-            }
+            } 
         });
     });
     // fetch more posts on scroll
@@ -132,14 +135,4 @@ setups.AuthEvents = (formType, app) => {
     }
 }
 
-// Setup private messages events
-setups.PrivateMessagesEvents = () => {
-    // User list items click event
-    document.querySelectorAll('.user-list-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            const userId = item.getAttribute('data-user-id');
-            // this.openChat(userId);
-        });
-    });
-}
 

@@ -488,7 +488,7 @@ main {
 }
 
 .create-section {
-    display: none;
+    display: block;
 }
 
 /* Show active section */

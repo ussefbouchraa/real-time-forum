@@ -20,8 +20,10 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set security headers
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' ws://localhost:8080; object-src 'none'; frame-ancestors 'none';")
+		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
+	// Set cachign policy
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -60,7 +62,9 @@ func main() {
 	// API routes
 	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/ws", auth.WebSocketHandler)
-	http.HandleFunc("/posts", posts.PostsHandler)
+	http.HandleFunc("/api/posts", posts.PostsHandler)
+	http.HandleFunc("/api/comments", posts.CommentHandler)
+	http.HandleFunc("/api/reactions", posts.ReactionHandler)
 
 	// Start a background goroutine that periodically cleans up expired sessions
 	// using the indexed 'expires_at' column to keep the database search performant
