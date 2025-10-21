@@ -1,19 +1,7 @@
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 
-// Throttle utility to limit how often a function can be called.
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
+
 class RealTimeForum {
     constructor() {
         this.isAuthenticated = false;
@@ -186,8 +174,8 @@ class RealTimeForum {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 // Attach scroll listener only after the chat container is rendered
-                const chatMessagesContainer = document.getElementById('chat-messages');
-                if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
+                // const chatMessagesContainer = document.getElementById('chat-messages');
+                // if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
                 setups.HomeEvents(this);
                 break;
             case 'login':

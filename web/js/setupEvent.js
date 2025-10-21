@@ -80,6 +80,23 @@ setups.HomeEvents = (app) => {
             // app.handleCreateComment(postId, e.target); // TODO: Uncomment when implemented
         });
     });
+
+    const chatMessagesContainer = document.getElementById('chat-messages');
+
+    if (chatMessagesContainer) {
+        function throttle(func, limit) {
+            let inThrottle;
+            return function () {
+                if (!inThrottle) {
+                    func.apply(this, arguments);
+                    inThrottle = true;
+                    setTimeout(() => inThrottle = false, limit);
+                }
+            };
+        }
+        chatMessagesContainer.addEventListener('scroll', throttle(app.handleChatScroll.bind(app), 200));
+    }
+
 }
 
 // Setup authentication events
