@@ -76,7 +76,7 @@ components.postToggleSection = (userData, formError) => {
                 <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                <p>👋Welcome, ${escapeHTML(userData.nickname)} </p>
+                <p>👋Welcome, ${escapeHTML(userData.data.nickname)} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -343,27 +343,27 @@ components.profile = (userData) => {
             <div class="profile-info">
                 <div class="profile-field">
                     <label>Nickname:</label>
-                    <span>${escapeHTML(userData.nickname)}</span>
+                    <span>${escapeHTML(userData.data.nickname)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Email:</label>
-                    <span>${escapeHTML(userData.email)}</span>
+                    <span>${escapeHTML(userData.data.email)}</span>
                 </div>
                 <div class="profile-field">
                     <label>First Name:</label>
-                    <span>${escapeHTML(userData.first_name)}</span>
+                    <span>${escapeHTML(userData.data.first_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Last Name:</label>
-                    <span>${escapeHTML(userData.last_name)}</span>
+                    <span>${escapeHTML(userData.data.last_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Age:</label>
-                    <span>${escapeHTML(userData.age)}</span>
+                    <span>${escapeHTML(userData.data.age)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Gender:</label>
-                    <span>${escapeHTML(userData.gender) || 'Not specified'}</span>
+                    <span>${escapeHTML(userData.data.gender) || 'Not specified'}</span>
                 </div>
             </div>
         </div>

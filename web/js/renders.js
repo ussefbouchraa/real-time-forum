@@ -15,6 +15,7 @@ renders.Navigation = (isAuthenticated) => {
 renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
+    
     try {
         // Initial posts load
         const response = await fetch('/api/posts', {
@@ -31,12 +32,11 @@ renders.Home = async (isAuthenticated, userData = {}) => {
                 throw new Error('Invalid session, please log in');
             }
             const errorText = await response.text();
-            console.log(errorText);
             throw new Error(errorText || `Failed to load post: ${response.status}`);
         }
 
         const data = await response.json();
-        if (!data.error) {
+        if (!data.error) {            
             userData.posts = data.posts;
             mainContent.innerHTML = components.home(isAuthenticated, userData);
             document.querySelector('.posts-loader').style.display = 'none';

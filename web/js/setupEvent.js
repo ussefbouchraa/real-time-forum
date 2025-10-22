@@ -85,7 +85,6 @@ setups.HomeEvents = (app) => {
         label.addEventListener('click', (e) => {
             const target = e.target.getAttribute('for');
             if (target === 'show-create') {
-                console.log("ASD");
                 document.querySelector('.create-section').style.display = 'block';
                 document.querySelector('.filter-section').style.display = 'none';
             }
