@@ -1,4 +1,3 @@
-import { components } from './components.js';
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 
@@ -59,7 +58,7 @@ class RealTimeForum {
             console.warn("WebSocket closed, trying to reconnect...");
             setTimeout(() => {
                 this.reconnectWS();
-            }, 50000);
+            }, 5000);
         });
 
         this.ws.addEventListener("error", (err) => {
@@ -95,8 +94,12 @@ class RealTimeForum {
                 if (data.status === "ok") {
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.userData = data.data.user;
+                    
                     this.isAuthenticated = true;
-                    window.location.hash = 'home';
+                    setTimeout(()=>{
+                        window.location.hash = 'home';
+                        this.router()
+                    },0)
                 } else {
                     localStorage.removeItem("session_id");
 

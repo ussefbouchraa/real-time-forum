@@ -55,7 +55,8 @@ components.navbar = (isAuthenticated = false) => {
 components.home = (isAuthenticated, userData = {}) => {
 
     const posts = userData.posts != null ? userData.posts : [];
-
+    console.log(userData);
+    
     return `
         ${isAuthenticated ? components.postToggleSection(userData) : ''}
         ${components.posts(posts, isAuthenticated)}
