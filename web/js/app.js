@@ -1,20 +1,8 @@
 import { components } from './components.js';
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
+import { throttle } from './utils.js'; // Import throttle from a new utility file
 
-// Throttle utility to limit how often a function can be called.
-function throttle(func, limit) {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
 class RealTimeForum {
     constructor() {
         this.isAuthenticated = false;
@@ -27,7 +15,8 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
-        this.init();
+        this.init(); // Initialize the application
+        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 300); // Throttle scroll events to 200ms
     }
 
     init() {
@@ -193,9 +182,6 @@ class RealTimeForum {
                 setTimeout(()=>{
                     if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
                 },1000)
-                const chatMessagesContainer = document.getElementById('chat-messages');
-                if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
-
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
                     window.__homeEventsInitialized = true;
@@ -607,9 +593,11 @@ class RealTimeForum {
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
-
+        
+        const chatMessagesContainer = document.getElementById('chat-messages');
         // Clear previous messages and prepare for new chat
-        document.getElementById('chat-messages').innerHTML = '';
+        chatMessagesContainer.innerHTML = '';
+        chatMessagesContainer.addEventListener('scroll', this.chatScrollHandler);
         this.loadMoreMessages();
     }
 
@@ -683,7 +671,11 @@ class RealTimeForum {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
-        document.getElementById('chat-messages').innerHTML = '';
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        if (chatMessagesContainer) {
+            chatMessagesContainer.innerHTML = '';
+            chatMessagesContainer.removeEventListener('scroll', this.chatScrollHandler);
+        }
         document.getElementById('message-input').value = '';
     }
 
@@ -693,11 +685,12 @@ class RealTimeForum {
     }
 
     handleChatScroll(e) {
-        // If we are already loading or not at the top, do nothing.
-        if (this.isLoadingMessages || e.target.scrollTop !== 0) {
-            return;
+        const chatMessagesContainer = e.target;
+        // Only attempt to load more messages if the user has scrolled to the very top (or near the top)
+        // The `isLoadingMessages` check is handled inside `loadMoreMessages`.
+        if (chatMessagesContainer.scrollTop <= 10) { // Use a small threshold (e.g., 10px) for better UX
+            this.loadMoreMessages();
         }
-        this.loadMoreMessages();
     }
 }
 
