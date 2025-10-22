@@ -2,6 +2,19 @@ import { components } from './components.js';
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 
+// Throttle utility to limit how often a function can be called.
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    };
+}
 class RealTimeForum {
     constructor() {
         this.isAuthenticated = false;
@@ -11,8 +24,9 @@ class RealTimeForum {
         this.isLoggingOut = false;
         this.activeFilters = null; // Track active filters
         this.activeChatUserId = null;
-        this.chatMessages = {};
-        this.sessionID = null;
+        this.chatOffsets = {}; // Stores message offset for each chat
+        this.isLoadingMessages = false; // Flag to prevent multiple loads
+        this.userList = [];
         this.init();
     }
 
@@ -23,10 +37,9 @@ class RealTimeForum {
     }
 
     setupWS() {
-        this.ws.addEventListener("open", () => {            
-            const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
+        this.ws.addEventListener("open", () => {
+            const session = localStorage.getItem('session_id');
             if (session) {
-
                 this.ws.send(JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: session } }
@@ -36,24 +49,23 @@ class RealTimeForum {
 
         this.ws.addEventListener("message", (event) => {
             this.BackToFrontPayload(event)
-        })
+        });
 
         this.ws.addEventListener("close", () => {
             if (this.isLoggingOut) {
-                this.isLoggingOut = false; // reset for next login
-                return; // Do NOT reconnect after logout
+                this.isLoggingOut = false;
+                return;
             }
             console.warn("WebSocket closed, trying to reconnect...");
             setTimeout(() => {
                 this.reconnectWS();
-            }, 5000);
+            }, 50000);
         });
 
         this.ws.addEventListener("error", (err) => {
             console.error('WebSocket error:', err);
             renders.Error('Connection to server lost. Please try again.');
         });
-
     }
 
     reconnectWS() {
@@ -64,46 +76,93 @@ class RealTimeForum {
             this.ws.onerror = null;
             this.ws.close();
         }
-
         this.ws = new WebSocket("ws://localhost:8080/ws");
         this.setupWS();
     }
 
-    // Handle incoming WebSocket messages
     BackToFrontPayload(event) {
         const data = JSON.parse(event.data);
         switch (data.type) {
             case "register_response":
                 if (data.status === "ok") {
-                    window.location.hash = 'login';
+                    window.location.hash = 'home';
                 } else {
                     renders.Error(data.error)
                 }
                 break;
             case "session_response":
-            case "login_response":    
-            
-            if (data.status === "ok") {
+            case "login_response":
+                if (data.status === "ok") {
                     localStorage.setItem("session_id", data.data.user.session_id);
-                    this.userData.data = data.data.user;
+                    this.userData = data.data.user;
                     this.isAuthenticated = true;
-                    
-                    // Make sure user data is set before routing
-                    setTimeout(() => {
-                        window.location.hash = 'home';
-                        this.router(); // Explicitly call router after setting user data
-                    }, 0);
+                    window.location.hash = 'home';
                 } else {
                     localStorage.removeItem("session_id");
-                    this.isAuthenticated = false;
-                    this.userData.data = undefined;
+
                     this.sessionID = null;
                     renders.Error(data.error)
                 }
                 break;
+            case "users_list":
+                if (data.status === "ok") {
+                    this.userList = data.data;
+                    renders.Users(this.userList, this.userData);
+                } else { renders.Error(data.error) }
+                break;
+
+            case "private_message":
+                if (data.status === "ok") {
+                    const msg = data.data;
+                    const isOwn = msg.sender_id === this.userData.user_id;
+                    const otherUserId = isOwn ? msg.recipient_id : msg.sender_id;
+
+                    // Always update the last message preview in the sidebar
+                    this.updateLastMessage(otherUserId, msg.content, msg.created_at);
+
+                    // If the chat is open, display the message.
+                    if (otherUserId === this.activeChatUserId) {
+                        this.displayChatMessage(msg, isOwn);
+                    } else if (!isOwn) { // Otherwise, if it's a message from someone else, show a notification.
+                        this.showNotification(otherUserId);
+                    }
+                } else {
+                    renders.Error(data.error);
+                }
+                break;
+
+            case "chat_history_response":
+                if (data.status === "ok") {
+                    const messages = data.data || []; // Messages arrive sorted DESC
+                    const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
+
+                    if (messages.length === 0) {
+                        this.isLoadingMessages = false; // No more messages to load
+                        return;
+                    }
+
+                    const chatMessagesContainer = document.getElementById('chat-messages');
+                    const oldScrollHeight = chatMessagesContainer.scrollHeight;
+
+                    messages.reverse(); // Reverse to prepend in correct chronological order
+                    const messagesHTML = messages.map(msg => {
+                        const isOwn = msg.sender_id === this.userData.user_id;
+                        return renders.ChatMessage(msg, isOwn);
+                    }).join('');
+
+                    chatMessagesContainer.insertAdjacentHTML('afterbegin', messagesHTML);
+                    this.chatOffsets[this.activeChatUserId] += messages.length;
+
+                    if (isInitialLoad) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                    else chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight - oldScrollHeight;
+                    this.isLoadingMessages = false;
+                } else {
+                    renders.Error(data.error);
+                }
+                break;
         }
     }
-    // Router function to handle navigation
+
     router() {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
@@ -113,12 +172,12 @@ class RealTimeForum {
         this.isAuthenticated = !!sessionId;
 
         renders.Navigation(this.isAuthenticated);
-        setups.NavigationEvents()
+        setups.NavigationEvents();
 
         // Redirect to login or home depending on authentication if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
-
+        
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login'; return;
         }
@@ -126,9 +185,17 @@ class RealTimeForum {
             window.location.hash = 'home'; return;
         }
 
+        
         switch (path) {
-            case 'home' :
+            case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
+                // Attach scroll listener only after the chat container is rendered
+                setTimeout(()=>{
+                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
+                },1000)
+                const chatMessagesContainer = document.getElementById('chat-messages');
+                if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
+
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
                     window.__homeEventsInitialized = true;
@@ -141,7 +208,6 @@ class RealTimeForum {
             case 'register':
                 renders.Register()
                 setups.AuthEvents('register', this);
-
                 break;
             case 'profile':
                 renders.Profile(this.userData);
@@ -150,26 +216,24 @@ class RealTimeForum {
                 this.handleLogout();
                 break;
             default:
+
+                // renders.StatusPage()
                 renders.Error("NOT FOUND")
-            // renderHome();
         }
     }
 
     // Setup event listeners
     setupEventListeners() {
-        // Handle hash changes for SPA routing
         window.addEventListener('hashchange', () => {
             this.router();
         });
 
-        // storage listener
         window.addEventListener('storage', (event) => {
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: event.newValue } }
                 });
-
                 this.sendWS(sessionPayload);
             } else if (event.key === 'session_id' && !event.newValue) {
                 this.handleLogout();
@@ -186,9 +250,10 @@ class RealTimeForum {
             // Close chat button
             if (e.target.closest('.close-btn')) this.closeChat();
             // Send message button
-            if (e.target.closest('#send-message')) this.sendMessage();
+            if (e.target.closest('#send-message-btn')) this.sendMessage();
 
         });
+
     }
 
     sendWS(payload) {
@@ -216,11 +281,9 @@ class RealTimeForum {
             type: "login",
             data: { user: { email_or_nickname: emailOrNickname, password: password } }
         });
-        
         this.sendWS(loginPayload);
     }
 
-    // Handle registration
     handleRegister() {
         const ageVal = parseInt(document.getElementById("age").value) || 0;
         const registerPayload = JSON.stringify({
@@ -237,24 +300,18 @@ class RealTimeForum {
                 }
             }
         });
-
-        this.sendWS(registerPayload)
+        this.sendWS(registerPayload);
     }
-
-    // Handle logout
 
     handleLogout() {
         this.isAuthenticated = false;
         this.isLoggingOut = true;
         this.userData = {};
         localStorage.removeItem('session_id');
-
-        // Close WebSocket connection
         if (this.ws) {
             this.ws.close();
             this.ws = null;
         }
-
         // Close chat if open
         this.closeChat();
 
@@ -537,37 +594,91 @@ class RealTimeForum {
     }
 }
 
-    // Open chat with a user
     openChat(userId) {
+
+        const user = this.userList.find(u => u.id === userId);
+        if (!user) {
+            console.error("Cannot open chat: User not found in list.", userId);
+            return;
+        }
         this.activeChatUserId = userId;
+        this.chatOffsets[userId] = 0; // Reset offset when opening a new chat
+        this.hideNotification(userId); // Hide notification when chat is opened
+        const chatContainer = document.getElementById('active-chat-container');
+        chatContainer.style.display = 'block';
+        document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
 
-        // Get user info from the list (in a real app, you'd fetch this from server)
-        const userItems = document.querySelectorAll('.user-list-item');
-        let userInfo = null;
+        // Clear previous messages and prepare for new chat
+        document.getElementById('chat-messages').innerHTML = '';
+        this.loadMoreMessages();
+    }
 
-        userItems.forEach(item => {
-            if (item.getAttribute('data-user-id') === userId) {
-                const userNameElement = item.querySelector('.user-name');
-                if (userNameElement) {
-                    userInfo = { id: userId, name: userNameElement.textContent };
+    loadMoreMessages() {
+        if (!this.activeChatUserId || this.isLoadingMessages) return;
+        this.isLoadingMessages = true;
+        const offset = this.chatOffsets[this.activeChatUserId] || 0;
+        this.sendWS(JSON.stringify({
+            type: "get_chat_history",
+            data: { with_user_id: this.activeChatUserId, limit: 10, offset: offset }
+        }));
+    }
+
+    sendMessage() {
+        const input = document.getElementById('message-input');
+        const messageText = input.value.trim();
+        if (messageText && this.activeChatUserId) {
+            const payload = {
+                type: "private_message",
+                data: {
+                    recipient_id: this.activeChatUserId,
+                    content: messageText,
                 }
-            }
-        });
+            };
+            this.sendWS(JSON.stringify(payload));
 
-        if (userInfo) {
-            // Show chat container
-            const chatContainer = document.getElementById('active-chat-container');
-            chatContainer.style.display = 'block';
-
-            // Update chat header
-            document.getElementById('chat-with-user').textContent = `Chat with ${userInfo.name}`;
-
-            // Load messages (in a real app, you'd fetch from server)
-            // this.loadChatMessages(userId);
+            input.value = '';
         }
     }
 
-    // Close active chat
+    displayChatMessage(message, isOwn) {
+        // Append message to chat UI
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        if (chatMessagesContainer) {
+            const messageEl = document.createElement('div');
+            messageEl.innerHTML = renders.ChatMessage(message, isOwn);
+            chatMessagesContainer.appendChild(messageEl.firstElementChild);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Auto-scroll to the latest message
+        }
+    }
+
+    updateLastMessage(userId, content, timestamp) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            const lastMsgEl = userItem.querySelector('.last-message');
+            const lastTimeEl = userItem.querySelector('.last-time');
+            if (lastMsgEl) {
+                lastMsgEl.textContent = content.length > 25 ? content.substring(0, 25) + '...' : content;
+            }
+            if (lastTimeEl) {
+                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+            }
+        }
+    }
+
+    showNotification(userId) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.notification-dot')?.classList.remove('hidden');
+        }
+    }
+
+    hideNotification(userId) {
+        const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
+        if (userItem) {
+            userItem.querySelector('.notification-dot')?.classList.add('hidden');
+        }
+    }
+
     closeChat() {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
@@ -578,13 +689,18 @@ class RealTimeForum {
 
     toggleSideBar() {
         const sidebar = document.querySelector('.sidebar-container');
-        if (sidebar) sidebar.classList.toggle('hide')
+        if (sidebar) sidebar.classList.toggle('hide');
     }
 
+    handleChatScroll(e) {
+        // If we are already loading or not at the top, do nothing.
+        if (this.isLoadingMessages || e.target.scrollTop !== 0) {
+            return;
+        }
+        this.loadMoreMessages();
+    }
 }
 
-// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.forumApp = new RealTimeForum();
 });
-

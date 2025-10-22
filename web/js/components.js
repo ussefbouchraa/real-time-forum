@@ -52,12 +52,12 @@ components.navbar = (isAuthenticated = false) => {
 };
 
 // Home/Layout Component
-components.home = (isAuthenticated, userData) => {
-    console.log("NNN:",userData);
-    
-    const posts = userData.posts != null ? userData.posts : [];    
+components.home = (isAuthenticated, userData = {}) => {
+
+    const posts = userData.posts != null ? userData.posts : [];
+
     return `
-        ${components.postToggleSection(userData)}
+        ${isAuthenticated ? components.postToggleSection(userData) : ''}
         ${components.posts(posts, isAuthenticated)}
         ${components.chatSidebar()}
         <button class="chat-toggle-btn">💬</button>
@@ -67,8 +67,6 @@ components.home = (isAuthenticated, userData) => {
 
 // Post Toggle Section Component
 components.postToggleSection = (userData, formError) => {
-    console.log("TTT" , userData);
-    
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" hidden>
@@ -78,7 +76,7 @@ components.postToggleSection = (userData, formError) => {
                 <label for="show-create">➕ Make a Post</label>
             </div>
             <div class="Welcome-msg">
-                <p>👋Welcome, ${escapeHTML(userData.data.nickname)} </p>
+                <p>👋Welcome, ${escapeHTML(userData.nickname)} </p>
             </div>
 
             ${formError ? components.errorPopup(formError) : ''}
@@ -345,27 +343,27 @@ components.profile = (userData) => {
             <div class="profile-info">
                 <div class="profile-field">
                     <label>Nickname:</label>
-                    <span>${escapeHTML(userData.data.nickname)}</span>
+                    <span>${escapeHTML(userData.nickname)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Email:</label>
-                    <span>${escapeHTML(userData.data.email)}</span>
+                    <span>${escapeHTML(userData.email)}</span>
                 </div>
                 <div class="profile-field">
                     <label>First Name:</label>
-                    <span>${escapeHTML(userData.data.first_name)}</span>
+                    <span>${escapeHTML(userData.first_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Last Name:</label>
-                    <span>${escapeHTML(userData.data.last_name)}</span>
+                    <span>${escapeHTML(userData.last_name)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Age:</label>
-                    <span>${escapeHTML(userData.data.age)}</span>
+                    <span>${escapeHTML(userData.age)}</span>
                 </div>
                 <div class="profile-field">
                     <label>Gender:</label>
-                    <span>${escapeHTML(userData.data.gender) || 'Not specified'}</span>
+                    <span>${escapeHTML(userData.gender) || 'Not specified'}</span>
                 </div>
             </div>
         </div>
