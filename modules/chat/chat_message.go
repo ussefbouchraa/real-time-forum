@@ -1,4 +1,5 @@
-package auth
+package chat
+
 
 import (
 	"real-time-forum/modules/core"
@@ -68,16 +69,3 @@ func GetOnlyUsers() ([]User, error) {
 	return users, nil
 }
 
-func broadcastUsersList() {
-	users, _ := GetUsers()
-
-	for i := range users {
-		if _, ok := clients[users[i].ID]; ok {
-			users[i].IsOnline = true
-		}
-	}
-	// Send updated list to all connected clients
-	for _, conn := range clients {
-		writeResponse(conn, "users_list", "ok", users, "")
-	}
-}

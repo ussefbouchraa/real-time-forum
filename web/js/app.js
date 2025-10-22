@@ -687,7 +687,6 @@ class RealTimeForum {
     handleChatScroll(e) {
         const chatMessagesContainer = e.target;
         // Only attempt to load more messages if the user has scrolled to the very top (or near the top)
-        // The `isLoadingMessages` check is handled inside `loadMoreMessages`.
         if (chatMessagesContainer.scrollTop <= 10) { // Use a small threshold (e.g., 10px) for better UX
             this.loadMoreMessages();
         }
