@@ -52,12 +52,12 @@ components.navbar = (isAuthenticated = false) => {
 };
 
 // Home/Layout Component
-components.home = (isAuthenticated, userData = {}) => {
-
-    const posts = userData.posts != null ? userData.posts : [];
-
+components.home = (isAuthenticated, userData) => {
+    console.log("NNN:",userData);
+    
+    const posts = userData.posts != null ? userData.posts : [];    
     return `
-        ${isAuthenticated ? components.postToggleSection(userData) : ''}
+        ${components.postToggleSection(userData)}
         ${components.posts(posts, isAuthenticated)}
         ${components.chatSidebar()}
         <button class="chat-toggle-btn">💬</button>
@@ -67,6 +67,8 @@ components.home = (isAuthenticated, userData = {}) => {
 
 // Post Toggle Section Component
 components.postToggleSection = (userData, formError) => {
+    console.log("TTT" , userData);
+    
     return `
         <div class="post-toggle-wrapper">
             <input type="radio" name="post-toggle" id="show-filter" hidden>

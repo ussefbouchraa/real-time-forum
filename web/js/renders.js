@@ -12,7 +12,7 @@ renders.Navigation = (isAuthenticated) => {
 }
 
 // Render home page with 3 initial posts
-renders.Home = async (isAuthenticated, userData = {}) => {
+renders.Home = async (isAuthenticated, userData) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
     
@@ -36,8 +36,11 @@ renders.Home = async (isAuthenticated, userData = {}) => {
         }
 
         const data = await response.json();
-        if (!data.error) {            
-            userData.posts = data.posts;
+        if (!data.error) {               
+                // console.log("LLL2", data)
+                userData.posts = data.posts;
+                console.log("LLL", userData);
+                
             mainContent.innerHTML = components.home(isAuthenticated, userData);
             document.querySelector('.posts-loader').style.display = 'none';
             return

@@ -23,7 +23,7 @@ class RealTimeForum {
     }
 
     setupWS() {
-        this.ws.addEventListener("open", () => {
+        this.ws.addEventListener("open", () => {            
             const session = this.sessionID != null ? this.sessionID : localStorage.getItem('session_id');
             if (session) {
 
@@ -46,7 +46,7 @@ class RealTimeForum {
             console.warn("WebSocket closed, trying to reconnect...");
             setTimeout(() => {
                 this.reconnectWS();
-            }, 50000);
+            }, 5000);
         });
 
         this.ws.addEventListener("error", (err) => {
@@ -55,8 +55,6 @@ class RealTimeForum {
         });
 
     }
-
-
 
     reconnectWS() {
         if (this.ws) {
@@ -77,22 +75,28 @@ class RealTimeForum {
         switch (data.type) {
             case "register_response":
                 if (data.status === "ok") {
-                    window.location.hash = 'home';
+                    window.location.hash = 'login';
                 } else {
                     renders.Error(data.error)
                 }
                 break;
             case "session_response":
-            case "login_response":                
-                if (data.status === "ok") {
-
+            case "login_response":    
+            
+            if (data.status === "ok") {
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.userData.data = data.data.user;
                     this.isAuthenticated = true;
-                    window.location.hash = 'home';
+                    
+                    // Make sure user data is set before routing
+                    setTimeout(() => {
+                        window.location.hash = 'home';
+                        this.router(); // Explicitly call router after setting user data
+                    }, 0);
                 } else {
                     localStorage.removeItem("session_id");
                     this.isAuthenticated = false;
+                    this.userData.data = undefined;
                     this.sessionID = null;
                     renders.Error(data.error)
                 }
@@ -123,9 +127,7 @@ class RealTimeForum {
         }
 
         switch (path) {
-            case 'home':
-                console.log("1 :",this.userData);
-                
+            case 'home' :
                 renders.Home(this.isAuthenticated, this.userData)
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
