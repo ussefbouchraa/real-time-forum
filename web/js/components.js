@@ -1,7 +1,7 @@
 export const components = {};
 
 // Utility function to prevent XSS attacks
-export function escapeHTML(str) {
+function escapeHTML(str) {
     if (str === undefined || str === null) return '';
     return String(str)
         .replace(/&/g, '&amp;')
@@ -9,6 +9,14 @@ export function escapeHTML(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function formatMessage(message) {
+  return message
+    .trim()
+    .split(/\n+/)
+    .map(line => `<p>${line}</p>`)
+    .join('');
 }
 
 // Posts Component
@@ -437,7 +445,7 @@ components.chatMessage = (message, isOwn = false) => {
                 <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
                 <span class="message-time">${new Date(message.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
             </div>
-            <div class="message-content">${escapeHTML(message.content)}</div>
+            <div class="message-content">${formatMessage(escapeHTML(message.content))}</div>
         </div>
     `;
 };

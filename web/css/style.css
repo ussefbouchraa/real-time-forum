@@ -1363,6 +1363,10 @@ textarea {
     overflow-y: auto;
 }
 
+#message-input::placeholder {
+  color: rgb(255, 255, 255);
+}
+
 #send-message-btn {
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     color: white;
