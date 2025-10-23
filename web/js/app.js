@@ -40,7 +40,7 @@ class RealTimeForum {
             const session = localStorage.getItem('session_id');
             if (session) {
                 this.ws.send(JSON.stringify({
-                    type: "user_have_session",
+                    type: "session_check",
                     data: { user: { session_id: session } }
                 }));
             }
@@ -82,15 +82,15 @@ class RealTimeForum {
     BackToFrontPayload(event) {
         const data = JSON.parse(event.data);
         switch (data.type) {
-            case "register_response":
+            case "register_result":
                 if (data.status === "ok") {
                     window.location.hash = 'home';
                 } else {
                     renders.Error(data.error)
                 }
                 break;
-            case "session_response":
-            case "login_response":
+            case "session_check_result":
+            case "login_result":
                 if (data.status === "ok") {
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.userData = data.data.user;
@@ -134,7 +134,7 @@ class RealTimeForum {
                 }
                 break;
 
-            case "chat_history_response":
+            case "chat_history_result":
                 if (data.status === "ok") {
                     const messages = data.data || []; // Messages arrive sorted DESC
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
@@ -234,7 +234,7 @@ class RealTimeForum {
         window.addEventListener('storage', (event) => {
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
-                    type: "user_have_session",
+                    type: "session_check",
                     data: { user: { session_id: event.newValue } }
                 });
                 this.sendWS(sessionPayload);
