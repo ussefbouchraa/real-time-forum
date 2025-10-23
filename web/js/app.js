@@ -4,7 +4,7 @@ import { setups } from './setupEvent.js';
 // Throttle utility to limit how often a function can be called.
 function throttle(func, limit) {
     let inThrottle;
-    return function() {
+    return function () {
         const args = arguments;
         const context = this;
         if (!inThrottle) {
@@ -84,8 +84,8 @@ class RealTimeForum {
         switch (data.type) {
             case "register_result":
                 if (data.status === "ok") {
-                    window.location.hash = 'login';                    
-                    this.userData = data.data.user.email;                    
+                    window.location.hash = 'login';
+                    this.userData = data.data.user.email;
                 } else {
                     renders.Error(data.error)
                 }
@@ -96,12 +96,12 @@ class RealTimeForum {
                     this.userData = {};
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.userData = data.data.user;
-                    
+
                     this.isAuthenticated = true;
-                    setTimeout(()=>{
+                    setTimeout(() => {
                         window.location.hash = 'home';
                         this.router()
-                    },0)
+                    }, 0)
                 } else {
                     localStorage.removeItem("session_id");
 
@@ -182,7 +182,7 @@ class RealTimeForum {
         // Redirect to login or home depending on authentication if trying to access protected pages
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
-        
+
         if (!this.isAuthenticated && protectedPages.includes(path)) {
             window.location.hash = 'login'; return;
         }
@@ -190,14 +190,14 @@ class RealTimeForum {
             window.location.hash = 'home'; return;
         }
 
-        
+
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 // Attach scroll listener only after the chat container is rendered
-                setTimeout(()=>{
-                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
-                },1000)
+                setTimeout(() => {
+                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" })); }
+                }, 1000)
                 const chatMessagesContainer = document.getElementById('chat-messages');
                 if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
 
@@ -401,7 +401,7 @@ class RealTimeForum {
                 }
             }
             const data = await response.json();
-            
+
             if (!data.posts || data.posts.length === 0) {
                 document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
                 return
@@ -409,7 +409,7 @@ class RealTimeForum {
                 document.querySelector(`.loading-spinner`).style.display = "block";
                 document.querySelector(`.posts-loader`).style.display = "block";
             }
-            
+
             renders.PostsList(data.posts);
         } catch (err) {
             renders.Error(err.message);
@@ -500,7 +500,7 @@ class RealTimeForum {
             } else {
                 document.querySelector(`.loading-spinner`).style.display = "block";
                 document.querySelector(`.posts-loader`).style.display = "block";
-            }            
+            }
 
             if (Array.isArray(data.posts)) {
                 data.posts.forEach(post => renders.AddPost(post, "append"));
@@ -560,44 +560,44 @@ class RealTimeForum {
 
     async handleReaction({ postId, commentId, reactionType }) {
 
-    try {
-        const response = await fetch('/api/reactions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Session-ID': localStorage.getItem('session_id')
-            },
-            body: JSON.stringify({
-                post_id: postId || '',
-                comment_id: commentId || '',
-                reaction_type: reactionType // 1 for like, -1 for dislike
-            })
-        });
-        if (!response.ok) {
-            if (response.status === 401) {
-                window.location.hash = 'login';
-                throw new Error('Invalid session, please log in');
+        try {
+            const response = await fetch('/api/reactions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Session-ID': localStorage.getItem('session_id')
+                },
+                body: JSON.stringify({
+                    post_id: postId || '',
+                    comment_id: commentId || '',
+                    reaction_type: reactionType // 1 for like, -1 for dislike
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session, please log in');
+                }
+                const errorText = await response.text();
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to add reaction: ${response.status}`);
             }
-            const errorText = await response.text();
-            throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to add reaction: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        if (data.status === 'ok') {
-            const selector = postId 
-                ? `.forum-post[data-post-id="${postId}"]`
-                : `.comment[data-comment-id="${commentId}"]`;
-            const container = document.querySelector(selector);
-            if (container) {
-                container.querySelector('.like-btn').textContent = `👍 ${data.like_count}`;
-                container.querySelector('.dislike-btn').textContent = `👎 ${data.dislike_count}`;
+
+            const data = await response.json();
+            if (data.status === 'ok') {
+                const selector = postId
+                    ? `.forum-post[data-post-id="${postId}"]`
+                    : `.comment[data-comment-id="${commentId}"]`;
+                const container = document.querySelector(selector);
+                if (container) {
+                    container.querySelector('.like-btn').textContent = `👍 ${data.like_count}`;
+                    container.querySelector('.dislike-btn').textContent = `👎 ${data.dislike_count}`;
+                }
             }
+        } catch (err) {
+            renders.Error(err.message);
+            console.error('Reaction error:', err);
         }
-    } catch (err) {
-        renders.Error(err.message);
-        console.error('Reaction error:', err);
     }
-}
 
     openChat(userId) {
 
@@ -665,7 +665,7 @@ class RealTimeForum {
                 lastMsgEl.textContent = content.length > 25 ? content.substring(0, 25) + '...' : content;
             }
             if (lastTimeEl) {
-                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             }
         }
     }
@@ -693,8 +693,19 @@ class RealTimeForum {
     }
 
     toggleSideBar() {
+        const textarea = document.getElementById("message-input");
+        const sendBtn = document.getElementById("send-message-btn");
+
+        textarea.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.click();
+            }
+        });
+        
         const sidebar = document.querySelector('.sidebar-container');
         if (sidebar) sidebar.classList.toggle('hide');
+
     }
 
     handleChatScroll(e) {

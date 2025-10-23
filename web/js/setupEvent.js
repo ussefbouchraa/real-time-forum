@@ -63,7 +63,7 @@ setups.HomeEvents = (app) => {
                 }, 1000)
             })();
         }
-        
+
         // Handle reaction buttons
         const reactionBtn = e.target.closest('.reaction-btn');
         if (reactionBtn) {
@@ -85,16 +85,16 @@ setups.HomeEvents = (app) => {
         label.addEventListener('click', (e) => {
             const target = e.target.getAttribute('for');
             if (target === 'show-create') {
-                console.log("ASD");
                 document.querySelector('.create-section').style.display = 'block';
                 document.querySelector('.filter-section').style.display = 'none';
             }
             if (target === 'show-filter') {
                 document.querySelector('.filter-section').style.display = 'block';
                 document.querySelector('.create-section').style.display = 'none';
-            } 
+            }
         });
     });
+
     // fetch more posts on scroll
     let isFetchingPosts = false;
     window.addEventListener('scroll', () => {

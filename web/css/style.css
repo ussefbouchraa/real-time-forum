@@ -269,6 +269,7 @@ body {
     height: 310px;
 }
 
+
 .message {
     max-width: 80%;
     padding: 0.75rem;
@@ -1190,26 +1191,6 @@ textarea {
     background-color: #545b62;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .status-code {
-        font-size: 2.5rem;
-    }
-
-    .status-title {
-        font-size: 1.25rem;
-    }
-
-    .status-actions {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .btn {
-        width: 200px;
-    }
-}
-
 .notification-dot {
     background-color: #00aaff;
     width: 8px;
@@ -1229,25 +1210,32 @@ textarea {
         width: 250px;
     }
 
-    .chat-container {
-        right: 250px;
-        width: calc(100% - 250px);
-    }
-
     .sidebar-container.collapsed~.chat-container {
         right: 50px;
         width: calc(100% - 50px);
+    }
+
+    .status-code {
+        font-size: 2.5rem;
+    }
+
+    .status-title {
+        font-size: 1.25rem;
+    }
+
+    .status-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn {
+        width: 200px;
     }
 }
 
 @media (max-width: 1024px) {
     .sidebar-container {
         width: 240px;
-    }
-
-    .chat-container {
-        right: 200px;
-        width: calc(100% - 500px);
     }
 
     .sidebar-container.collapsed~.chat-container {
@@ -1259,10 +1247,6 @@ textarea {
 @media (max-width: 768px) {
     .sidebar-container {
         width: 230px;
-    }
-    .chat-container {
-        right: 0;
-        width: 100%;
     }
 
     .navbar {
@@ -1350,16 +1334,45 @@ textarea {
         max-width: 90%;
     }
 
-    .chat-container {
-        width: 100%;
-        right: 0;
-    }
 }
-
 .avatar {
     border: 1px solid #1e1e1e6e;
     width: 40px;
     height: 40px;
     border-radius: 50%;
     cursor: pointer;
+}
+
+.chat-container {
+    width: 59%;
+    left: 0;
+}
+
+#message-input {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+#send-message-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: 0.5s;
+}
+
+#send-message-btn:hover {
+    background: var(--primary-color);
 }
