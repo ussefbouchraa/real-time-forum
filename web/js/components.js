@@ -382,9 +382,11 @@ components.userListItem = (user) => {
         (user.lastMsg.length > 30 ?
             escapeHTML(user.lastMsg.substring(0, 30)) + '...' : escapeHTML(user.lastMsg)) : 'No messages yet';
 
+
     return `
         <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
-            <div class="user-avatar ${userStatus}"></div>
+      
+            <div class="user-avatar ${userStatus}"><img src="https://robohash.org/${userName}.png?size=50x50" class="avatar"/></div>
             <div class="user-info">
                 <div class="user-name">${userName}</div>
                 <div class="last-message">${lastMessagePreview}</div>

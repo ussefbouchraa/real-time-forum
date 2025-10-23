@@ -42,7 +42,7 @@ renders.Home = async (isAuthenticated, userData = {}) => {
             document.querySelector('.posts-loader').style.display = 'none';
             return
         }
-        
+
         mainContent.innerHTML = components.home(isAuthenticated, userData);
     } catch (error) {
         mainContent.innerHTML = components.errorPopup(error);
@@ -76,7 +76,7 @@ renders.PostsList = (posts) => {
 // Add a single new post to the list
 renders.AddPost = (post, mode = "prepend") => {
     const postsList = document.querySelector('.posts-list');  // Change to inner list
-    
+
     if (!postsList) return;
 
     const postHTML = components.post(post, true);
@@ -92,13 +92,13 @@ renders.AddPost = (post, mode = "prepend") => {
     }
 
     const noPosts = document.querySelector('.posts-list .no-post')
-    if (noPosts){
+    if (noPosts) {
         noPosts.style.display = 'none';
     }
 };
 
 // add a single new comment to a post
-renders.AddComment = (comment ,mode = "prepend") => {
+renders.AddComment = (comment, mode = "prepend") => {
     const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
     if (!commentSection) return;
 
@@ -173,12 +173,16 @@ renders.Users = (users, user) => {
 
     const onlineUsersList = document.getElementById('online-users-list');
     const offlineUsersList = document.getElementById('conversations-list')
-    if (!onlineUsersList || !offlineUsersList) return 
-    
+    if (!onlineUsersList || !offlineUsersList) return
+
     onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u)).join('');
     offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u)).join('');
-    
 
+    const umg = document.querySelector(".avatar")
+    umg.onerror = (err) => {
+        console.log("fdsfdsfsdf");
+        ;
+    };
     const handleClick = (e) => {
         const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
         if (item) {
@@ -187,8 +191,8 @@ renders.Users = (users, user) => {
         }
     }
 
-     onlineUsersList.onclick = handleClick 
-     offlineUsersList.onclick = handleClick 
+    onlineUsersList.onclick = handleClick
+    offlineUsersList.onclick = handleClick
 
 }
 

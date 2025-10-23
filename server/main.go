@@ -20,7 +20,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set security headers
 	w.Header().Set("Content-Security-Policy",
-		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;")
+		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://robohash.org;")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	// Set cachign policy
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
