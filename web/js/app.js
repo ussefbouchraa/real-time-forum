@@ -84,7 +84,8 @@ class RealTimeForum {
         switch (data.type) {
             case "register_result":
                 if (data.status === "ok") {
-                    window.location.hash = 'home';
+                    window.location.hash = 'login';                    
+                    this.userData = data.data.user.email;                    
                 } else {
                     renders.Error(data.error)
                 }
@@ -92,6 +93,7 @@ class RealTimeForum {
             case "session_check_result":
             case "login_result":
                 if (data.status === "ok") {
+                    this.userData = {};
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.userData = data.data.user;
                     
@@ -205,7 +207,7 @@ class RealTimeForum {
                 }
                 break;
             case 'login':
-                renders.Login()
+                renders.Login(this.userData)
                 setups.AuthEvents('login', this);
                 break;
             case 'register':
@@ -351,7 +353,7 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 }
                 const errorText = await response.text();
-                throw new Error(errorText || `Failed to create post: ${response.status}`);
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
             }
             const data = await response.json();
 
@@ -395,7 +397,7 @@ class RealTimeForum {
                     throw new Error('Invalid filter parameters');
                 } else {
                     const errorText = await response.text();
-                    throw new Error(errorText || `Failed to create post: ${response.status}`);
+                    throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
                 }
             }
             const data = await response.json();
@@ -433,7 +435,7 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 } else {
                     const errorText = await response.text();
-                    throw new Error(errorText || `Failed to create comment: ${response.status}`);
+                    throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create comment: ${response.status}`);
                 }
             }
             const data = await response.json();
@@ -488,7 +490,7 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 }
                 const errorText = await response.text();
-                throw new Error(errorText || `Failed to fetch post: ${response.status}`);
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to fetch post: ${response.status}`);
             }
             const data = await response.json();
 
@@ -539,7 +541,7 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 }
                 const errorText = await response.text();
-                throw new Error(errorText || `Failed to fetch comment: ${response.status}`);
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to fetch comment: ${response.status}`);
             }
             const data = await response.json();
             if (!data.comments || data.comments.length === 0 || data.error) {
@@ -577,7 +579,7 @@ class RealTimeForum {
                 throw new Error('Invalid session, please log in');
             }
             const errorText = await response.text();
-            throw new Error(errorText || `Failed to add reaction: ${response.status}`);
+            throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to add reaction: ${response.status}`);
         }
         
         const data = await response.json();

@@ -256,7 +256,8 @@ components.comment = (comment, isAuthenticated) => {
 };
 
 // Login Component
-components.login = () => {
+components.login = (userData = {}) => {    
+    const email = Object.keys(userData).length === 0 ? '' : userData;
     return `
         <div class="auth-container">
             <div class="login_container">
@@ -265,7 +266,7 @@ components.login = () => {
                     <div class="error-container"></div>
                     
                     <label for="email_or_nickname">Email or Nickname</label>
-                    <input type="text" id="email_or_nickname" name="identifier" placeholder="Enter your email or nickname" >
+                    <input type="text" id="email_or_nickname" name="identifier" value="${email}" placeholder="Enter your email or nickname" >
                     
                     <label for="password">Password</label>
                     <input type="password" id="password" name="password" placeholder="Enter your password">

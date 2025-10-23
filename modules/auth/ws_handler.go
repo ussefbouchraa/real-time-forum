@@ -105,12 +105,12 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		case "session_check":
 			session, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
-				writeResponse(conn, "session_check_result", "error", "", "Invalid data format : session")
+				writeResponse(conn, "session_check_result", "error", "", "Invalid session data format")
 				continue
 			}
 			sessionData, err := GetUserFromSessionID(session.User.SessionID)
 			if err != nil {
-				writeResponse(conn, "session_check_result", "error", "", err.Error())
+				writeResponse(conn, "session_check_result", "error", nil, "Session invalid or expired. Please log in again")
 				continue
 			}
 
@@ -135,7 +135,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		case "register":
 			registerData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
-				writeResponse(conn, "register_result", "error", nil, "Invalid data format : register")
+				writeResponse(conn, "register_result", "error", nil, "Invalid register data format")
 				continue
 			}
 
@@ -148,12 +148,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				errMsg = err.Error()
 			}
 
+			response.User.Email = registerData.User.Email
 			writeResponse(conn, "register_result", status, response, errMsg)
 		case "login":
 
 			loginData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
-				writeResponse(conn, "login_result", "error", nil, "Invalid data format")
+				writeResponse(conn, "login_result", "error", nil, "Invalid login data format")
 				continue
 			}
 
@@ -194,13 +195,13 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		case "private_message":
 			if currentUserID == "" {
-				writeResponse(conn, "private_message", "error", nil, "User not authenticated")
+				writeResponse(conn, "private_message", "error", nil, "You must be logged in to send messages")
 				continue
 			}
 
 			preparedMsg, err := chat.ProcessPrivateMessage(currentUserID, msg.Data)
 			if err != nil {
-				writeResponse(conn, "private_message", "error", nil, "Invalid message format")
+				writeResponse(conn, "private_message", "error", nil, "Message could not be sent: invalid format")
 				continue
 			}
 
@@ -219,7 +220,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		case "get_chat_history":
 			if currentUserID == "" {
-				writeResponse(conn, "chat_history_result", "error", nil, "User not authenticated")
+				writeResponse(conn, "chat_history_result", "error", nil, "You must be logged in to view chat history")
 				continue
 			}
 			var payload struct {
@@ -228,7 +229,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				Offset     int    `json:"offset"`
 			}
 			if err := json.Unmarshal(msg.Data, &payload); err != nil {
-				writeResponse(conn, "chat_history_result", "error", nil, "Invalid request format")
+				writeResponse(conn, "chat_history_result", "error", nil, "Failed to fetch chat history: invalid request")
 				continue
 			}
 			if payload.Limit == 0 {
@@ -236,7 +237,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			} // Default to 10
 			history, err := chat.GetChatHistory(currentUserID, payload.WithUserID, payload.Limit, payload.Offset)
 			if err != nil {
-				writeResponse(conn, "chat_history_result", "error", nil, "Could not retrieve chat history")
+				writeResponse(conn, "chat_history_result", "error", nil, "Unable to retrieve chat history. Please try again")
 				continue
 			}
 			writeResponse(conn, "chat_history_result", "ok", history, "")

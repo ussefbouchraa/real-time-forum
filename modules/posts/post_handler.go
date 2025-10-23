@@ -49,7 +49,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		post, err := postService.CreatePost(userID, newPost)
 		if err != nil {
-			http.Error(w, fmt.Sprintf(`"%s"}`, err.Error()), http.StatusBadRequest)
+			http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
@@ -172,7 +172,7 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 			comment, err := commentService.CreateComment(userID, newComment.PostID, newComment.Content)
 			if err != nil {
 				log.Printf("❌ Create comment error: %v", err)
-				http.Error(w, fmt.Sprintf(`"%s"}`, err.Error()), http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf(`{"error": "%s"}`, err.Error()), http.StatusBadRequest)
 				return
 			}
 			w.WriteHeader(http.StatusCreated)

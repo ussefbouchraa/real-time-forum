@@ -136,9 +136,9 @@ renders.updatePostStats = (post_id, Statustype) => {
 }
 
 // Render login page
-renders.Login = () => {
+renders.Login = (userData = {}) => {
     const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = components.login();
+    mainContent.innerHTML = components.login(userData);
 }
 
 // Render register page
