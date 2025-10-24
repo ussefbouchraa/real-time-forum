@@ -178,11 +178,6 @@ renders.Users = (users, user) => {
     onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u)).join('');
     offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u)).join('');
 
-    const umg = document.querySelector(".avatar")
-    umg.onerror = (err) => {
-        console.log("fdsfdsfsdf");
-        ;
-    };
     const handleClick = (e) => {
         const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
         if (item) {

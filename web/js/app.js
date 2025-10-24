@@ -39,10 +39,10 @@ class RealTimeForum {
         this.ws.addEventListener("open", () => {
             const session = localStorage.getItem('session_id');
             if (session) {
-                this.ws.send(JSON.stringify({
+                this.sendWS((JSON.stringify({
                     type: "session_check",
                     data: { user: { session_id: session } }
-                }));
+                })));
             }
         });
 
@@ -190,13 +190,16 @@ class RealTimeForum {
             window.location.hash = 'home'; return;
         }
 
-
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
                 // Attach scroll listener only after the chat container is rendered
                 setTimeout(() => {
-                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" })); }
+                    if (this.isAuthenticated) {
+                        this.sendWS(JSON.stringify(
+                            { type: "users_list" }
+                        ));
+                    }
                 }, 1000)
                 const chatMessagesContainer = document.getElementById('chat-messages');
                 if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
@@ -632,6 +635,8 @@ class RealTimeForum {
         const input = document.getElementById('message-input');
         const messageText = input.value.trim();
         if (messageText && this.activeChatUserId) {
+            console.log(this.activeChatUserId);
+            
             const payload = {
                 type: "private_message",
                 data: {
@@ -702,7 +707,7 @@ class RealTimeForum {
                 sendBtn.click();
             }
         });
-        
+
         const sidebar = document.querySelector('.sidebar-container');
         if (sidebar) sidebar.classList.toggle('hide');
 
