@@ -685,6 +685,7 @@ class RealTimeForum {
     handleChatScroll(e) {
         const chatMessagesContainer = e.target;
         if (chatMessagesContainer.scrollTop <= 20) {
+            this.loadMoreMessages();
         }
     }
 }
