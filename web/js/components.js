@@ -262,7 +262,7 @@ components.comment = (comment, isAuthenticated) => {
 };
 
 // Login Component
-components.login = (userData = {}) => {    
+components.login = (userData = {}) => {
     const email = Object.keys(userData).length === 0 ? '' : userData;
     return `
         <div class="auth-container">
@@ -380,11 +380,11 @@ components.profile = (userData) => {
 
 // User List Item Component (for private messages)
 components.userListItem = (user) => {
-    
+
     const userName = escapeHTML(user.nickname) || "unknown";
     const userStatus = user.isOnline ? 'online' : 'offline';
-    const lastMessageTime = user.lastMsg ? new Date(user.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'}) : '';
-    const lastMessagePreview = user.lastMsg?
+    const lastMessageTime = user.lastMsg && user.created_at ? new Date(parseInt(user.created_at)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
+    const lastMessagePreview = user.lastMsg ?
         (user.lastMsg.length > 30 ?
             escapeHTML(user.lastMsg.substring(0, 30)) + '...' : escapeHTML(user.lastMsg)) : 'No messages yet';
 
@@ -435,18 +435,20 @@ components.chatSidebar = () => {
     `;
 };
 
-// Chat Message Component
 components.chatMessage = (message, isOwn = false) => {
+
     return `
         <div class="message ${isOwn ? 'own-message' : 'other-message'}">
             <div class="message-header">
                 <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
-                <span class="message-time">${new Date(message.created_at).toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'})}</span>
+                <span class="message-time">${new Date(parseInt(message.created_at)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
-            <div class="message-content">${formatMessage(escapeHTML(message.content))}</div>
+            <div class="message-content">${escapeHTML(message.content)}</div>
         </div>
     `;
 };
+
+
 
 // Error Popup Component
 components.errorPopup = (message) => {

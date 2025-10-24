@@ -15,7 +15,7 @@ class RealTimeForum {
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
         this.init(); // Initialize the application
-        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 300);
+        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
     }
 
     init() {
@@ -97,6 +97,7 @@ class RealTimeForum {
                 }
                 break;
             case "users_list":
+                console.log("users_list", data.data)
                 if (data.status === "ok") {
                     this.userList = data.data;
                     renders.Users(this.userList, this.userData);
@@ -104,11 +105,12 @@ class RealTimeForum {
                 break;
 
             case "private_message":
+            console.log("prvate_message", data.data)
+
                 if (data.status === "ok") {
                     const msg = data.data;
                     const isOwn = msg.sender_id === this.userData.user_id;
                     const otherUserId = isOwn ? msg.recipient_id : msg.sender_id;
-
                     // Always update the last message preview in the sidebar
                     this.updateLastMessage(otherUserId, msg.content, msg.created_at);
 
@@ -124,7 +126,9 @@ class RealTimeForum {
                 break;
 
             case "chat_history_result":
-                if (data.status === "ok") {
+                        console.log("chat_history", data.data)
+    
+            if (data.status === "ok") {
                     const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
 
@@ -136,7 +140,7 @@ class RealTimeForum {
                     const chatMessagesContainer = document.getElementById('chat-messages');
                     const oldScrollHeight = chatMessagesContainer.scrollHeight;
 
-                    messages.reverse(); // Reverse to prepend in correct chronological order
+                    messages.reverse(); // Reverse to prepend in correct order
                     const messagesHTML = messages.map(msg => {
                         const isOwn = msg.sender_id === this.userData.user_id;
                         return renders.ChatMessage(msg, isOwn);
@@ -176,7 +180,6 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                // Attach scroll listener only after the chat container is rendered
                 setTimeout(() => {
                     if (this.isAuthenticated) {
                         this.sendWS(JSON.stringify(
@@ -228,7 +231,7 @@ class RealTimeForum {
             }
             if (!event.newValue || event.newValue !== this.sessionID) {
                 this.handleLogout();
-            } 
+            }
         });
 
         // Close error popups when clicked
@@ -294,7 +297,7 @@ class RealTimeForum {
         this.sendWS(registerPayload);
     }
 
-    handleLogout() {        
+    handleLogout() {
         this.isAuthenticated = false;
         this.isLoggingOut = true;
         this.userData = {};
@@ -598,9 +601,9 @@ class RealTimeForum {
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
-        
+
         const chatMessagesContainer = document.getElementById('chat-messages');
-        // Clear previous messages and prepare for new chat
+        // // Clear previous messages and prepare for new chat
         chatMessagesContainer.innerHTML = '';
         chatMessagesContainer.addEventListener('scroll', this.chatScrollHandler);
         this.loadMoreMessages();
@@ -620,8 +623,6 @@ class RealTimeForum {
         const input = document.getElementById('message-input');
         const messageText = input.value.trim();
         if (messageText && this.activeChatUserId) {
-            console.log(this.activeChatUserId);
-            
             const payload = {
                 type: "private_message",
                 data: {
@@ -630,7 +631,6 @@ class RealTimeForum {
                 }
             };
             this.sendWS(JSON.stringify(payload));
-
             input.value = '';
         }
     }
@@ -655,7 +655,7 @@ class RealTimeForum {
                 lastMsgEl.textContent = content.length > 25 ? content.substring(0, 25) + '...' : content;
             }
             if (lastTimeEl) {
-                lastTimeEl.textContent = new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                lastTimeEl.textContent = new Date(parseInt(timestamp)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             }
         }
     }
@@ -683,7 +683,7 @@ class RealTimeForum {
             chatMessagesContainer.innerHTML = '';
             chatMessagesContainer.removeEventListener('scroll', this.chatScrollHandler);
         }
-        document.getElementById('message-input').value = '';
+        // document.getElementById('message-input').value = '';
     }
 
     toggleSideBar() {
@@ -704,7 +704,7 @@ class RealTimeForum {
 
     handleChatScroll(e) {
         const chatMessagesContainer = e.target;
-        if (chatMessagesContainer.scrollTop <= 20) {
+        if (chatMessagesContainer.scrollTop <= 100) {
             this.loadMoreMessages();
         }
     }

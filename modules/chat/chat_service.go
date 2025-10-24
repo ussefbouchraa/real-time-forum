@@ -34,12 +34,12 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 		senderNickname = "Unknown"
 	}
 
-	pm.SenderID = senderID
-	pm.SenderNickname = senderNickname
-	pm.CreatedAt = time.Now().Format(time.RFC3339)
-
 	// Save the message to the database
 	messageID := uuid.New().String()
+	pm.SenderID = senderID
+	pm.SenderNickname = senderNickname
+	pm.CreatedAt = fmt.Sprintf("%d", time.Now().UnixMilli())
+
 	_, err = core.Db.Exec(
 		"INSERT INTO private_messages (message_id, sender_id, recipient_id, content, created_at) VALUES (?, ?, ?, ?, ?)",
 		messageID, pm.SenderID, pm.RecipientID, pm.Content, pm.CreatedAt,

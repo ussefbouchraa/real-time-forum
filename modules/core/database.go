@@ -189,7 +189,7 @@ func createPrvMsgsTable() {
         sender_id TEXT NOT NULL,
         recipient_id TEXT NOT NULL,
         content TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at BIGINT NOT NULL,
         FOREIGN KEY (sender_id) REFERENCES users(user_id),
         FOREIGN KEY (recipient_id) REFERENCES users(user_id)
 );`
