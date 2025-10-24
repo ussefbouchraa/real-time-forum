@@ -247,3 +247,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func broadcastUsersList() {
+	users, _ := chat.GetUsers()
+
+	for i := range users {
+		if _, ok := clients[users[i].ID]; ok {
+			users[i].IsOnline = true
+		}
+	}
+	// Send updated list to all connected clients
+	for _, conn := range clients {
+		writeResponse(conn, "users_list", "ok", users, "")
+	}
+}

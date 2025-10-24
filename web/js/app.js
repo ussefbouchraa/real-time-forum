@@ -1,19 +1,7 @@
 import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
+import { throttle } from './utils.js'; // Import throttle from a new utility file
 
-// Throttle utility to limit how often a function can be called.
-function throttle(func, limit) {
-    let inThrottle;
-    return function () {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
 class RealTimeForum {
     constructor() {
         this.isAuthenticated = false;
@@ -26,7 +14,8 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
-        this.init();
+        this.init(); // Initialize the application
+        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 300);
     }
 
     init() {
@@ -95,17 +84,15 @@ class RealTimeForum {
                 if (data.status === "ok") {
                     this.userData = {};
                     localStorage.setItem("session_id", data.data.user.session_id);
+                    this.sessionID = data.data.user.session_id;
                     this.userData = data.data.user;
 
                     this.isAuthenticated = true;
-                    setTimeout(() => {
-                        window.location.hash = 'home';
-                        this.router()
-                    }, 0)
+                    this.router()
                 } else {
                     localStorage.removeItem("session_id");
-
                     this.sessionID = null;
+                    window.location.hash = 'login';
                     renders.Error(data.error)
                 }
                 break;
@@ -138,7 +125,7 @@ class RealTimeForum {
 
             case "chat_history_result":
                 if (data.status === "ok") {
-                    const messages = data.data || []; // Messages arrive sorted DESC
+                    const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
 
                     if (messages.length === 0) {
@@ -172,10 +159,6 @@ class RealTimeForum {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
-        // Check session status
-        const sessionId = this.sessionID || localStorage.getItem('session_id');
-        this.isAuthenticated = !!sessionId;
-
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents();
 
@@ -201,8 +184,6 @@ class RealTimeForum {
                         ));
                     }
                 }, 1000)
-                const chatMessagesContainer = document.getElementById('chat-messages');
-                if (chatMessagesContainer) chatMessagesContainer.addEventListener('scroll', throttle(this.handleChatScroll.bind(this), 200));
 
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
@@ -237,15 +218,17 @@ class RealTimeForum {
         });
 
         window.addEventListener('storage', (event) => {
+
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "session_check",
                     data: { user: { session_id: event.newValue } }
                 });
                 this.sendWS(sessionPayload);
-            } else if (event.key === 'session_id' && !event.newValue) {
-                this.handleLogout();
             }
+            if (!event.newValue || event.newValue !== this.sessionID) {
+                this.handleLogout();
+            } 
         });
 
         // Close error popups when clicked
@@ -311,7 +294,7 @@ class RealTimeForum {
         this.sendWS(registerPayload);
     }
 
-    handleLogout() {
+    handleLogout() {        
         this.isAuthenticated = false;
         this.isLoggingOut = true;
         this.userData = {};
@@ -610,14 +593,16 @@ class RealTimeForum {
             return;
         }
         this.activeChatUserId = userId;
-        this.chatOffsets[userId] = 0; // Reset offset when opening a new chat
+        this.chatOffsets[userId] = 0; // Reset offset 
         this.hideNotification(userId); // Hide notification when chat is opened
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
-
+        
+        const chatMessagesContainer = document.getElementById('chat-messages');
         // Clear previous messages and prepare for new chat
-        document.getElementById('chat-messages').innerHTML = '';
+        chatMessagesContainer.innerHTML = '';
+        chatMessagesContainer.addEventListener('scroll', this.chatScrollHandler);
         this.loadMoreMessages();
     }
 
@@ -693,7 +678,11 @@ class RealTimeForum {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
-        document.getElementById('chat-messages').innerHTML = '';
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        if (chatMessagesContainer) {
+            chatMessagesContainer.innerHTML = '';
+            chatMessagesContainer.removeEventListener('scroll', this.chatScrollHandler);
+        }
         document.getElementById('message-input').value = '';
     }
 
@@ -714,11 +703,10 @@ class RealTimeForum {
     }
 
     handleChatScroll(e) {
-        // If we are already loading or not at the top, do nothing.
-        if (this.isLoadingMessages || e.target.scrollTop !== 0) {
-            return;
+        const chatMessagesContainer = e.target;
+        if (chatMessagesContainer.scrollTop <= 20) {
+            this.loadMoreMessages();
         }
-        this.loadMoreMessages();
     }
 }
 
