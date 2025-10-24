@@ -83,13 +83,14 @@ class RealTimeForum {
             case "login_response":
                 if (data.status === "ok") {
                     localStorage.setItem("session_id", data.data.user.session_id);
+                    this.sessionID = data.data.user.session_id
                     this.userData = data.data.user;
                     this.isAuthenticated = true;
                     window.location.hash = 'home';
                 } else {
                     localStorage.removeItem("session_id");
-
                     this.sessionID = null;
+                    window.location.hash = 'login';
                     renders.Error(data.error)
                 }
                 break;
@@ -122,7 +123,7 @@ class RealTimeForum {
 
             case "chat_history_response":
                 if (data.status === "ok") {
-                    const messages = data.data || []; // Messages arrive sorted DESC
+                    const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
 
                     if (messages.length === 0) {
@@ -156,10 +157,6 @@ class RealTimeForum {
         const path = window.location.hash.replace('#', '') || 'home';
         this.currentPage = path;
 
-        // Check session status
-        const sessionId = this.sessionID || localStorage.getItem('session_id');
-        this.isAuthenticated = !!sessionId;
-
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents();
 
@@ -178,10 +175,7 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                // Attach scroll listener only after the chat container is rendered
-                setTimeout(()=>{
-                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
-                },1000)
+                if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
                     window.__homeEventsInitialized = true;
@@ -215,15 +209,19 @@ class RealTimeForum {
         });
 
         window.addEventListener('storage', (event) => {
-            if (event.key === 'session_id' && event.newValue) {
+            if (event.key !== 'session_id') {
+                return; 
+            }
+            if (event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: event.newValue } }
                 });
                 this.sendWS(sessionPayload);
-            } else if (event.key === 'session_id' && !event.newValue) {
-                this.handleLogout();
             }
+            if (!event.newValue || event.newValue !== this.sessionID) {
+                this.handleLogout();
+            } 
         });
 
         // Close error popups when clicked
@@ -588,7 +586,7 @@ class RealTimeForum {
             return;
         }
         this.activeChatUserId = userId;
-        this.chatOffsets[userId] = 0; // Reset offset when opening a new chat
+        this.chatOffsets[userId] = 0; // Reset offset 
         this.hideNotification(userId); // Hide notification when chat is opened
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
@@ -686,9 +684,7 @@ class RealTimeForum {
 
     handleChatScroll(e) {
         const chatMessagesContainer = e.target;
-        // Only attempt to load more messages if the user has scrolled to the very top (or near the top)
-        if (chatMessagesContainer.scrollTop <= 10) { // Use a small threshold (e.g., 10px) for better UX
-            this.loadMoreMessages();
+        if (chatMessagesContainer.scrollTop <= 20) {
         }
     }
 }

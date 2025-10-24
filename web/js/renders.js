@@ -166,8 +166,6 @@ renders.Error = (message) => {
 
 // Render users in the sidebar
 renders.Users = (users, user) => {
-    // Filter out the current user so they don't see themselves in the list 
-
     const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
     const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)
 
