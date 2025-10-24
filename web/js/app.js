@@ -16,7 +16,7 @@ class RealTimeForum {
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
         this.init(); // Initialize the application
-        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 300); // Throttle scroll events to 200ms
+        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 300);
     }
 
     init() {
@@ -175,7 +175,9 @@ class RealTimeForum {
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
-                if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
+                   setTimeout(()=>{
+                    if (this.isAuthenticated) { this.sendWS(JSON.stringify({ type: "users_list" }));}
+                },1000)
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
                     window.__homeEventsInitialized = true;
@@ -209,10 +211,8 @@ class RealTimeForum {
         });
 
         window.addEventListener('storage', (event) => {
-            if (event.key !== 'session_id') {
-                return; 
-            }
-            if (event.newValue) {
+
+            if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "user_have_session",
                     data: { user: { session_id: event.newValue } }
