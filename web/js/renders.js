@@ -169,8 +169,9 @@ renders.Error = (message) => {
 renders.Users = (users, user) => {
 
     const currentUser = users.find(u => u.id === user.user_id);
-    const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
-    const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)    
+if (!currentUser) return;    
+    const onlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === true);
+    const offlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === false)    
     const onlineUsersList = document.getElementById('online-users-list');
     const offlineUsersList = document.getElementById('conversations-list')
     if (!onlineUsersList || !offlineUsersList) return

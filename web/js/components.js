@@ -380,7 +380,7 @@ components.profile = (userData) => {
 
 // User List Item Component (for private messages)
 components.userListItem = (user, current_user) => {
-    if (current_user && current_user.lastMsg === ""){
+    if ((current_user && current_user.lastMsg === "" ) || (current_user.recipient_id !== user.id && current_user.sender_id !== user.id)) {
         user.lastMsg = ""
     }
     const userName = escapeHTML(user.nickname) || "unknown";

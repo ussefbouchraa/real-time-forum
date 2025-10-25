@@ -80,7 +80,7 @@ body {
     right: 0;
     top: 80px;
     bottom: 0;
-    width: 300px;
+    width: 280px;
     background: var(--card-bg);
     border-left: 1px solid var(--border-color);
     padding: 1rem;
@@ -207,24 +207,11 @@ body {
     color: var(--text-secondary);
 }
 
-.unread-count {
-    background: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
 .chat-container {
     position: fixed;
     bottom: 0;
-    right: 300px;
-    /* width: calc(100% - 300px); */
+    left: 0;
+    width: calc(100% - 280px);
     background: var(--card-bg);
     border-top: 1px solid var(--border-color);
     display: none;
@@ -233,8 +220,8 @@ body {
 }
 
 .sidebar-container.collapsed~.chat-container {
-    right: 50px;
-    width: calc(100% - 50px);
+    /* right: 50px; */
+    /* width: calc(100% - 50px); */
 }
 
 .chat-header {
@@ -1210,10 +1197,6 @@ textarea {
         width: 250px;
     }
 
-    .sidebar-container.collapsed~.chat-container {
-        right: 50px;
-        width: calc(100% - 50px);
-    }
 
     .status-code {
         font-size: 2.5rem;
@@ -1237,17 +1220,22 @@ textarea {
     .sidebar-container {
         width: 240px;
     }
-
-    .sidebar-container.collapsed~.chat-container {
-        right: 50px;
-        width: calc(100% - 50px);
+    .chat-container {
+        width: calc(100% - 240px);
     }
+
 }
 
 @media (max-width: 768px) {
     .sidebar-container {
         width: 230px;
     }
+    .chat-container {
+        width: calc(100% - 230px);
+    }
+}
+
+@media (max-width: 640px) {
 
     .navbar {
         padding: 1rem;
@@ -1312,6 +1300,9 @@ textarea {
     .sidebar-container {
         width: 200px;
     }
+    .chat-container {
+        width: calc(100% - 200px);
+    }
     .post-header {
         flex-direction: column;
         gap: 0.5rem;
@@ -1343,25 +1334,21 @@ textarea {
     cursor: pointer;
 }
 
-.chat-container {
-    /* width: 59%; */
-    left: 0;
-}
-
 #message-input {
     flex: 1;
     resize: none;
     border: none;
     outline: none;
-    padding: 0.5rem 0.75rem;
     border-radius: 10px;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     color: white;
     font-size: 0.95rem;
-    line-height: 1.4;
-    max-height: 150px;
+    line-height: 1.6;
+    max-height: 160px;
     overflow-y: auto;
-}
+    padding: 18px  0.75rem 0px 0.75rem;
+    }
+
 
 #message-input::placeholder {
   color: rgb(255, 255, 255);

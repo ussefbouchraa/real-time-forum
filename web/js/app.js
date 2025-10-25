@@ -86,7 +86,6 @@ class RealTimeForum {
                     localStorage.setItem("session_id", data.data.user.session_id);
                     this.sessionID = data.data.user.session_id;
                     this.userData = data.data.user;
-
                     this.isAuthenticated = true;
                     this.router()
                 } else {
@@ -98,6 +97,7 @@ class RealTimeForum {
                 break;
             case "users_list":
                 if (data.status === "ok") {
+
                     this.userList = data.data;
                     renders.Users(this.userList, this.userData);
                 } else { renders.Error(data.error) }

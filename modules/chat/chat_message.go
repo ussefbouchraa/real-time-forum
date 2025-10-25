@@ -1,16 +1,17 @@
 package chat
 
-
 import (
 	"real-time-forum/modules/core"
 )
 
 type User struct {
-	ID         string `json:"id"`
-	Nickname   string `json:"nickname"`
-	LastMsg    string `json:"lastMsg"`
-	Created_at string `json:"created_at"`
-	IsOnline   bool   `json:"isOnline"`
+	ID           string `json:"id"`
+	Nickname     string `json:"nickname"`
+	LastMsg      string `json:"lastMsg"`
+	Created_at   string `json:"created_at"`
+	IsOnline     bool   `json:"isOnline"`
+	SenderID     string `json:"sender_id"`
+	RecipientID string `json:"recipient_id"`
 }
 
 // GetUsers fetches all users and fills LastMsg
@@ -20,29 +21,31 @@ func GetUsers() ([]User, error) {
 		return nil, err
 	}
 	for i := range users {
-		last, timeStamp := GetLastMessage(users[i].ID)
+		last, timeStamp, sender_id, recipient_id := GetLastMessage(users[i].ID)
 		users[i].LastMsg = last
 		users[i].Created_at = timeStamp
+		users[i].SenderID = sender_id
+		users[i].RecipientID = recipient_id
 	}
 	return users, err
 }
 
 // GetLastMessage returns the latest message content for a user
-func GetLastMessage(userID string) (string, string) {
-	var lastMsg, created_at string
+func GetLastMessage(userID string) (string, string, string, string) {
+	var lastMsg, created_at, sender_id, recipient_id string
 
 	query := `
-		SELECT content, created_at
+		SELECT content, created_at, sender_id, recipient_id
 		FROM private_messages
 		WHERE sender_id = ? OR recipient_id = ?
 		ORDER BY created_at DESC
 		LIMIT 1;
 	`
-	err := core.Db.QueryRow(query, userID, userID).Scan(&lastMsg, &created_at)
+	err := core.Db.QueryRow(query, userID, userID).Scan(&lastMsg, &created_at, &sender_id, &recipient_id)
 	if err != nil {
-		return "", ""
+		return "", "", "", ""
 	}
-	return lastMsg, created_at
+	return lastMsg, created_at, sender_id, recipient_id
 }
 
 // GetOnlyUsers fetches all users from the database
