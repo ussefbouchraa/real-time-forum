@@ -379,8 +379,10 @@ components.profile = (userData) => {
 };
 
 // User List Item Component (for private messages)
-components.userListItem = (user) => {
-
+components.userListItem = (user, current_user) => {
+    if (current_user && current_user.lastMsg === ""){
+        user.lastMsg = ""
+    }
     const userName = escapeHTML(user.nickname) || "unknown";
     const userStatus = user.isOnline ? 'online' : 'offline';
     const lastMessageTime = user.lastMsg && user.created_at ? new Date(parseInt(user.created_at)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '';
@@ -388,7 +390,7 @@ components.userListItem = (user) => {
         (user.lastMsg.length > 30 ?
             escapeHTML(user.lastMsg.substring(0, 30)) + '...' : escapeHTML(user.lastMsg)) : 'No messages yet';
 
-
+            
     return `
         <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
       

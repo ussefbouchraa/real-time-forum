@@ -166,15 +166,16 @@ renders.Error = (message) => {
 
 // Render users in the sidebar
 renders.Users = (users, user) => {
-    const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
-    const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)
 
+    const currentUser = users.find(u => u.id === user.user_id);
+    const onlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === true);
+    const offlineUsers = users.filter(u => u.id !== user.user_id && u.isOnline === false)    
     const onlineUsersList = document.getElementById('online-users-list');
     const offlineUsersList = document.getElementById('conversations-list')
     if (!onlineUsersList || !offlineUsersList) return
-
-    onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u)).join('');
-    offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u)).join('');
+    
+    onlineUsersList.innerHTML = onlineUsers.map(u => components.userListItem(u, currentUser)).join('');
+    offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u, currentUser)).join('');
 
     const handleClick = (e) => {
         const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
