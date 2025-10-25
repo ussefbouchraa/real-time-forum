@@ -97,7 +97,6 @@ class RealTimeForum {
                 }
                 break;
             case "users_list":
-                console.log("users_list", data.data)
                 if (data.status === "ok") {
                     this.userList = data.data;
                     renders.Users(this.userList, this.userData);
@@ -123,8 +122,8 @@ class RealTimeForum {
                 }
                 break;
 
-            case "chat_history_result":    
-            if (data.status === "ok") {
+            case "chat_history_result":
+                if (data.status === "ok") {
                     const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
 
@@ -648,15 +647,19 @@ class RealTimeForum {
             if (lastTimeEl) {
                 lastTimeEl.textContent = new Date(parseInt(timestamp)).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
             }
+            const userList = userItem?.parentElement; // get the parent list
+            if (userList) { userList.prepend(userItem); }
         }
     }
 
     showNotification(userId) {
         const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
-        if (userItem) {
-            userItem.querySelector('.notification-dot')?.classList.remove('hidden');
-        }
+        const userList = userItem?.parentElement; // get the parent list
+
+        if (userItem) { userItem.querySelector('.notification-dot')?.classList.remove('hidden') }
+        if (userList) { userList.prepend(userItem); }
     }
+
 
     hideNotification(userId) {
         const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
