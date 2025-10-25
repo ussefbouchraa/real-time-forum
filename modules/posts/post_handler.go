@@ -39,7 +39,6 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid session", http.StatusUnauthorized)
 		return
 	}
-
 	switch r.Method {
 	case http.MethodPost:
 		var newPost *NewPost
@@ -57,7 +56,7 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			"status": "ok",
 			"post":   post,
 		})
-
+		
 	case http.MethodGet:
 		if r.Header.Get("request-type") == "fetch-3-posts" {
 			LastPostId := ""

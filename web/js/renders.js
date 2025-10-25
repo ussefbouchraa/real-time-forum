@@ -15,6 +15,8 @@ renders.Navigation = (isAuthenticated) => {
 renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();
+    console.log("MMM");
+    
     try {
         // Initial posts load
         const response = await fetch('/api/posts', {

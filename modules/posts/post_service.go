@@ -434,11 +434,11 @@ func (ps *PostService) GetComments(postID string, lastCommentID string, limit in
 		if err != nil {
 			return nil, fmt.Errorf("invalid last_comment_id: %w", err)
 		}
-		where = " AND c.created_at > ?"
+		where = " AND c.created_at < ?"
 		args = append(args, lastCreatedAt)
 	}
 
-	query := baseQuery + where + " GROUP BY c.comment_id ORDER BY c.created_at ASC LIMIT ?"
+	query := baseQuery + where + " GROUP BY c.comment_id ORDER BY c.created_at DESC LIMIT ?"
 	args = append(args, limit)
 
 	rows, err := ps.db.Query(query, args...)
@@ -457,6 +457,9 @@ func (ps *PostService) GetComments(postID string, lastCommentID string, limit in
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows error: %v", err)
+	}
+	if lastCommentID != "" && len(comments) > 0 {
+		return comments[1:], nil // Skip the last post if paginating
 	}
 	return comments, nil
 }
