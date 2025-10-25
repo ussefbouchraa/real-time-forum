@@ -113,7 +113,6 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			onlyMyPosts := r.URL.Query().Get("myPosts") == "true"
 			onlyMyLikedPosts := r.URL.Query().Get("likedPosts") == "true"
-
 			PostId := ""
 			if r.Header.Get("Last-Post-ID") != "" {
 				PostId = r.Header.Get("Last-Post-ID")

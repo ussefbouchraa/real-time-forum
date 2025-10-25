@@ -26,7 +26,9 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 		fmt.Printf("Error decoding private message: %v\n", err)
 		return nil, err
 	}
-
+	if len(pm.Content) > 1000 {
+		return nil, fmt.Errorf("private message exceeds maximum length of 1000 characters")
+	}
 	// Fetch sender's nickname
 	senderNickname, err := GetNicknameByUserID(senderID)
 	if err != nil {

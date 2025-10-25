@@ -180,7 +180,22 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 	var args []interface{}
 
 	// Category filter
-	if len(categories) > 0 {
+	if len(categories) == 0 {
+		rows, err := ps.db.Query("SELECT category_name FROM categories")
+		if err != nil {
+			return nil, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err != nil {
+				return nil, err
+			}
+			categories = append(categories, name)
+		}
+	}
+	if len(categories) >= 0 {
 		categoryPlaceholders := strings.Repeat("?,", len(categories))
 		categoryPlaceholders = categoryPlaceholders[:len(categoryPlaceholders)-1]
 		whereClauses = append(whereClauses, fmt.Sprintf(
@@ -221,7 +236,6 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 	if len(whereClauses) > 0 {
 		where = " WHERE " + strings.Join(whereClauses, " AND ")
 	}
-
 	query := fmt.Sprintf("%s%s GROUP BY p.post_id ORDER BY p.created_at DESC LIMIT ?", baseQuery, where)
 	args = append(args, limit)
 

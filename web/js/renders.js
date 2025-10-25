@@ -31,7 +31,6 @@ renders.Home = async (isAuthenticated, userData = {}) => {
                 throw new Error('Invalid session, please log in');
             }
             const errorText = await response.text();
-            console.log(errorText);
             throw new Error(errorText || `Failed to load post: ${response.status}`);
         }
 
@@ -51,11 +50,11 @@ renders.Home = async (isAuthenticated, userData = {}) => {
 }
 
 // Render post list (used for filtering and updates)
-renders.PostsList = (posts) => {
+renders.PostsList = (posts = []) => {
     const postsContainer = document.querySelector('.posts-container');
     if (!postsContainer) return;
-
-    if (!posts || posts.length === 0) {
+    
+    if (!posts || posts.length === 0) {        
         postsContainer.innerHTML = '<p>No posts found matching your criteria.</p>';
         return;
     }

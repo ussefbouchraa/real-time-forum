@@ -429,7 +429,7 @@ components.chatSidebar = () => {
             </div>
             <div id="chat-messages" class="chat-messages"></div>
             <div class="chat-input">
-                <textarea id="message-input" placeholder="Type your message..."></textarea>
+                <textarea id="message-input" placeholder="Type your message..." maxlength="1000"></textarea>
                 <button id="send-message-btn">Send</button>
             </div>
         </div>

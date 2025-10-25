@@ -105,8 +105,6 @@ class RealTimeForum {
                 break;
 
             case "private_message":
-            console.log("prvate_message", data.data)
-
                 if (data.status === "ok") {
                     const msg = data.data;
                     const isOwn = msg.sender_id === this.userData.user_id;
@@ -117,7 +115,7 @@ class RealTimeForum {
                     // If the chat is open, display the message.
                     if (otherUserId === this.activeChatUserId) {
                         this.displayChatMessage(msg, isOwn);
-                    } else if (!isOwn) { // Otherwise, if it's a message from someone else, show a notification.
+                    } else if (!isOwn) { // Otherwise, if it's a message from someone else, show a notification, if clicked it will be fetched on click (openChat())
                         this.showNotification(otherUserId);
                     }
                 } else {
@@ -125,9 +123,7 @@ class RealTimeForum {
                 }
                 break;
 
-            case "chat_history_result":
-                        console.log("chat_history", data.data)
-    
+            case "chat_history_result":    
             if (data.status === "ok") {
                     const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
@@ -170,10 +166,12 @@ class RealTimeForum {
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
-        if (!this.isAuthenticated && protectedPages.includes(path)) {
+        if (!localStorage.getItem('session_id') && protectedPages.includes(path)) {
+
             window.location.hash = 'login'; return;
         }
-        if (this.isAuthenticated && authPages.includes(path)) {
+
+        if (localStorage.getItem('session_id') && authPages.includes(path)) {
             window.location.hash = 'home'; return;
         }
 
@@ -208,7 +206,6 @@ class RealTimeForum {
                 this.handleLogout();
                 break;
             default:
-
                 // renders.StatusPage()
                 renders.Error("NOT FOUND")
         }
@@ -391,14 +388,6 @@ class RealTimeForum {
             }
             const data = await response.json();
 
-            if (!data.posts || data.posts.length === 0) {
-                document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
-                return
-            } else {
-                document.querySelector(`.loading-spinner`).style.display = "block";
-                document.querySelector(`.posts-loader`).style.display = "block";
-            }
-
             renders.PostsList(data.posts);
         } catch (err) {
             renders.Error(err.message);
@@ -483,7 +472,7 @@ class RealTimeForum {
             }
             const data = await response.json();
 
-            if (!data.posts || data.posts.length === 0 || data.error) {
+            if (!data.posts || data.posts.length === 0 || Object.keys(data).includes('error')) {
                 document.querySelector(`.loading-spinner`).innerHTML = `No more posts`;
                 return
             } else {
@@ -533,7 +522,8 @@ class RealTimeForum {
                 throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to fetch comment: ${response.status}`);
             }
             const data = await response.json();
-            if (!data.comments || data.comments.length === 0 || data.error) {
+
+            if (!data.comments || data.comments.length === 0 || Object.keys(data).includes('error')) {
                 const commentsFooter = document.querySelector(`.load-more-comments[data-post-id="${postId}"]`);
                 commentsFooter.outerHTML = '<p class="no-comments">No more comments.</p>';
                 commentsFooter.style.display = commentsFooter.style.display === 'none' ? 'block' : 'none';
@@ -595,6 +585,7 @@ class RealTimeForum {
             console.error("Cannot open chat: User not found in list.", userId);
             return;
         }
+        
         this.activeChatUserId = userId;
         this.chatOffsets[userId] = 0; // Reset offset 
         this.hideNotification(userId); // Hide notification when chat is opened
@@ -683,7 +674,6 @@ class RealTimeForum {
             chatMessagesContainer.innerHTML = '';
             chatMessagesContainer.removeEventListener('scroll', this.chatScrollHandler);
         }
-        // document.getElementById('message-input').value = '';
     }
 
     toggleSideBar() {

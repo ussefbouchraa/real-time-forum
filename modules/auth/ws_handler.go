@@ -89,7 +89,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		if currentUserID != "" {
 			delete(clients, currentUserID)
 			broadcastUsersList()
-			fmt.Printf("Client disconnected and removed: %s\n", currentUserID)
 		}
 		mutex.Unlock()
 	}()
@@ -188,7 +187,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					clients[currentUserID] = conn
 					broadcastUsersList()
 					mutex.Unlock()
-					fmt.Printf("Client logged in and registered: %s\n", currentUserID)
 				}
 			}
 			writeResponse(conn, "login_result", status, response, errMsg)
@@ -201,7 +199,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 			preparedMsg, err := chat.ProcessPrivateMessage(currentUserID, msg.Data)
 			if err != nil {
-				writeResponse(conn, "private_message", "error", nil, "Message could not be sent: invalid format")
+				writeResponse(conn, "private_message", "error", nil, fmt.Sprintf("Message could not be sent: %v", err))
 				continue
 			}
 
