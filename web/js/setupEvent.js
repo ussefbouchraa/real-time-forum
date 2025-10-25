@@ -72,9 +72,6 @@ setups.HomeEvents = (app) => {
             const reactionType = parseInt(reactionBtn.getAttribute('data-type'), 10);
             if ((postId || commentId) && !postId !== !commentId && !isNaN(reactionType)) {
                 app.handleReaction({ postId, commentId, reactionType });
-            } else {
-                console.error('Invalid reaction data:', { postId, commentId, reactionType });
-                renders.Error('Invalid reaction. Please try again.');
             }
         }
     });

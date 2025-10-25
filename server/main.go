@@ -13,10 +13,6 @@ import (
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "Page not found", http.StatusNotFound)
-		return
-	}
 
 	// Set security headers
 	w.Header().Set("Content-Security-Policy",

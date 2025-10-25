@@ -14,9 +14,7 @@ renders.Navigation = (isAuthenticated) => {
 // Render home page with 3 initial posts
 renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
-    mainContent.innerHTML = components.loading();
-    console.log("MMM");
-    
+    mainContent.innerHTML = components.loading();    
     try {
         // Initial posts load
         const response = await fetch('/api/posts', {
@@ -199,10 +197,10 @@ renders.ChatMessage = (message, isOwn) => {
 };
 
 // Render Status Page
-renders.StatusPage = () => {
+renders.StatusPage = (statusCode) => {
     const mainContent = document.getElementById('main-content')
     if (mainContent) {
-        mainContent.innerHTML = components.statusPage()
+        mainContent.innerHTML = components.statusPage(statusCode)
 
     }
 }

@@ -154,10 +154,10 @@ class RealTimeForum {
         }
     }
 
-    router() {
-        const path = window.location.hash.replace('#', '') || 'home';
-        this.currentPage = path;
-
+        router() {
+        const path = window.location.hash.replace('#', '');
+        this.currentPage = path;        
+        
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents();
 
@@ -172,8 +172,7 @@ class RealTimeForum {
 
         if (localStorage.getItem('session_id') && authPages.includes(path)) {
             window.location.hash = 'home'; return;
-        }
-
+        }                
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
@@ -204,9 +203,9 @@ class RealTimeForum {
             case 'logout':
                 this.handleLogout();
                 break;
-            default:
-                // renders.StatusPage()
-                renders.Error("NOT FOUND")
+            default:                
+                renders.StatusPage(404)
+                break;
         }
     }
 
@@ -332,14 +331,24 @@ class RealTimeForum {
                 },
                 body: JSON.stringify({ content, categories })
             });
+
+            console.log("Response status:", response.status);  // ← ADD THIS
+    console.log("Response ok:", response.ok);
             if (!response.ok) {
-                if (response.status === 401) {
-                    window.location.hash = 'login';
-                    throw new Error('Invalid session, please log in');
-                }
-                const errorText = await response.text();
-                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
-            }
+        const errorText = await response.text();      // ← READ BODY
+        console.log("Error body:", errorText);         // ← SEE THE MESSAGE
+
+        if (response.status === 401) {
+            window.location.hash = 'login';
+            throw new Error('Invalid session');
+        } else if ([403, 404, 405, 500].includes(response.status)) {
+            renders.StatusPage(response.status);
+            return;
+        } else {
+            renders.Error(`Server error: ${response.status}`);
+            return;
+        }
+    }
             const data = await response.json();
 
             renders.AddPost(data.post);
@@ -380,10 +389,12 @@ class RealTimeForum {
                     throw new Error('Invalid session, please log in');
                 } else if (response.status === 400) {
                     throw new Error('Invalid filter parameters');
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
                 }
+                const errorText = await response.text();
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
             }
             const data = await response.json();
 
@@ -410,10 +421,12 @@ class RealTimeForum {
                 if (response.status === 401) {
                     window.location.hash = 'login';
                     throw new Error('Invalid session, please log in');
-                } else {
-                    const errorText = await response.text();
-                    throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create comment: ${response.status}`);
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
                 }
+                const errorText = await response.text();
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create comment: ${response.status}`);
             }
             const data = await response.json();
 
@@ -465,6 +478,9 @@ class RealTimeForum {
                 if (response.status === 401) {
                     window.location.hash = 'login';
                     throw new Error('Invalid session, please log in');
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
                 }
                 const errorText = await response.text();
                 throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to fetch post: ${response.status}`);
@@ -516,6 +532,9 @@ class RealTimeForum {
                 if (response.status === 401) {
                     window.location.hash = 'login';
                     throw new Error('Invalid session, please log in');
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
                 }
                 const errorText = await response.text();
                 throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to fetch comment: ${response.status}`);
@@ -555,6 +574,9 @@ class RealTimeForum {
                 if (response.status === 401) {
                     window.location.hash = 'login';
                     throw new Error('Invalid session, please log in');
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
                 }
                 const errorText = await response.text();
                 throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to add reaction: ${response.status}`);
@@ -584,7 +606,7 @@ class RealTimeForum {
             console.error("Cannot open chat: User not found in list.", userId);
             return;
         }
-        
+
         this.activeChatUserId = userId;
         this.chatOffsets[userId] = 0; // Reset offset 
         this.hideNotification(userId); // Hide notification when chat is opened

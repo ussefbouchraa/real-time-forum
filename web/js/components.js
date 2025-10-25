@@ -468,7 +468,7 @@ components.loading = () => {
 };
 
 // Status Page Component (for 404, maintenance, etc.)
-components.statusPage = (statusCode = "404", title = "Page Not Found", message = "The page you're looking for doesn't exist.") => {
+components.statusPage = (statusCode) => {
     const statusMessages = {
         "404": {
             title: "Page Not Found",
@@ -486,8 +486,7 @@ components.statusPage = (statusCode = "404", title = "Page Not Found", message =
             icon: "⚙️"
         },
 
-    };
-
+    };    
     const statusInfo = statusMessages[statusCode]
 
 
@@ -500,7 +499,6 @@ components.statusPage = (statusCode = "404", title = "Page Not Found", message =
                 <p class="status-message">${escapeHTML(statusInfo.message)}</p>
                 <div class="status-actions">
                     <a href="#home" data-link class="btn btn-primary">Go Home</a>
-                    <button onclick="history.back()" class="btn btn-secondary">Go Back</button>
                 </div>
             </div>
         </div>

@@ -137,7 +137,8 @@ func PostsHandler(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		fmt.Println("TTT")
+		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
 	}
 }
 
@@ -180,6 +181,7 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	default:
+		fmt.Println("TTT")
 		http.Error(w, `{"error": "Method not allowed"}`, http.StatusMethodNotAllowed)
 	}
 }
