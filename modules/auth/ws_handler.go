@@ -109,7 +109,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			fmt.Println("err :", err)
 			break
 		}
 		switch msg.Type {

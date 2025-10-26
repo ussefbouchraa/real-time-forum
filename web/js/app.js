@@ -115,6 +115,7 @@ class RealTimeForum {
 
                     // If the chat is open, display the message.
                     if (otherUserId === this.activeChatUserId) {
+                        this.chatOffsets[this.activeChatUserId]++
                         this.displayChatMessage(msg, isOwn);
                     } else if (!isOwn) { // Otherwise, if it's a message from someone else, show a notification, if clicked it will be fetched on click (openChat())
                         this.showNotification(otherUserId);
@@ -642,7 +643,6 @@ class RealTimeForum {
             input.value = '';
         }
     }
-
     displayChatMessage(message, isOwn) {
         // Append message to chat UI
         const chatMessagesContainer = document.getElementById('chat-messages');
