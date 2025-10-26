@@ -39,8 +39,8 @@ type WSResponse struct {
 }
 
 var (
-	clients = make(map[string]*websocket.Conn)
-	mutex   = &sync.Mutex{}
+	clients = make(map[string][]*websocket.Conn)
+	mutex   = &sync.RWMutex{}
 )
 
 var upgrader = websocket.Upgrader{
@@ -58,14 +58,15 @@ func decodeMessage[T any](raw json.RawMessage) (T, error) {
 }
 
 func writeResponse(conn *websocket.Conn, msgType string, status string, data interface{}, errMsg string) {
-	err := conn.WriteJSON(WSResponse{
+	response := WSResponse{
 		Type:   msgType,
 		Status: status,
 		Data:   data,
 		Error:  errMsg,
-	})
+	}
+	err := conn.WriteJSON(response)
 	if err != nil {
-		fmt.Println("WriteJSON failed:", err)
+		fmt.Printf("[WS] WriteJSON FAILED: %v (conn closed? %v)\n", err, conn == nil)
 	}
 }
 
@@ -87,10 +88,20 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		mutex.Lock()
 		if currentUserID != "" {
-			delete(clients, currentUserID)
-			broadcastUsersList()
+			conns := clients[currentUserID]
+			for i, c := range conns {
+				if c == conn {
+					clients[currentUserID] = append(conns[:i], conns[i+1:]...)
+					break
+				}
+			}
+
+			if len(clients[currentUserID]) == 0 {
+				delete(clients, currentUserID)
+			}
 		}
 		mutex.Unlock()
+		broadcastUsersList()
 	}()
 
 	for {
@@ -98,6 +109,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
+			fmt.Println("err :", err)
 			break
 		}
 		switch msg.Type {
@@ -112,7 +124,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				writeResponse(conn, "session_check_result", "error", nil, "Session invalid or expired. Please log in again")
 				continue
 			}
-
 			var response UserPayload
 			response.User.SessionID = sessionData.User.SessionID
 			response.User.UserID = sessionData.User.UserID
@@ -122,12 +133,11 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response.User.Email = sessionData.User.Email
 			response.User.Age = sessionData.User.Age
 			response.User.Gender = sessionData.User.Gender
-
 			currentUserID = sessionData.User.UserID
 			mutex.Lock()
-			clients[currentUserID] = conn
-			broadcastUsersList()
+			clients[currentUserID] = append(clients[currentUserID], conn)
 			mutex.Unlock()
+			broadcastUsersList()
 
 			writeResponse(conn, "session_check_result", "ok", response, "")
 
@@ -150,7 +160,6 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response.User.Email = registerData.User.Email
 			writeResponse(conn, "register_result", status, response, errMsg)
 		case "login":
-
 			loginData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "login_result", "error", nil, "Invalid login data format")
@@ -163,7 +172,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			var response UserPayload
 
 			if err != nil {
-				response.User.EmailOrNickname = user.User.EmailOrNickname
+				response.User.EmailOrNickname = loginData.User.EmailOrNickname
 				status = "error"
 				errMsg = err.Error()
 			} else {
@@ -171,7 +180,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				if err != nil {
 					status = "error"
 					errMsg = "Cannot create session"
-					response.User.EmailOrNickname = user.User.EmailOrNickname
+					response.User.EmailOrNickname = loginData.User.EmailOrNickname
 				} else {
 					response.User.SessionID = sessionID
 					response.User.UserID = user.User.UserID
@@ -182,15 +191,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					response.User.Age = user.User.Age
 					response.User.Gender = user.User.Gender
 
+					// SET USER ID
 					currentUserID = user.User.UserID
+
+					// ADD TO CLIENTS
 					mutex.Lock()
-					clients[currentUserID] = conn
-					broadcastUsersList()
+					clients[currentUserID] = append(clients[currentUserID], conn)
 					mutex.Unlock()
+					broadcastUsersList()
 				}
 			}
 			writeResponse(conn, "login_result", status, response, errMsg)
-
 		case "private_message":
 			if currentUserID == "" {
 				writeResponse(conn, "private_message", "error", nil, "You must be logged in to send messages")
@@ -203,19 +214,20 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			mutex.Lock()
-			// Send to recipient
-			recipientConn, ok := clients[preparedMsg.RecipientID]
-			if ok {
-				writeResponse(recipientConn, "private_message", "ok", preparedMsg, "")
+			mutex.RLock()
+			if recipientConns, ok := clients[preparedMsg.RecipientID]; ok {
+				for _, c := range recipientConns {
+					writeResponse(c, "private_message", "ok", preparedMsg, "")
+				}
 			}
-			// send back to the sender for confirmation and UI update
-			senderConn, ok := clients[currentUserID]
-			if ok {
-				writeResponse(senderConn, "private_message", "ok", preparedMsg, "")
+			mutex.RUnlock()
+			mutex.RLock()
+			if senderConns, ok := clients[currentUserID]; ok {
+				for _, c := range senderConns {
+					writeResponse(c, "private_message", "ok", preparedMsg, "")
+				}
 			}
-			mutex.Unlock()
-
+			mutex.RUnlock()
 		case "get_chat_history":
 			if currentUserID == "" {
 				writeResponse(conn, "chat_history_result", "error", nil, "You must be logged in to view chat history")
@@ -239,7 +251,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			writeResponse(conn, "chat_history_result", "ok", history, "")
-		// Get all users
+		// Get all users with their connection state (online or not) depending if they have an instance of conn in the map
 		case "users_list":
 			broadcastUsersList()
 		}
@@ -249,13 +261,20 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 func broadcastUsersList() {
 	users, _ := chat.GetUsers()
 
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	// Mark online
 	for i := range users {
 		if _, ok := clients[users[i].ID]; ok {
 			users[i].IsOnline = true
 		}
 	}
-	// Send updated list to all connected clients
-	for _, conn := range clients {
-		writeResponse(conn, "users_list", "ok", users, "")
+
+	// SEND TO EVERY TAB OF EVERY USER
+	for _, conns := range clients {
+		for _, conn := range conns {
+			writeResponse(conn, "users_list", "ok", users, "")
+		}
 	}
 }

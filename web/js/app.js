@@ -28,10 +28,11 @@ class RealTimeForum {
         this.ws.addEventListener("open", () => {
             const session = localStorage.getItem('session_id');
             if (session) {
-                this.sendWS((JSON.stringify({
+                const payload = JSON.stringify({
                     type: "session_check",
                     data: { user: { session_id: session } }
-                })));
+                });
+                this.sendWS(payload);
             }
         });
 
@@ -39,13 +40,14 @@ class RealTimeForum {
             this.BackToFrontPayload(event)
         });
 
-        this.ws.addEventListener("close", () => {
+        this.ws.addEventListener("close", (event) => {
             if (this.isLoggingOut) {
                 this.isLoggingOut = false;
                 return;
             }
-            console.warn("WebSocket closed, trying to reconnect...");
+            console.warn("WebSocket closed with code:", event.code, "reason:", event.reason);
             setTimeout(() => {
+                console.log("Attempting to reconnect...");
                 this.reconnectWS();
             }, 5000);
         });
@@ -154,10 +156,10 @@ class RealTimeForum {
         }
     }
 
-        router() {
+    router() {
         const path = window.location.hash.replace('#', '');
-        this.currentPage = path;        
-        
+        this.currentPage = path;
+
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents();
 
@@ -172,7 +174,7 @@ class RealTimeForum {
 
         if (localStorage.getItem('session_id') && authPages.includes(path)) {
             window.location.hash = 'home'; return;
-        }                
+        }
         switch (path) {
             case 'home':
                 renders.Home(this.isAuthenticated, this.userData)
@@ -203,7 +205,7 @@ class RealTimeForum {
             case 'logout':
                 this.handleLogout();
                 break;
-            default:                
+            default:
                 renders.StatusPage(404)
                 break;
         }
@@ -332,23 +334,17 @@ class RealTimeForum {
                 body: JSON.stringify({ content, categories })
             });
 
-            console.log("Response status:", response.status);  // ← ADD THIS
-    console.log("Response ok:", response.ok);
             if (!response.ok) {
-        const errorText = await response.text();      // ← READ BODY
-        console.log("Error body:", errorText);         // ← SEE THE MESSAGE
-
-        if (response.status === 401) {
-            window.location.hash = 'login';
-            throw new Error('Invalid session');
-        } else if ([403, 404, 405, 500].includes(response.status)) {
-            renders.StatusPage(response.status);
-            return;
-        } else {
-            renders.Error(`Server error: ${response.status}`);
-            return;
-        }
-    }
+                if (response.status === 401) {
+                    window.location.hash = 'login';
+                    throw new Error('Invalid session');
+                } else if (response.status === 404 || response.status === 403 || response.status === 405) {
+                    renders.StatusPage(response.status)
+                    return
+                }
+                const errorText = await response.text();
+                throw new Error(errorText.replace(/["{}]/g, '').replace(/^error:\s*/i, '') || `Failed to create post: ${response.status}`);
+            }
             const data = await response.json();
 
             renders.AddPost(data.post);

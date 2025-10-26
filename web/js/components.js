@@ -136,7 +136,7 @@ components.postToggleSection = (userData, formError) => {
         <!-- post creation form -->
                 <div class="post-section create-section">
                     <form id="create-post-form" method="POST" action="/api/posts">
-                        <textarea name="content" placeholder="Write your post..." maxlength="5000"></textarea>
+                        <textarea name="content" placeholder="Write your post..." maxlength="5000" required></textarea>
                         <h4>Select Categories:</h4>
                         <div class="category-options">
                             <label class="category-tag">
@@ -229,7 +229,7 @@ components.commentForm = (post_id) => {
     return `
         <div class="comment-form">
             <form class="create-comment-form" data-post-id="${post_id}" method="POST" action="/api/comments">
-                <textarea name="content" placeholder="Add a comment..." maxlength="249"></textarea>
+                <textarea name="content" placeholder="Add a comment..." maxlength="249" required></textarea>
                 <button type="submit">Post Comment</button>
             </form>
         </div>
@@ -280,8 +280,6 @@ components.login = (userData = {}) => {
                     <div class="new_account_div">
                         <b>Don't have an account?</b>
                         <a href="#register" data-link>Create one here!</a>
-                        <br>
-                        <a href="#home" data-link class="back-to-home">Back to Home Page</a>
                     </div>
                     <input type="submit" class="login_button" value="Sign In">
                 </form>
@@ -323,7 +321,7 @@ components.register = () => {
                     <input type="number" id="age" name="age" 
                         placeholder="Enter your age" min="13" max="120" required>
                     
-                    <label for="gender">Gender</label>
+                    <label for="gender">Gender *</label>
                     <select id="gender" name="gender">
                         <option value="">Select gender</option>
                         <option value="male">Male</option>

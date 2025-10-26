@@ -219,11 +219,6 @@ body {
     z-index: 22950;
 }
 
-.sidebar-container.collapsed~.chat-container {
-    /* right: 50px; */
-    /* width: calc(100% - 50px); */
-}
-
 .chat-header {
     display: flex;
     justify-content: space-between;

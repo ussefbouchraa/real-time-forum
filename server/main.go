@@ -13,7 +13,6 @@ import (
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
-
 	// Set security headers
 	w.Header().Set("Content-Security-Policy",
 		"default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://robohash.org;")
@@ -57,17 +56,17 @@ func main() {
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./web/js/"))))
 	
 	// API routes
-	http.HandleFunc("/", mainHandler)
 	http.HandleFunc("/ws", auth.WebSocketHandler)
 	http.HandleFunc("/api/posts", posts.PostsHandler)
 	http.HandleFunc("/api/comments", posts.CommentHandler)
 	http.HandleFunc("/api/reactions", posts.ReactionHandler)
+	http.HandleFunc("/", mainHandler)
 
 	// Start a background goroutine that periodically cleans up expired sessions
 	// using the indexed 'expires_at' column to keep the database search performant
 	StartSessionCleanup()
 
-	fmt.Println("Server started at http://localhost:8080")
+	fmt.Println("Server started at http://localhost:8080/#home")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
