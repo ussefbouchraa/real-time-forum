@@ -118,7 +118,7 @@ components.postToggleSection = (userData, formError) => {
         <!-- post creation form -->
                 <div class="post-section create-section">
                     <form id="create-post-form" method="POST" action="/api/posts">
-                        <textarea name="content" placeholder="Write your post..." maxlength="5000" required></textarea>
+                        <textarea name="content" placeholder="Write your post..." maxlength="700" required></textarea>
                         <h4>Select Categories:</h4>
                         <div class="category-options">
                             <label class="category-tag">

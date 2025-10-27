@@ -648,6 +648,9 @@ button[type="submit"]:active {
     box-shadow: var(--shadow);
     padding: 1.5rem;
     margin-bottom: 2rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
     transform: scale(1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
