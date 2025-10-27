@@ -157,7 +157,7 @@ class RealTimeForum {
         }
     }
 
-    router() {
+    async router() {
         const path = window.location.hash.replace('#', '');
         this.currentPage = path;
 
@@ -178,14 +178,12 @@ class RealTimeForum {
         }
         switch (path) {
             case 'home':
-                renders.Home(this.isAuthenticated, this.userData)
-                setTimeout(() => {
+                await renders.Home(this.isAuthenticated, this.userData)                
                     if (this.isAuthenticated) {
                         this.sendWS(JSON.stringify(
                             { type: "users_list" }
                         ));
                     }
-                }, 1000)
 
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);

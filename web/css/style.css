@@ -1206,6 +1206,7 @@ textarea {
     .sidebar-container {
         width: 240px;
     }
+
     .chat-container {
         width: calc(100% - 240px);
     }
@@ -1216,6 +1217,7 @@ textarea {
     .sidebar-container {
         width: 230px;
     }
+
     .chat-container {
         width: calc(100% - 230px);
     }
@@ -1286,9 +1288,12 @@ textarea {
     .sidebar-container {
         width: 200px;
     }
+
     .chat-container {
-        width: calc(100% - 200px);
+        width: 59%;
+        left: 0;
     }
+
     .post-header {
         flex-direction: column;
         gap: 0.5rem;
@@ -1310,8 +1315,14 @@ textarea {
     .message {
         max-width: 90%;
     }
+    #message-input {
+        font-size: small !important;
+        padding-top: 0px !important;
+    }
 
 }
+
+
 .avatar {
     border: 1px solid #1e1e1e6e;
     width: 40px;
@@ -1332,12 +1343,12 @@ textarea {
     line-height: 1.6;
     max-height: 160px;
     overflow-y: auto;
-    padding: 18px  0.75rem 0px 0.75rem;
-    }
+    padding: 18px 0.75rem 0px 0.75rem;
+}
 
 
 #message-input::placeholder {
-  color: rgb(255, 255, 255);
+    color: rgb(255, 255, 255);
 }
 
 #send-message-btn {
