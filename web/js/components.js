@@ -1,23 +1,5 @@
+import { escapeHTML , formatMessage } from "./utils.js";
 export const components = {};
-
-// Utility function to prevent XSS attacks
-function escapeHTML(str) {
-    if (str === undefined || str === null) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-function formatMessage(message) {
-  return message
-    .trim()
-    .split(/\n+/)
-    .map(line => `<p>${line}</p>`)
-    .join('');
-}
 
 // Posts Component
 components.posts = (posts, isAuthenticated) => {
@@ -443,7 +425,7 @@ components.chatMessage = (message, isOwn = false) => {
                 <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
                 <span class="message-time">${new Date(parseInt(message.created_at)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>
-            <div class="message-content">${escapeHTML(message.content)}</div>
+            <div class="message-content">${formatMessage(escapeHTML(message.content))}</div>
         </div>
     `;
 };

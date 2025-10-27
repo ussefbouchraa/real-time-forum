@@ -50,7 +50,7 @@ func main() {
 	posts.SetPostService(postService)
 	commentService := posts.NewCommentService(core.Db)
 	posts.SetCommentService(commentService)
-
+	
 	// serve static files
 	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./web/css/"))))
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./web/js/"))))

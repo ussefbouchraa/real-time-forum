@@ -178,7 +178,9 @@ class RealTimeForum {
         }
         switch (path) {
             case 'home':
-                await renders.Home(this.isAuthenticated, this.userData)                
+                await renders.Home(this.isAuthenticated, this.userData)          
+                console.log("1");
+                      
                     if (this.isAuthenticated) {
                         this.sendWS(JSON.stringify(
                             { type: "users_list" }

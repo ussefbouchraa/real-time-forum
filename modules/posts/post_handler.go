@@ -158,7 +158,6 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("✔️ Authenticated user_id: %s", userID)
 	switch r.Method {
 	case http.MethodPost:
 		if r.Header.Get("request-type") == "create_comment" {
