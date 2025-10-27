@@ -90,6 +90,9 @@ real-time-forum/
 ## 🔒 Security
 Security is a high priority for this application. We have implemented several layered defenses to protect against common web vulnerabilities.
 
+### XSS Prevention
+All user inputs are sanitized and escaped before rendering in the frontend or storing in the database. Combined with a strict Content Security Policy (CSP), this ensures that malicious scripts cannot execute in users' browsers.
+
 ### Content Security Policy (CSP)
 A strict CSP is enforced via HTTP headers to mitigate Cross-Site Scripting (XSS) and data injection attacks. This policy explicitly whitelists trusted sources for scripts, styles, fonts, and images, and blocks all inline scripts and styles.
 
