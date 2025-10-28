@@ -14,8 +14,8 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
+        this.chatScrollHandler = null; 
         this.init(); // Initialize the application
-        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
     }
 
     init() {
@@ -611,15 +611,20 @@ class RealTimeForum {
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
 
+        // Create a new throttled handler for this chat session
+        this.chatScrollHandler = throttle((e) => {
+            if (e.target.scrollTop <= 100) {
+                this.loadMoreMessages();
+            }
+        }, 200);
+
         const chatMessagesContainer = document.getElementById('chat-messages');
-        // // Clear previous messages and prepare for new chat
         chatMessagesContainer.innerHTML = '';
         chatMessagesContainer.addEventListener('scroll', this.chatScrollHandler);
         this.loadMoreMessages();
     }
 
     loadMoreMessages() {
-        if (!this.activeChatUserId || this.isLoadingMessages) return;
         this.isLoadingMessages = true;
         const offset = this.chatOffsets[this.activeChatUserId] || 0;
         this.sendWS(JSON.stringify({
@@ -690,10 +695,12 @@ class RealTimeForum {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
+
         const chatMessagesContainer = document.getElementById('chat-messages');
-        if (chatMessagesContainer) {
+        if (chatMessagesContainer && this.chatScrollHandler) {
             chatMessagesContainer.innerHTML = '';
             chatMessagesContainer.removeEventListener('scroll', this.chatScrollHandler);
+            this.chatScrollHandler = null; // Clean up the handler reference
         }
     }
 
@@ -711,13 +718,6 @@ class RealTimeForum {
         const sidebar = document.querySelector('.sidebar-container');
         if (sidebar) sidebar.classList.toggle('hide');
 
-    }
-
-    handleChatScroll(e) {
-        const chatMessagesContainer = e.target;
-        if (chatMessagesContainer.scrollTop <= 100) {
-            this.loadMoreMessages();
-        }
     }
 }
 
