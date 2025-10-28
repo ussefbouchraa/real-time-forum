@@ -20,16 +20,15 @@ export function formatMessage(message) {
 
 // throttle: Limits function execution rate (e.g., scroll/fetch)
 export function throttle(func, limit) {
-    let inThrottle = false;
-    let result;
-
-    return function(...args) {
-        if (inThrottle) {
-            return result;
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
         }
-        inThrottle = true;
-        setTimeout(() => (inThrottle = false), limit);
-        result = func.apply(this, args);
-        return result;
-    };
+    }
 }
+
