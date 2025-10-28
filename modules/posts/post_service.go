@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// PostService handles business logic for posts
+// PostService: Business logic for posts
 type PostService struct {
 	db *sql.DB // inject the DB
 }
@@ -18,7 +18,7 @@ type CommentService struct {
 	db *sql.DB
 }
 
-// NewPostService creates a new service instance
+// NewPostService: Factory - injects DB for testability
 func NewPostService(db *sql.DB) *PostService {
 	return &PostService{db: db}
 }
@@ -27,7 +27,7 @@ func NewCommentService(db *sql.DB) *CommentService {
 	return &CommentService{db: db}
 }
 
-// CreatePost creates a new post with categories
+// CreatePost: Validates and saves post + categories in a transaction
 func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error) {
 	if err := validateNewPost(newPost); err != nil {
 		return &Post{}, err
@@ -62,6 +62,7 @@ func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error
 		}
 	}
 
+	// Fetch author nickname
 	var nickname string
 	err = tx.QueryRow("SELECT nickname FROM users WHERE user_id = ?", userID).Scan(&nickname)
 	if err != nil {
@@ -83,7 +84,7 @@ func (ps *PostService) CreatePost(userID string, newPost *NewPost) (*Post, error
 	}, nil
 }
 
-// fetch more posts
+// GetPosts: Infinite scroll - fetches 3 newest posts after lastPostID
 func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 	limit := 3
 	baseQuery := `
@@ -122,7 +123,7 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 			return nil, fmt.Errorf("scan post: %w", err)
 		}
 
-		// Fetch categories
+		// Attach categories
 		catRows, err := ps.db.Query(`
             SELECT c.category_name
             FROM posts_categories pc
@@ -142,12 +143,11 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 		}
 		catRows.Close()
 
-		// Fetch comment count
+		// Attach comment count + first 3 comments
 		err = ps.db.QueryRow(`SELECT COUNT(*) FROM comments WHERE post_id = ?`, p.PostID).Scan(&p.CommentCount)
 		if err != nil {
 			return nil, fmt.Errorf("count comments error: %v", err)
 		}
-		// Fetch initial comments (first 3)
 		p.Comments, err = ps.GetComments(p.PostID, "", 3)
 		if err != nil {
 			return nil, fmt.Errorf("initial comments fetch error: %v", err)
@@ -159,11 +159,12 @@ func (ps *PostService) GetPosts(lastPostID string) ([]Post, error) {
 		return nil, fmt.Errorf("rows error: %v", err)
 	}
 	if lastPostID != "" && len(posts) > 0 {
-		return posts[1:], nil // Skip the last post if paginating
+		return posts[1:], nil // Skip duplicate on pagination
 	}
 	return posts, nil
 }
 
+// GetFilteredPosts: Advanced filtering with pagination
 func (ps *PostService) GetFilteredPosts(userID string, categories []string, onlyMyPosts, onlyMyLikedPosts bool, lastPostID string) ([]Post, error) {
 	limit := 3
 
@@ -179,7 +180,7 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 	var whereClauses []string
 	var args []interface{}
 
-	// Category filter
+	// Default: all categories if none specified
 	if len(categories) == 0 {
 		rows, err := ps.db.Query("SELECT category_name FROM categories")
 		if err != nil {
@@ -252,7 +253,7 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 			return nil, fmt.Errorf("scan filtered post: %w", err)
 		}
 
-		// Fetch categories
+		// Attach categories, comment count, and initial comments
 		catRows, err := ps.db.Query(`
             SELECT c.category_name
             FROM posts_categories pc
@@ -272,13 +273,11 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 		}
 		catRows.Close()
 
-		// Fetch comment count
 		err = ps.db.QueryRow(`SELECT COUNT(*) FROM comments WHERE post_id = ?`, p.PostID).Scan(&p.CommentCount)
 		if err != nil {
 			return nil, fmt.Errorf("count comments error: %v", err)
 		}
 
-		// Fetch initial comments
 		p.Comments, err = ps.GetComments(p.PostID, "", 3)
 		if err != nil {
 			return nil, fmt.Errorf("initial comments fetch error: %v", err)
@@ -296,6 +295,7 @@ func (ps *PostService) GetFilteredPosts(userID string, categories []string, only
 	return posts, nil
 }
 
+// AddOrUpdatePostReaction: Like/dislike toggle with upsert logic
 func (ps *PostService) AddOrUpdatePostReaction(userID, postID string, reactionType int) error {
 	if reactionType != 1 && reactionType != -1 {
 		return fmt.Errorf("invalid reaction_type: must be 1 (like) or -1 (dislike)")
@@ -369,7 +369,7 @@ func validateNewPost(newPost *NewPost) error {
 	return nil
 }
 
-// CommentService methods
+// CreateComment: Saves comment in transaction with author lookup
 func (cm *CommentService) CreateComment(userID, postID, content string) (*Comment, error) {
 	if err := validateComment(content); err != nil {
 		return &Comment{}, err
@@ -412,7 +412,7 @@ func (cm *CommentService) CreateComment(userID, postID, content string) (*Commen
 	}, nil
 }
 
-// GetComments fetches paginated comments for a post
+// GetComments: Paginated comment fetch with reaction counts
 func (ps *PostService) GetComments(postID string, lastCommentID string, limit int) ([]Comment, error) {
 	baseQuery := `
         SELECT c.comment_id, c.post_id, c.user_id, c.content, c.created_at, u.nickname,
@@ -464,6 +464,7 @@ func (ps *PostService) GetComments(postID string, lastCommentID string, limit in
 	return comments, nil
 }
 
+// AddOrUpdateCommentReaction: Toggle like/dislike on comment
 func (ps *PostService) AddOrUpdateCommentReaction(userID, commentID string, reactionType int) error {
 	if reactionType != 1 && reactionType != -1 {
 		return fmt.Errorf("invalid reaction_type: must be 1 (like) or -1 (dislike)")

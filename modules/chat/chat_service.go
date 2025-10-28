@@ -19,7 +19,8 @@ type PrivateMessagePayload struct {
 	CreatedAt      string `json:"created_at,omitempty"`
 }
 
-// ProcessPrivateMessage decodes, savmessage.timestamp)es, and prepares a private message for delivery.
+// ProcessPrivateMessage: Validates, enriches, saves, and returns a private message
+// Called from WebSocket handler; prepares message for delivery to both parties
 func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*PrivateMessagePayload, error) {
 	var pm PrivateMessagePayload
 	if err := json.Unmarshal(rawPayload, &pm); err != nil {
@@ -29,6 +30,7 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 	if len(pm.Content) > 1000 {
 		return nil, fmt.Errorf("private message exceeds maximum length of 1000 characters")
 	}
+
 	// Fetch sender's nickname
 	senderNickname, err := GetNicknameByUserID(senderID)
 	if err != nil {
@@ -36,7 +38,7 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 		senderNickname = "Unknown"
 	}
 
-	// Save the message to the database
+	// Generate unique ID and timestamp
 	messageID := uuid.New().String()
 	pm.SenderID = senderID
 	pm.SenderNickname = senderNickname
@@ -53,7 +55,7 @@ func ProcessPrivateMessage(senderID string, rawPayload json.RawMessage) (*Privat
 	return &pm, nil
 }
 
-// GetNicknameByUserID retrieves a user's nickname from their user ID.
+// GetNicknameByUserID: Retrieves user's public nickname by internal user ID
 func GetNicknameByUserID(userID string) (string, error) {
 	var nickname string
 	err := core.Db.QueryRow("SELECT nickname FROM users WHERE user_id = ?", userID).Scan(&nickname)
@@ -63,7 +65,7 @@ func GetNicknameByUserID(userID string) (string, error) {
 	return nickname, nil
 }
 
-// GetChatHistory retrieves the message history between two users.
+// GetChatHistory: Fetches paginated chat between two users (newest first)
 func GetChatHistory(user1ID, user2ID string, limit, offset int) ([]PrivateMessagePayload, error) {
 	query := `
         SELECT m.sender_id, u.nickname, m.content, m.created_at

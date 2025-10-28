@@ -8,8 +8,8 @@ import (
 
 	"real-time-forum/modules/auth"
 	"real-time-forum/modules/core"
+	"real-time-forum/modules/frontend_renderer"
 	"real-time-forum/modules/posts"
-	"real-time-forum/modules/templates"
 )
 
 // mainHandler: Serves the root "/" route - delivers the SPA entry point (index.html)
@@ -32,7 +32,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Render the main HTML template; return 500 on failure
-	if templates.Exec(w, "index.html", nil) != nil {
+	if frontend_renderer.Exec(w, "index.html", nil) != nil {
 		http.Error(w, "Could not execute template", 500)
 		fmt.Println("Error executing template.")
 		return
@@ -51,7 +51,7 @@ func StartSessionCleanup() {
 }
 
 func main() {
-	templates.Init()
+	frontend_renderer.Init()
 
 	// Load config and open SQLite database connection
 	core.InitDB(core.LoadConfig().DatabasePath)

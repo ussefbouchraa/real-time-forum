@@ -63,5 +63,5 @@ type NewComment struct {
 type NewReaction struct {
     PostID       string `json:"post_id,omitempty"`
     CommentID    string `json:"comment_id,omitempty"`
-    ReactionType int    `json:"reaction_type"` // 1 for like, -1 for dislike
+    ReactionType int    `json:"reaction_type"`
 }

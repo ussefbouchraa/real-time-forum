@@ -4,6 +4,7 @@ import (
 	"real-time-forum/modules/core"
 )
 
+// User: Public user representation for chat UI (includes last message preview)
 type User struct {
 	ID           string `json:"id"`
 	Nickname     string `json:"nickname"`
@@ -14,12 +15,14 @@ type User struct {
 	RecipientID string `json:"recipient_id"`
 }
 
-// GetUsers fetches all users and fills LastMsg
+// GetUsers: Returns all users with last message preview and online status
 func GetUsers() ([]User, error) {
 	users, err := GetOnlyUsers()
 	if err != nil {
 		return nil, err
 	}
+
+	// Enrich each user with last message data
 	for i := range users {
 		last, timeStamp, sender_id, recipient_id := GetLastMessage(users[i].ID)
 		users[i].LastMsg = last
@@ -30,7 +33,7 @@ func GetUsers() ([]User, error) {
 	return users, err
 }
 
-// GetLastMessage returns the latest message content for a user
+// GetLastMessage: Fetches most recent message involving user (for preview)
 func GetLastMessage(userID string) (string, string, string, string) {
 	var lastMsg, created_at, sender_id, recipient_id string
 
@@ -48,7 +51,7 @@ func GetLastMessage(userID string) (string, string, string, string) {
 	return lastMsg, created_at, sender_id, recipient_id
 }
 
-// GetOnlyUsers fetches all users from the database
+// GetOnlyUsers: Core query - fetches all users sorted by nickname
 func GetOnlyUsers() ([]User, error) {
 	rows, err := core.Db.Query(`
 		SELECT user_id, nickname

@@ -11,11 +11,13 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// ClientWSMessage: Incoming message wrapper - all client messages must have type + raw data
 type ClientWSMessage struct {
 	Type string          `json:"type"`
 	Data json.RawMessage `json:"data"`
 }
 
+// UserPayload: Structured user data for auth-related WS messages (register, login, session)
 type UserPayload struct {
 	User struct {
 		EmailOrNickname string `json:"email_or_nickname,omitempty"`
@@ -31,6 +33,7 @@ type UserPayload struct {
 	} `json:"user"`
 }
 
+// WSResponse: Standardized response format sent back to clients
 type WSResponse struct {
 	Type   string      `json:"type"`
 	Status string      `json:"status"`
@@ -38,25 +41,29 @@ type WSResponse struct {
 	Data   interface{} `json:"data,omitempty"`
 }
 
+// clients: Map[userID] -> list of active WebSocket connections (supports multiple tabs)
 var (
 	clients = make(map[string][]*websocket.Conn)
 	mutex   = &sync.RWMutex{}
 )
 
+// upgrader: Configures WebSocket handshake - allows all origins in dev
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		return true // Restrict in production
 	},
 }
 
+// decodeMessage: Generic helper to unmarshal raw JSON into typed struct
 func decodeMessage[T any](raw json.RawMessage) (T, error) {
 	var data T
 	err := json.Unmarshal(raw, &data)
 	return data, err
 }
 
+// writeResponse: Sends structured JSON response over WebSocket
 func writeResponse(conn *websocket.Conn, msgType string, status string, data interface{}, errMsg string) {
 	response := WSResponse{
 		Type:   msgType,
@@ -70,12 +77,15 @@ func writeResponse(conn *websocket.Conn, msgType string, status string, data int
 	}
 }
 
+// WebSocketHandler: Main entry - upgrades HTTP to WS and handles full client lifecycle
 func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
+	// Enforce GET method
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Upgrade connection to WebSocket
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
@@ -85,6 +95,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	var currentUserID string
 
+	// Cleanup: Remove connection from clients map on disconnect
 	defer func() {
 		mutex.Lock()
 		if currentUserID != "" {
@@ -104,15 +115,17 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 		broadcastUsersList()
 	}()
 
+	// Main message loop - reads and dispatches client messages
 	for {
 		var msg ClientWSMessage
 
 		err := conn.ReadJSON(&msg)
 		if err != nil {
-			break
+			break // Client disconnected or error
 		}
 		switch msg.Type {
 		case "session_check":
+			// Validate session token and restore user context
 			session, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "session_check_result", "error", "", "Invalid session data format")
@@ -123,6 +136,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				writeResponse(conn, "session_check_result", "error", nil, "Session invalid or expired. Please log in again")
 				continue
 			}
+
+			// Rebuild user payload and register connection
 			var response UserPayload
 			response.User.SessionID = sessionData.User.SessionID
 			response.User.UserID = sessionData.User.UserID
@@ -141,6 +156,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "session_check_result", "ok", response, "")
 
 		case "register":
+			// Handle new user registration
 			registerData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "register_result", "error", nil, "Invalid register data format")
@@ -159,6 +175,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			response.User.Email = registerData.User.Email
 			writeResponse(conn, "register_result", status, response, errMsg)
 		case "login":
+			// Authenticate user and create session
 			loginData, err := decodeMessage[UserPayload](msg.Data)
 			if err != nil {
 				writeResponse(conn, "login_result", "error", nil, "Invalid login data format")
@@ -181,6 +198,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					errMsg = "Cannot create session"
 					response.User.EmailOrNickname = loginData.User.EmailOrNickname
 				} else {
+					// Success: send full user + session
 					response.User.SessionID = sessionID
 					response.User.UserID = user.User.UserID
 					response.User.Nickname = user.User.Nickname
@@ -190,10 +208,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 					response.User.Age = user.User.Age
 					response.User.Gender = user.User.Gender
 
-					// SET USER ID
 					currentUserID = user.User.UserID
-
-					// ADD TO CLIENTS
 					mutex.Lock()
 					clients[currentUserID] = append(clients[currentUserID], conn)
 					mutex.Unlock()
@@ -202,6 +217,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			writeResponse(conn, "login_result", status, response, errMsg)
 		case "private_message":
+			// Route private message through chat module
 			if currentUserID == "" {
 				writeResponse(conn, "private_message", "error", nil, "You must be logged in to send messages")
 				continue
@@ -213,6 +229,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
+			// Deliver to recipient
 			mutex.RLock()
 			if recipientConns, ok := clients[preparedMsg.RecipientID]; ok {
 				for _, c := range recipientConns {
@@ -220,6 +237,8 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			mutex.RUnlock()
+
+			// Echo to sender (all tabs)
 			mutex.RLock()
 			if senderConns, ok := clients[currentUserID]; ok {
 				for _, c := range senderConns {
@@ -228,6 +247,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			mutex.RUnlock()
 		case "get_chat_history":
+			// Fetch paginated chat history between two users
 			if currentUserID == "" {
 				writeResponse(conn, "chat_history_result", "error", nil, "You must be logged in to view chat history")
 				continue
@@ -252,25 +272,27 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(conn, "chat_history_result", "ok", history, "")
 		// Get all users with their connection state (online or not) depending if they have an instance of conn in the map
 		case "users_list":
+			// Trigger broadcast of online user list
 			broadcastUsersList()
 		}
 	}
 }
 
+// broadcastUsersList: Sends updated user list with online status to all connected clients
 func broadcastUsersList() {
 	users, _ := chat.GetUsers()
 
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	// Mark online
+	// Mark users as online if they have active WebSocket connection(s)
 	for i := range users {
 		if _, ok := clients[users[i].ID]; ok {
 			users[i].IsOnline = true
 		}
 	}
 
-	// SEND TO EVERY TAB OF EVERY USER
+	// Push to every open tab of every user
 	for _, conns := range clients {
 		for _, conn := range conns {
 			writeResponse(conn, "users_list", "ok", users, "")
