@@ -2,7 +2,9 @@ import { renders } from './renders.js';
 import { setups } from './setupEvent.js';
 import { throttle } from './utils.js'; // Import throttle from a new utility file
 
+// RealTimeForum: Core SPA controller managing auth, routing, WS, posts, comments, and chat
 class RealTimeForum {
+    // constructor: Initializes state, WebSocket, and app lifecycle
     constructor() {
         this.isAuthenticated = false;
         this.userData = {};
@@ -14,17 +16,20 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
-        this.chatScrollHandler = null; 
+        this.chatScrollHandler = null;
         this.init(); // Initialize the application
     }
 
+    // init: Bootstraps WebSocket, event listeners, and router
     init() {
         this.setupWS();
         this.setupEventListeners();
         this.router();
     }
 
+    // setupWS: Configures WebSocket lifecycle events and session validation
     setupWS() {
+        // On open: Validate existing session
         this.ws.addEventListener("open", () => {
             const session = localStorage.getItem('session_id');
             if (session) {
@@ -36,10 +41,12 @@ class RealTimeForum {
             }
         });
 
+        // On message: Route incoming payloads from server
         this.ws.addEventListener("message", (event) => {
             this.BackToFrontPayload(event)
         });
 
+        // On close: Auto-reconnect unless logout
         this.ws.addEventListener("close", (event) => {
             if (this.isLoggingOut) {
                 this.isLoggingOut = false;
@@ -49,15 +56,17 @@ class RealTimeForum {
             setTimeout(() => {
                 console.log("Attempting to reconnect...");
                 this.reconnectWS();
-            }, 5000);
+            }, 1000);
         });
 
+        // On error: Show UI error and log
         this.ws.addEventListener("error", (err) => {
             console.error('WebSocket error:', err);
             renders.Error('Connection to server lost. Please try again.');
         });
     }
 
+    // reconnectWS: Re-establishes WebSocket with full event binding
     reconnectWS() {
         if (this.ws) {
             this.ws.onopen = null;
@@ -70,9 +79,12 @@ class RealTimeForum {
         this.setupWS();
     }
 
+    // BackToFrontPayload: Central dispatcher for all WebSocket messages
     BackToFrontPayload(event) {
         const data = JSON.parse(event.data);
         switch (data.type) {
+
+            // register_result: Handle registration success/failure
             case "register_result":
                 if (data.status === "ok") {
                     window.location.hash = 'login';
@@ -81,6 +93,8 @@ class RealTimeForum {
                     renders.Error(data.error)
                 }
                 break;
+
+            // session_check_result / login_result: Handle auth state
             case "session_check_result":
             case "login_result":
                 if (data.status === "ok") {
@@ -97,6 +111,8 @@ class RealTimeForum {
                     renders.Error(data.error)
                 }
                 break;
+
+            // users_list: Update online/offline users in sidebar
             case "users_list":
                 if (data.status === "ok") {
 
@@ -105,6 +121,7 @@ class RealTimeForum {
                 } else { renders.Error(data.error) }
                 break;
 
+            // private_message: Handle incoming chat messages
             case "private_message":
                 if (data.status === "ok") {
                     const msg = data.data;
@@ -125,6 +142,7 @@ class RealTimeForum {
                 }
                 break;
 
+            // chat_history_result: Render paginated chat history
             case "chat_history_result":
                 if (data.status === "ok") {
                     const messages = data.data || []
@@ -147,8 +165,12 @@ class RealTimeForum {
                     chatMessagesContainer.insertAdjacentHTML('afterbegin', messagesHTML);
                     this.chatOffsets[this.activeChatUserId] += messages.length;
 
-                    if (isInitialLoad) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                    else chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight - oldScrollHeight;
+                    // Maintain scroll position on prepend
+                    if (isInitialLoad) {
+                        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                    } else {
+                        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight - oldScrollHeight;
+                    }
                     this.isLoadingMessages = false;
                 } else {
                     renders.Error(data.error);
@@ -157,6 +179,7 @@ class RealTimeForum {
         }
     }
 
+    // router: Handles hash-based SPA navigation with auth guards
     async router() {
         const path = window.location.hash.replace('#', '');
         this.currentPage = path;
@@ -164,7 +187,7 @@ class RealTimeForum {
         renders.Navigation(this.isAuthenticated);
         setups.NavigationEvents();
 
-        // Redirect to login or home depending on authentication if trying to access protected pages
+        // Auth guard: Redirect based on session and page type
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
@@ -176,50 +199,61 @@ class RealTimeForum {
         if (localStorage.getItem('session_id') && authPages.includes(path)) {
             window.location.hash = 'home'; return;
         }
+
         switch (path) {
+            // home: Load posts and initialize home events once
             case 'home':
-                await renders.Home(this.isAuthenticated, this.userData)          
-                console.log("1");
-                      
-                    if (this.isAuthenticated) {
-                        this.sendWS(JSON.stringify(
-                            { type: "users_list" }
-                        ));
-                    }
+                await renders.Home(this.isAuthenticated, this.userData)
+                if (this.isAuthenticated) {
+                    this.sendWS(JSON.stringify(
+                        { type: "users_list" }
+                    ));
+                }
 
                 if (!window.__homeEventsInitialized) {
                     setups.HomeEvents(this);
                     window.__homeEventsInitialized = true;
                 }
                 break;
+
+            // login: Render login form
             case 'login':
                 renders.Login(this.userData)
                 setups.AuthEvents('login', this);
                 break;
+
+            // register: Render registration form
             case 'register':
                 renders.Register()
                 setups.AuthEvents('register', this);
                 break;
+
+            // profile: Show user profile
             case 'profile':
                 renders.Profile(this.userData);
                 break;
+
+            // logout: Trigger logout flow
             case 'logout':
                 this.handleLogout();
                 break;
+
+            // default: 404 fallback
             default:
                 renders.StatusPage(404)
                 break;
         }
     }
 
-    // Setup event listeners
+    // setupEventListeners: Global DOM and storage event bindings
     setupEventListeners() {
+        // hashchange: Re-route on URL hash change
         window.addEventListener('hashchange', () => {
             this.router();
         });
 
+        // storage: Sync session across tabs
         window.addEventListener('storage', (event) => {
-
             if (event.key === 'session_id' && event.newValue) {
                 const sessionPayload = JSON.stringify({
                     type: "session_check",
@@ -232,7 +266,7 @@ class RealTimeForum {
             }
         });
 
-        // Close error popups when clicked
+        // Global click: Error close, sidebar toggle, chat controls
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('error-close')) {
                 e.target.closest('.error-popout').style.display = 'none';
@@ -248,6 +282,7 @@ class RealTimeForum {
 
     }
 
+    // sendWS: Robust WebSocket send with auto-reconnect
     sendWS(payload) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(payload);
@@ -266,6 +301,7 @@ class RealTimeForum {
         }
     }
 
+    // handleLogin: Submit login credentials via WebSocket
     handleLogin() {
         const emailOrNickname = document.getElementById('email_or_nickname').value;
         const password = document.getElementById('password').value;
@@ -276,6 +312,7 @@ class RealTimeForum {
         this.sendWS(loginPayload);
     }
 
+    // handleRegister: Submit registration data via WebSocket
     handleRegister() {
         const ageVal = parseInt(document.getElementById("age").value) || 0;
         const registerPayload = JSON.stringify({
@@ -295,6 +332,7 @@ class RealTimeForum {
         this.sendWS(registerPayload);
     }
 
+    // handleLogout: Clear session, close WS, redirect to login
     handleLogout() {
         this.isAuthenticated = false;
         this.isLoggingOut = true;
@@ -311,7 +349,7 @@ class RealTimeForum {
         window.location.hash = 'login';
     }
 
-    // fetch and render the new post on post creation form submit 
+    // handleCreatePost: Submit new post via REST, prepend to list
     async handleCreatePost(postCreateForm) {
         const content = postCreateForm.querySelector('textarea[name="content"]').value;
         const categories = [...postCreateForm.querySelectorAll('input[name="categories"]:checked')].map(input => input.value);
@@ -355,7 +393,8 @@ class RealTimeForum {
             console.error('Post creation error:', err);
         }
     }
-    // fetch and render posts on filter form submit 
+
+    // fetchMorePosts: Infinite scroll – load next batch of posts
     async handleFilterPosts(filterForm) {
         const categories = [...filterForm.querySelectorAll('input[name="category-filter"]:checked')].map(input => input.value);
         const onlyMyPosts = filterForm.querySelector('input[name="myPosts"]')?.checked || false;
@@ -401,7 +440,8 @@ class RealTimeForum {
             console.error('Filter error:', err);
         }
     }
-    // fetch and render the new comment on post comment creation form submit 
+
+    // handleCreateComment: Submit new comment and prepend to post
     async handleCreateComment(post_id, commentForm) {
         const content = commentForm.querySelector('textarea[name="content"]').value;
         try {
@@ -435,7 +475,7 @@ class RealTimeForum {
         }
     }
 
-    //fetch on scroll 
+    // fetchMorePosts: Infinite scroll – load next batch of posts
     async fetchMorePosts() {
         const postsList = document.querySelector('.posts-list');
 
@@ -503,7 +543,7 @@ class RealTimeForum {
         }
     }
 
-    //fetch on click
+    // fetchMoreComments: Load more comments on button click
     async fetchMoreComments(postId) {
         const parentPost = document.querySelector(`.comment-section[data-post-id="${postId}"]`);
         const commentList = parentPost.querySelectorAll(`.comment`)
@@ -552,6 +592,7 @@ class RealTimeForum {
         }
     }
 
+    // handleReaction: Submit like/dislike and update UI counts
     async handleReaction({ postId, commentId, reactionType }) {
 
         try {
@@ -596,6 +637,7 @@ class RealTimeForum {
         }
     }
 
+    // openChat: Initialize chat with user, load history
     openChat(userId) {
 
         const user = this.userList.find(u => u.id === userId);
@@ -611,7 +653,7 @@ class RealTimeForum {
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
 
-        // Create a new throttled handler for this chat session
+        // Throttled scroll handler for infinite load
         this.chatScrollHandler = throttle((e) => {
             if (e.target.scrollTop <= 100) {
                 this.loadMoreMessages();
@@ -624,6 +666,7 @@ class RealTimeForum {
         this.loadMoreMessages();
     }
 
+    // loadMoreMessages: Request older messages via WebSocket
     loadMoreMessages() {
         this.isLoadingMessages = true;
         const offset = this.chatOffsets[this.activeChatUserId] || 0;
@@ -633,6 +676,7 @@ class RealTimeForum {
         }));
     }
 
+    // sendMessage: Send private message via WebSocket
     sendMessage() {
         const input = document.getElementById('message-input');
         const messageText = input.value.trim();
@@ -648,6 +692,8 @@ class RealTimeForum {
             input.value = '';
         }
     }
+
+    // displayChatMessage: Append incoming/outgoing message to active chat 
     displayChatMessage(message, isOwn) {
         // Append message to chat UI
         const chatMessagesContainer = document.getElementById('chat-messages');
@@ -659,6 +705,7 @@ class RealTimeForum {
         }
     }
 
+    // updateLastMessage: Update sidebar preview and timestamp
     updateLastMessage(userId, content, timestamp) {
         const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
         if (userItem) {
@@ -675,6 +722,7 @@ class RealTimeForum {
         }
     }
 
+    // showNotification: Display unread dot and move to top
     showNotification(userId) {
         const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
         const userList = userItem?.parentElement; // get the parent list
@@ -683,7 +731,7 @@ class RealTimeForum {
         if (userList) { userList.prepend(userItem); }
     }
 
-
+    // hideNotification: Remove unread indicator
     hideNotification(userId) {
         const userItem = document.querySelector(`.user-list-item[data-user-id="${userId}"]`);
         if (userItem) {
@@ -691,6 +739,7 @@ class RealTimeForum {
         }
     }
 
+    // closeChat: Hide chat, clean up scroll handler
     closeChat() {
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
@@ -704,6 +753,7 @@ class RealTimeForum {
         }
     }
 
+    // toggleSideBar: Show/hide chat sidebar and bind Enter key
     toggleSideBar() {
         const textarea = document.getElementById("message-input");
         const sendBtn = document.getElementById("send-message-btn");

@@ -3,7 +3,7 @@ import { components } from './components.js';
 
 export const renders = {}
 
-// Render navigation
+// Navigation: Renders navbar with auth state
 renders.Navigation = (isAuthenticated) => {
     const navbarContainer = document.getElementById('navbar-container');
     if (navbarContainer) {
@@ -17,7 +17,7 @@ renders.Home = async (isAuthenticated, userData = {}) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.loading();    
     try {
-        // Initial posts load
+        // Fetch initial posts via API
         const response = await fetch('/api/posts', {
             method: 'GET',
             headers: {
@@ -50,7 +50,7 @@ renders.Home = async (isAuthenticated, userData = {}) => {
     }
 }
 
-// Render post list (used for filtering and updates)
+// PostsList: Renders full list of posts (used in filtering)
 renders.PostsList = (posts = []) => {
     const postsContainer = document.querySelector('.posts-container');
     if (!postsContainer) return;
@@ -73,9 +73,9 @@ renders.PostsList = (posts = []) => {
     `;
 }
 
-// Add a single new post to the list
+// AddPost: Inserts a new post (prepend for creation, append for fetch)
 renders.AddPost = (post, mode = "prepend") => {
-    const postsList = document.querySelector('.posts-list');  // Change to inner list
+    const postsList = document.querySelector('.posts-list');
 
     if (!postsList) return;
 
@@ -83,12 +83,11 @@ renders.AddPost = (post, mode = "prepend") => {
     const postElement = document.createElement('div');
     postElement.innerHTML = postHTML;
     const actualPost = postElement.children[0];
-    // actualPost.querySelector('.comment-section').style.display = 'none';
 
     if (mode === "append") {
-        postsList.appendChild(actualPost); // prepend when its the creation of a post
+        postsList.appendChild(actualPost); // append when fetching new posts
     } else {
-        postsList.insertBefore(actualPost, postsList.firstChild); // append when fetching new posts
+        postsList.insertBefore(actualPost, postsList.firstChild); // prepend when its the creation of a post
     }
 
     const noPosts = document.querySelector('.posts-list .no-post')
@@ -97,7 +96,7 @@ renders.AddPost = (post, mode = "prepend") => {
     }
 };
 
-// add a single new comment to a post
+// AddComment: Adds a new comment to its post
 renders.AddComment = (comment, mode = "prepend") => {
     const commentSection = document.querySelector(`.comment-section[data-post-id="${comment.post_id}"]`);
     if (!commentSection) return;
@@ -117,6 +116,7 @@ renders.AddComment = (comment, mode = "prepend") => {
     }
 }
 
+// updatePostStats: Increments comment count in UI
 renders.updatePostStats = (post_id, Statustype) => {
     switch (Statustype) {
         case "LikeDislike":
@@ -147,13 +147,13 @@ renders.Register = () => {
     mainContent.innerHTML = components.register();
 }
 
-// Render profile page
+// Profile: Renders user profile
 renders.Profile = (userData) => {
     const mainContent = document.getElementById('main-content');
     mainContent.innerHTML = components.profile(userData);
 }
 
-// Render error message
+// Error: Shows temporary error popup
 renders.Error = (message) => {
     const errorContainer = document.getElementById('error-container');
     if (errorContainer) {
@@ -164,7 +164,7 @@ renders.Error = (message) => {
     }
 }
 
-// Render users in the sidebar
+// Users: Renders online/offline users in chat sidebar
 renders.Users = (users, user) => {
 
     const currentUser = users.find(u => u.id === user.user_id);
@@ -191,13 +191,13 @@ if (!currentUser) return;
 
 }
 
-// Render a single chat message
+// ChatMessage: Renders a single chat bubble
 renders.ChatMessage = (message, isOwn) => {
     message.sender_nickname = isOwn ? 'You' : message.sender_nickname;
     return components.chatMessage(message, isOwn);
 };
 
-// Render Status Page
+// StatusPage: Renders 404/403/500 page
 renders.StatusPage = (statusCode) => {
     const mainContent = document.getElementById('main-content')
     if (mainContent) {

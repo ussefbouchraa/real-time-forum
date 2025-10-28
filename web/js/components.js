@@ -1,7 +1,7 @@
 import { escapeHTML , formatMessage } from "./utils.js";
 export const components = {};
 
-// Posts Component
+// posts: Full posts container with list and loader
 components.posts = (posts, isAuthenticated) => {
     return `
         <section class="posts-container" id="posts-container">
@@ -18,7 +18,7 @@ components.posts = (posts, isAuthenticated) => {
     `;
 }
 
-// Navbar Component
+// navbar: Dynamic navbar based on auth state
 components.navbar = (isAuthenticated = false) => {
     return `
         <header class="navbar">
@@ -41,7 +41,7 @@ components.navbar = (isAuthenticated = false) => {
     `;
 };
 
-// Home/Layout Component
+// home: Main layout with toggle section, posts, and chat
 components.home = (isAuthenticated, userData = {}) => {
 
     const posts = userData.posts != null ? userData.posts : [];
@@ -54,7 +54,7 @@ components.home = (isAuthenticated, userData = {}) => {
 };
 
 
-// Post Toggle Section Component
+// postToggleSection: Create vs Filter toggle with forms
 components.postToggleSection = (userData, formError) => {
     return `
         <div class="post-toggle-wrapper">
@@ -150,7 +150,7 @@ components.postToggleSection = (userData, formError) => {
     `;
 };
 
-// Single Post Component
+// post: Single post with content, reactions, and comments
 components.post = (post, isAuthenticated) => {
     return `
         <article class="forum-post" data-post-id="${escapeHTML(post.post_id)}">
@@ -206,7 +206,7 @@ components.post = (post, isAuthenticated) => {
     `;
 };
 
-// Comment Form Component
+// commentForm: Form to add a new comment
 components.commentForm = (post_id) => {
     return `
         <div class="comment-form">
@@ -218,7 +218,7 @@ components.commentForm = (post_id) => {
     `;
 };
 
-// Comment Component
+// comment: Single comment with reactions
 components.comment = (comment, isAuthenticated) => {
     return `
         <div class="comment" data-comment-id="${comment.comment_id}">
@@ -243,7 +243,7 @@ components.comment = (comment, isAuthenticated) => {
     `;
 };
 
-// Login Component
+// login: Login form with error container
 components.login = (userData = {}) => {
     const email = Object.keys(userData).length === 0 ? '' : userData;
     return `
@@ -270,7 +270,7 @@ components.login = (userData = {}) => {
     `;
 };
 
-// Register Component
+// register: Full registration form
 components.register = () => {
     return `
         <div class="auth-container">
@@ -323,7 +323,7 @@ components.register = () => {
     `;
 };
 
-// Profile Component
+// profile: Displays user profile info
 components.profile = (userData) => {
     return `
         <div class="profile-container">
@@ -358,7 +358,7 @@ components.profile = (userData) => {
    `;
 };
 
-// User List Item Component (for private messages)
+// userListItem: Sidebar user with last message preview
 components.userListItem = (user, current_user) => {
     if ((current_user && current_user.lastMsg === "" ) || (current_user.recipient_id !== user.id && current_user.sender_id !== user.id)) {
         user.lastMsg = ""
@@ -386,6 +386,8 @@ components.userListItem = (user, current_user) => {
         </div>
     `;
 };
+
+// chatSidebar: Full chat sidebar with online/offline lists
 components.chatSidebar = () => {
     return `
             <div class="sidebar-container hide">
@@ -417,6 +419,7 @@ components.chatSidebar = () => {
     `;
 };
 
+// chatMessage: Single chat bubble with sender and timestamp
 components.chatMessage = (message, isOwn = false) => {
 
     return `
@@ -430,9 +433,7 @@ components.chatMessage = (message, isOwn = false) => {
     `;
 };
 
-
-
-// Error Popup Component
+// errorPopup: Temporary dismissible error message
 components.errorPopup = (message) => {
     return `
         <div class="error-popout">
@@ -442,12 +443,12 @@ components.errorPopup = (message) => {
     `;
 };
 
-// Loading Component
+// loading: Simple spinner
 components.loading = () => {
     return `<div class="loading-spinner">Loading...</div>`;
 };
 
-// Status Page Component (for 404, maintenance, etc.)
+// statusPage: 404/403/500 error pages
 components.statusPage = (statusCode) => {
     const statusMessages = {
         "404": {
@@ -468,7 +469,6 @@ components.statusPage = (statusCode) => {
 
     };    
     const statusInfo = statusMessages[statusCode]
-
 
     return `
         <div class="status-page">

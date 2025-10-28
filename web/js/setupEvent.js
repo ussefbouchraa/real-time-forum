@@ -1,7 +1,7 @@
 export const setups = {}
 
 
-// Setup navigation events
+// NavigationEvents: Enables SPA routing via hash links
 setups.NavigationEvents = () => {
     // Handle navigation links
     document.querySelectorAll('a[data-link]').forEach(link => {
@@ -13,7 +13,7 @@ setups.NavigationEvents = () => {
     });
 }
 
-// Setup home page events
+// HomeEvents: Handles post/comment creation, filtering, reactions, and infinite scroll
 setups.HomeEvents = (app) => {
 
     // handle spa form submissions
@@ -34,9 +34,11 @@ setups.HomeEvents = (app) => {
         }
     });
     let isFetchingComments = false;
-    document.addEventListener("click", (e) => {
-        // Toggle comments visibility
 
+    // Click handlers: toggle comments, load more, reactions
+    document.addEventListener("click", (e) => {
+
+        // Toggle comment section visibility
         if (e.target && e.target.closest(".toggle-comments")) {
 
             const postElement = e.target.closest('.forum-post');
@@ -50,7 +52,9 @@ setups.HomeEvents = (app) => {
                 }
                 commentsFoter.style.display = commentsFoter.style.display === 'block' ? 'none' : 'block';
             }
-        } else if (e.target && e.target.closest(".load-more-comments")) {
+        }
+        // Load more comments for a post
+        else if (e.target && e.target.closest(".load-more-comments")) {
             // fetch more posts on scroll
             const postId = e.target.closest('[data-post-id]')?.getAttribute('data-post-id');
             if (isFetchingComments) return;
@@ -64,7 +68,7 @@ setups.HomeEvents = (app) => {
             })();
         }
 
-        // Handle reaction buttons
+        // Handle like/dislike reactions
         const reactionBtn = e.target.closest('.reaction-btn');
         if (reactionBtn) {
             const postId = reactionBtn.getAttribute('data-post-id') || '';
@@ -76,8 +80,7 @@ setups.HomeEvents = (app) => {
         }
     });
 
-    // setting toggle buttons :
-    // Toggle between filter and create sections
+    // Toggle between create post and filter sections
     document.querySelectorAll('.toggle-buttons label').forEach(label => {
         label.addEventListener('click', (e) => {
             const target = e.target.getAttribute('for');
@@ -92,7 +95,7 @@ setups.HomeEvents = (app) => {
         });
     });
 
-    // fetch more posts on scroll
+    // Infinite scroll: load more posts when near bottom
     let isFetchingPosts = false;
     window.addEventListener('scroll', () => {
         if (isFetchingPosts) return;
@@ -117,7 +120,7 @@ setups.HomeEvents = (app) => {
     });
 }
 
-// Setup authentication events
+// AuthEvents: Binds login/register form submissions
 setups.AuthEvents = (formType, app) => {
     const form = document.getElementById(`${formType}-form`);
     if (form) {

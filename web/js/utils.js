@@ -1,4 +1,4 @@
-// Utility function to prevent XSS attacks
+// escapeHTML: Sanitizes user input to prevent XSS attacks
 export function escapeHTML(str) {
     if (str === undefined || str === null) return '';
     return String(str)
@@ -9,6 +9,7 @@ export function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// formatMessage: Converts plain text with newlines into <p> blocks
 export function formatMessage(message) {
   return message
     .trim()
@@ -17,6 +18,7 @@ export function formatMessage(message) {
     .join('');
 }
 
+// throttle: Limits function execution rate (e.g., scroll/fetch)
 export function throttle(func, limit) {
     let inThrottle = false;
     let result;
