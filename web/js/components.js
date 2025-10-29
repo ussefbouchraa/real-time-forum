@@ -360,7 +360,7 @@ components.profile = (userData) => {
 
 // userListItem: Sidebar user with last message preview
 components.userListItem = (user, current_user) => {
-    if (current_user && current_user.lastMsg === ""){
+    if ((current_user && current_user.lastMsg === "" ) && (user.recipient_id !== current_user.id && user.sender_id !== current_user.id)) {
         user.lastMsg = ""
     }
     const userName = escapeHTML(user.nickname) || "unknown";

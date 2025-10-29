@@ -6,17 +6,17 @@ import (
 
 // User: Public user representation for chat UI (includes last message preview)
 type User struct {
-	ID           string `json:"id"`
-	Nickname     string `json:"nickname"`
-	LastMsg      string `json:"lastMsg"`
-	Created_at   string `json:"created_at"`
-	IsOnline     bool   `json:"isOnline"`
-	SenderID     string `json:"sender_id"`
+	ID          string `json:"id"`
+	Nickname    string `json:"nickname"`
+	LastMsg     string `json:"lastMsg"`
+	Created_at  string `json:"created_at"`
+	IsOnline    bool   `json:"isOnline"`
+	SenderID    string `json:"sender_id"`
 	RecipientID string `json:"recipient_id"`
 }
 
-// GetUsers: Returns all users with last message preview and online status
-func GetUsers() ([]User, error) {
+// GetUsers fetches all users with last message for currentUserID
+func GetUsers(currentUserID string) ([]User, error) {
 	users, err := GetOnlyUsers()
 	if err != nil {
 		return nil, err
@@ -24,7 +24,10 @@ func GetUsers() ([]User, error) {
 
 	// Enrich each user with last message data
 	for i := range users {
-		last, timeStamp, sender_id, recipient_id := GetLastMessage(users[i].ID)
+		if users[i].ID == currentUserID {
+			continue // Skip current user
+		}
+		last, timeStamp, sender_id, recipient_id := GetLastMessage(currentUserID, users[i].ID)
 		users[i].LastMsg = last
 		users[i].Created_at = timeStamp
 		users[i].SenderID = sender_id
@@ -33,18 +36,17 @@ func GetUsers() ([]User, error) {
 	return users, err
 }
 
-// GetLastMessage: Fetches most recent message involving user (for preview)
-func GetLastMessage(userID string) (string, string, string, string) {
-	var lastMsg, created_at, sender_id, recipient_id string
-
+// GetLastMessage returns the last message between two users
+func GetLastMessage(currentUserID, targetUserID string) (string, string, string, string) {
 	query := `
 		SELECT content, created_at, sender_id, recipient_id
 		FROM private_messages
-		WHERE sender_id = ? OR recipient_id = ?
-		ORDER BY created_at DESC
-		LIMIT 1;
+		WHERE (sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)
+		ORDER BY created_at DESC LIMIT 1
 	`
-	err := core.Db.QueryRow(query, userID, userID).Scan(&lastMsg, &created_at, &sender_id, &recipient_id)
+	var lastMsg, created_at, sender_id, recipient_id string
+	err := core.Db.QueryRow(query, currentUserID, targetUserID, targetUserID, currentUserID).Scan(
+		&lastMsg, &created_at, &sender_id, &recipient_id)
 	if err != nil {
 		return "", "", "", ""
 	}

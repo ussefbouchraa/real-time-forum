@@ -270,30 +270,37 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			writeResponse(conn, "chat_history_result", "ok", history, "")
-		// Get all users with their connection state (online or not) depending if they have an instance of conn in the map
 		case "users_list":
-			// Trigger broadcast of online user list
-			broadcastUsersList()
+			if currentUserID == "" {
+				continue
+			}
+			sendUsersList(conn, currentUserID)
 		}
 	}
 }
 
-// broadcastUsersList: Sends updated user list with online status to all connected clients
-func broadcastUsersList() {
-	users, _ := chat.GetUsers()
-
+func sendUsersList(conn *websocket.Conn, userID string) {
+	users, _ := chat.GetUsers(userID)
 	mutex.RLock()
-	defer mutex.RUnlock()
-
-	// Mark users as online if they have active WebSocket connection(s)
 	for i := range users {
 		if _, ok := clients[users[i].ID]; ok {
 			users[i].IsOnline = true
 		}
 	}
+	mutex.RUnlock()
+	writeResponse(conn, "users_list", "ok", users, "")
+}
 
-	// Push to every open tab of every user
-	for _, conns := range clients {
+func broadcastUsersList() {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	for userID, conns := range clients {
+		users, _ := chat.GetUsers(userID)
+		for i := range users {
+			if _, ok := clients[users[i].ID]; ok {
+				users[i].IsOnline = true
+			}
+		}
 		for _, conn := range conns {
 			writeResponse(conn, "users_list", "ok", users, "")
 		}

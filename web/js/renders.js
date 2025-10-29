@@ -166,7 +166,7 @@ renders.Error = (message) => {
 
 // Users: Renders online/offline users in chat sidebar
 renders.Users = (users, user) => {
-
+    
     const currentUser = users.find(u => u.id === user.user_id);
 if (!currentUser) return;    
     const onlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === true);

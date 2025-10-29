@@ -191,8 +191,7 @@ class RealTimeForum {
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
-        if (!localStorage.getItem('session_id') && protectedPages.includes(path)) {
-
+        if (!localStorage.getItem('session_id') && protectedPages.includes(path) || path === '' ){
             window.location.hash = 'login'; return;
         }
 
@@ -652,6 +651,13 @@ class RealTimeForum {
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
+        
+        // Create a new throttled handler for this chat session
+        this.chatScrollHandler = throttle((e) => {
+            if (e.target.scrollTop <= 100) {
+                this.loadMoreMessages();
+            }
+        }, 200);
 
         const chatMessagesContainer = document.getElementById('chat-messages');
         chatMessagesContainer.innerHTML = '';
@@ -678,6 +684,7 @@ class RealTimeForum {
             const payload = {
                 type: "private_message",
                 data: {
+
                     recipient_id: this.activeChatUserId,
                     content: messageText,
                 }
