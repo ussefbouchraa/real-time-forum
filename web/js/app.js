@@ -16,8 +16,9 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
-        this.init(); // Initialize the application
         this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
+        this.typingTimeout = null;
+        this.init(); // Initialize the application
     }
 
     // init: Bootstraps WebSocket, event listeners, and router
@@ -176,6 +177,23 @@ class RealTimeForum {
                     renders.Error(data.error);
                 }
                 break;
+            case "typing_result":
+                if (data.status === "ok") {
+                    const chatMessagesContainer = document.getElementById('chat-messages');
+                    const oldHeight = chatMessagesContainer.scrollHeight
+                    console.log(chatMessagesContainer.scrollHeight);
+                    
+                    
+                    chatMessagesContainer.classList.add('typing');
+                    
+                    if (oldHeight  < chatMessagesContainer.scrollHeight){
+                        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                        
+                    }
+                } else {
+                    renders.Error(data.error);
+                }
+                break;
         }
     }
 
@@ -191,7 +209,7 @@ class RealTimeForum {
         const protectedPages = ['home', 'profile'];
         const authPages = ['login', 'register'];
 
-        if (!localStorage.getItem('session_id') && protectedPages.includes(path) || path === '' ){
+        if (!localStorage.getItem('session_id') && protectedPages.includes(path) || path === '') {
             window.location.hash = 'login'; return;
         }
 
@@ -276,9 +294,12 @@ class RealTimeForum {
             if (e.target.closest('.close-btn')) this.closeChat();
             // Send message button
             if (e.target.closest('#send-message-btn')) this.sendMessage();
-
         });
 
+        document.addEventListener('input', (e) => {
+            const input = e.target.closest('#message-input');
+            if (input) this.handleTyping();
+        });
     }
 
     // sendWS: Robust WebSocket send with auto-reconnect
@@ -651,7 +672,7 @@ class RealTimeForum {
         const chatContainer = document.getElementById('active-chat-container');
         chatContainer.style.display = 'block';
         document.getElementById('chat-with-user').textContent = `Chat with ${user.nickname}`;
-        
+
         // Create a new throttled handler for this chat session
         this.chatScrollHandler = throttle((e) => {
             if (e.target.scrollTop <= 100) {
@@ -777,6 +798,16 @@ class RealTimeForum {
         }
     }
 
+    handleTyping() {
+        this.sendWS(JSON.stringify({
+            type: 'typing',
+            data: {
+                isTyping: true,
+                whoIsTyping: this.userData.user_id,
+                whoIsReceiving: this.activeChatUserId
+            }
+        }));
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

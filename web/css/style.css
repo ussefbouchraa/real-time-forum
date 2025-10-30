@@ -251,6 +251,19 @@ body {
     height: 310px;
 }
 
+.typing {
+
+}
+
+.typing::after {
+    content: '...';
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    font-size: large;
+    width: 100%;
+    padding-bottom: 5px;
+}
 
 .message {
     max-width: 80%;
@@ -1367,3 +1380,4 @@ textarea {
 #send-message-btn:hover {
     background: var(--primary-color);
 }
+

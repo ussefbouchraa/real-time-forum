@@ -170,7 +170,7 @@ renders.Users = (users, user) => {
     const currentUser = users.find(u => u.id === user.user_id);
 if (!currentUser) return;    
     const onlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === true);
-    const offlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === false)    
+    const offlineUsers = users.filter(u => u.id !== currentUser.id && u.isOnline === false); 
     const onlineUsersList = document.getElementById('online-users-list');
     const offlineUsersList = document.getElementById('conversations-list')
     if (!onlineUsersList || !offlineUsersList) return
@@ -179,7 +179,7 @@ if (!currentUser) return;
     offlineUsersList.innerHTML = offlineUsers.map(u => components.userListItem(u, currentUser)).join('');
 
     const handleClick = (e) => {
-        const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item')
+        const item = e.target.closest('.user-list-item') || e.target.closest('.conversation-list-item');
         if (item) {
             const userId = item.getAttribute('data-user-id')
             window.forumApp.openChat(userId)

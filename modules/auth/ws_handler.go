@@ -33,6 +33,12 @@ type UserPayload struct {
 	} `json:"user"`
 }
 
+type TypingInProgressPayload struct {
+	IsTyping       bool   `json:"istyping,omitempty"`
+	WhoIsTyping    string `json:"whoIsTyping,omitempty"`
+	WhoIsReceiving string `json:"whoIsReceiving,omitempty"`
+}
+
 // WSResponse: Standardized response format sent back to clients
 type WSResponse struct {
 	Type   string      `json:"type"`
@@ -275,6 +281,21 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			sendUsersList(conn, currentUserID)
+		case "typing":
+			var S TypingInProgressPayload
+			S, err := decodeMessage[TypingInProgressPayload](msg.Data)
+			if err != nil {
+				writeResponse(conn, "typing_result", "error", nil, "Invalid typingInProgress data")
+				continue
+			}
+			// Deliver to recipient
+			mutex.RLock()
+			if recipientConns, ok := clients[S.WhoIsReceiving]; ok {
+				for _, c := range recipientConns {
+					writeResponse(c, "typing_result", "ok", nil, "")
+				}
+			}
+			mutex.RUnlock()
 		}
 	}
 }
