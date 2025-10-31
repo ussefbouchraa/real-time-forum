@@ -17,7 +17,7 @@ class RealTimeForum {
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
         this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
-        this.typingTimeout = null;
+        this.typing = null;
         this.init(); // Initialize the application
     }
 
@@ -178,7 +178,12 @@ class RealTimeForum {
                 }
                 break;
             case "typing_result":
-                if (data.status === "ok") {
+                const typingData = data.data;
+
+                if (this.activeChatUserId !== typingData.whoIsTyping) {
+                    return;
+                }
+                if (typingData.istyping) {
                     const chatMessagesContainer = document.getElementById('chat-messages');
                     const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight < 5;
                     chatMessagesContainer.classList.add('typing');
@@ -186,6 +191,9 @@ class RealTimeForum {
                     if (isAtBottom) {
                         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                     }
+                } else if (!typingData.istyping) {
+                    const chatMessagesContainer = document.getElementById('chat-messages');
+                    chatMessagesContainer.classList.remove('typing');
                 } else {
                     renders.Error(data.error);
                 }
@@ -294,8 +302,27 @@ class RealTimeForum {
 
         document.addEventListener('input', (e) => {
             const input = e.target.closest('#message-input');
-            if (input) this.handleTyping();
+            if (!input) return;
+
+            this.handleTyping()
+
+            clearTimeout(this.typing)
+
+            this.typing = setTimeout(() => {
+                this.cancelTyping()
+            }, 1500)
         });
+
+        document.addEventListener('keyup', (e) => {
+            const input = e.target.closest('#message-input');
+            if (!input) return;
+
+            if (e.key === 'Enter') {
+                this.cancelTyping();
+                return;
+            }
+        });
+
     }
 
     // sendWS: Robust WebSocket send with auto-reconnect
@@ -799,6 +826,17 @@ class RealTimeForum {
             type: 'typing',
             data: {
                 isTyping: true,
+                whoIsTyping: this.userData.user_id,
+                whoIsReceiving: this.activeChatUserId
+            }
+        }));
+    }
+
+    cancelTyping() {
+        this.sendWS(JSON.stringify({
+            type: 'typing',
+            data: {
+                isTyping: false,
                 whoIsTyping: this.userData.user_id,
                 whoIsReceiving: this.activeChatUserId
             }
