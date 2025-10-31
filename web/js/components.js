@@ -407,7 +407,7 @@ components.chatSidebar = () => {
         <div id="active-chat-container" class="chat-container">
             <div class="chat-header">
                 <h3 id="chat-with-user">??</h3>
-                <button id="close-chat" class="close-btn">×</button>
+                <button id="close-chat" class="close-btn">✘</button>
             </div>
             <div id="chat-messages" class="chat-messages"></div>
             <div class="chat-input">

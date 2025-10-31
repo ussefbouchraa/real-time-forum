@@ -256,13 +256,15 @@ body {
 }
 
 .typing::after {
+    padding: 0px;
+    margin: 0px;
     content: '...';
     display: flex;
     justify-content: start;
     align-items: center;
     font-size: large;
-    width: 100%;
-    padding-bottom: 5px;
+    width: 70%;
+    padding-left: 10px;
 }
 
 .message {

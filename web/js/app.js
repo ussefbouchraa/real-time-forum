@@ -180,15 +180,11 @@ class RealTimeForum {
             case "typing_result":
                 if (data.status === "ok") {
                     const chatMessagesContainer = document.getElementById('chat-messages');
-                    const oldHeight = chatMessagesContainer.scrollHeight
-                    console.log(chatMessagesContainer.scrollHeight);
-                    
-                    
+                    const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight < 5;
                     chatMessagesContainer.classList.add('typing');
-                    
-                    if (oldHeight  < chatMessagesContainer.scrollHeight){
+
+                    if (isAtBottom) {
                         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                        
                     }
                 } else {
                     renders.Error(data.error);
