@@ -292,13 +292,7 @@ func WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 			mutex.RLock()
 			if recipientConns, ok := clients[S.WhoIsReceiving]; ok {
 				for _, c := range recipientConns {
-					if S.IsTyping {
-						S.IsTyping = true
-						writeResponse(c, "typing_result", "ok", S, "")
-					} else {
-						S.IsTyping = false
-						writeResponse(c, "typing_result", "ok", S, "")
-					}
+					writeResponse(c, "typing_result", "ok", S, "")
 				}
 			}
 			mutex.RUnlock()
