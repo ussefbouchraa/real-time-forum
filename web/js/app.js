@@ -184,19 +184,35 @@ class RealTimeForum {
                     return;
                 }
                 if (typingData.istyping) {
-                    const chatMessagesContainer = document.getElementById('chat-messages');
-                    const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.scrollTop - chatMessagesContainer.clientHeight < 5;
-                    chatMessagesContainer.classList.add('typing');
+                    // If indicator already exists, do nothing
+                    if (document.querySelector('.typing-container')) return;
 
-                    if (isAtBottom) {
-                        chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-                    }
-                } else if (!typingData.istyping) {
+
                     const chatMessagesContainer = document.getElementById('chat-messages');
-                    chatMessagesContainer.classList.remove('typing');
-                } else {
-                    renders.Error(data.error);
-                }
+                    const typingUser = this.userList.find(u => u.id === typingData.whoIsTyping);
+                    const typingUserName = typingUser ? typingUser.nickname : '...';
+
+
+                    const container = document.createElement('div');
+                    container.className = 'typing-container';
+
+                    const userTyping = document.createElement('span');
+                    userTyping.className = 'typing-text';
+                    userTyping.textContent = `${typingUserName} is typing`;
+
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'typing';
+
+                    container.append(userTyping, typingIndicator);
+                    chatMessagesContainer.appendChild(container);
+
+                    const isAtBottom = chatMessagesContainer.scrollTop <= chatMessagesContainer.scrollHeight && chatMessagesContainer.scrollTop >= chatMessagesContainer.scrollHeight / 2
+                    if (isAtBottom) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+
+                } else if (!typingData.istyping) {
+                    const typingIndicator = document.querySelector('.typing-container');
+                    if (typingIndicator) typingIndicator.remove();
+                } else { renders.Error(data.error) }
                 break;
         }
     }

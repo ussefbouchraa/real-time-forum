@@ -251,20 +251,28 @@ body {
     height: 310px;
 }
 
-.typing {
-
+.typing-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    align-self: flex-start;
 }
 
-.typing::after {
-    padding: 0px;
-    margin: 0px;
-    content: '...';
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    font-size: large;
-    width: 70%;
-    padding-left: 10px;
+.typing-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.typing {
+    align-self: flex-start;
+    border-radius: var(--border-radius);
+    width: 40px;
+    height: 20px;
+    background-image: url('typing.gif');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
 }
 
 .message {
@@ -1382,4 +1390,3 @@ textarea {
 #send-message-btn:hover {
     background: var(--primary-color);
 }
-
