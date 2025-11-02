@@ -18,6 +18,7 @@ class RealTimeForum {
         this.userList = [];
         this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
         this.typing = null;
+        this.typingTimeouts = {};
         this.init(); // Initialize the application
     }
 
@@ -179,10 +180,10 @@ class RealTimeForum {
                 break;
             case "typing_result":
                 const typingData = data.data;
+                const typerId = typingData.whoIsTyping
 
-                if (this.activeChatUserId !== typingData.whoIsTyping) {
-                    return;
-                }
+                if (typerId !== this.activeChatUserId) return;
+
                 if (typingData.istyping) {
 
                     // If indicator already exists, do nothing
@@ -209,10 +210,24 @@ class RealTimeForum {
                     const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.clientHeight - chatMessagesContainer.scrollTop < 80;
                     if (isAtBottom) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
-                } else if (!typingData.istyping) {
+                    if (this.typingTimeouts[typerId]) {
+                        clearTimeout(this.typingTimeouts[typerId]);
+                    }
+                    // Set a timeout to auto-remove if no new typing signal comes
+                    this.typingTimeouts[typerId] = setTimeout(() => {
+                        const typingIndicator = document.querySelector('.typing-container');
+                        if (typingIndicator) typingIndicator.remove();
+                        delete this.typingTimeouts[typerId];
+                    }, 3000);
+
+                } else {
                     const typingIndicator = document.querySelector('.typing-container');
                     if (typingIndicator) typingIndicator.remove();
-                } else { renders.Error(data.error) }
+                    if (this.typingTimeouts[typerId]) {
+                        clearTimeout(this.typingTimeouts[typerId]);
+                        delete this.typingTimeouts[typerId];
+                    }
+                }
                 break;
         }
     }
@@ -318,7 +333,7 @@ class RealTimeForum {
 
         document.addEventListener('input', (e) => {
             const input = e.target.closest('#message-input');
-            if (!input) return;
+            if (!input || !this.activeChatUserId) return;
 
             this.handleTyping()
 
@@ -331,7 +346,7 @@ class RealTimeForum {
 
         document.addEventListener('keyup', (e) => {
             const input = e.target.closest('#message-input');
-            if (!input) return;
+            if (!input || !this.activeChatUserId) return;
 
             if (e.key === 'Enter') {
                 this.cancelTyping();
@@ -802,6 +817,16 @@ class RealTimeForum {
 
     // closeChat: Hide chat, clean up scroll handler
     closeChat() {
+        clearTimeout(this.typing);
+
+        if (this.activeChatUserId) {
+            this.cancelTyping();
+            if (this.typingTimeouts[this.activeChatUserId]) {
+                clearTimeout(this.typingTimeouts[this.activeChatUserId]);
+                delete this.typingTimeouts[this.activeChatUserId];
+            }
+        }
+
         this.activeChatUserId = null;
         const chatContainer = document.getElementById('active-chat-container');
         if (chatContainer) chatContainer.style.display = 'none';
