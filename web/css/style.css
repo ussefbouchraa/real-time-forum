@@ -266,7 +266,7 @@ body {
 
 .typing {
     align-self: flex-start;
-    border-radius: var(--border-radius);
+    /* border-radius: var(--border-radius); */
     width: 40px;
     height: 20px;
     background-image: url('typing.gif');

@@ -184,9 +184,9 @@ class RealTimeForum {
                     return;
                 }
                 if (typingData.istyping) {
+
                     // If indicator already exists, do nothing
                     if (document.querySelector('.typing-container')) return;
-
 
                     const chatMessagesContainer = document.getElementById('chat-messages');
                     const typingUser = this.userList.find(u => u.id === typingData.whoIsTyping);
@@ -206,7 +206,7 @@ class RealTimeForum {
                     container.append(userTyping, typingIndicator);
                     chatMessagesContainer.appendChild(container);
 
-                    const isAtBottom = chatMessagesContainer.scrollTop <= chatMessagesContainer.scrollHeight && chatMessagesContainer.scrollTop >= chatMessagesContainer.scrollHeight / 2
+                    const isAtBottom = chatMessagesContainer.scrollHeight - chatMessagesContainer.clientHeight - chatMessagesContainer.scrollTop < 80;
                     if (isAtBottom) chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 
                 } else if (!typingData.istyping) {
