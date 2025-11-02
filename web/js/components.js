@@ -1,4 +1,4 @@
-import { escapeHTML , formatMessage } from "./utils.js";
+import { escapeHTML, formatMessage } from "./utils.js";
 export const components = {};
 
 // posts: Full posts container with list and loader
@@ -360,7 +360,7 @@ components.profile = (userData) => {
 
 // userListItem: Sidebar user with last message preview
 components.userListItem = (user, current_user) => {
-    if ((current_user && current_user.lastMsg === "" ) && (user.recipient_id !== current_user.id && user.sender_id !== current_user.id)) {
+    if ((current_user && current_user.lastMsg === "") && (user.recipient_id !== current_user.id && user.sender_id !== current_user.id)) {
         user.lastMsg = ""
     }
     const userName = escapeHTML(user.nickname) || "unknown";
@@ -370,7 +370,7 @@ components.userListItem = (user, current_user) => {
         (user.lastMsg.length > 30 ?
             escapeHTML(user.lastMsg.substring(0, 30)) + '...' : escapeHTML(user.lastMsg)) : 'No messages yet';
 
-            
+
     return `
         <div class="user-list-item" data-user-id="${escapeHTML(user.id)}">
       
@@ -422,11 +422,20 @@ components.chatSidebar = () => {
 // chatMessage: Single chat bubble with sender and timestamp
 components.chatMessage = (message, isOwn = false) => {
 
+    const time = new Date(parseInt(message.created_at)).toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false  // 24-hour format
+    });
+
     return `
         <div class="message ${isOwn ? 'own-message' : 'other-message'}">
             <div class="message-header">
                 <span class="message-sender">${escapeHTML(message.sender_nickname)}</span>
-                <span class="message-time">${new Date(parseInt(message.created_at)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span class="message-time">${time}</span>
             </div>
             <div class="message-content">${formatMessage(escapeHTML(message.content))}</div>
         </div>
@@ -467,7 +476,7 @@ components.statusPage = (statusCode) => {
             icon: "⚙️"
         },
 
-    };    
+    };
     const statusInfo = statusMessages[statusCode]
 
     return `

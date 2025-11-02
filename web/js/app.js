@@ -149,7 +149,7 @@ class RealTimeForum {
                 if (data.status === "ok") {
                     const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
-
+                    
                     if (messages.length === 0) {
                         this.isLoadingMessages = false; // No more messages to load
                         return;
@@ -218,7 +218,7 @@ class RealTimeForum {
                         const typingIndicator = document.querySelector('.typing-container');
                         if (typingIndicator) typingIndicator.remove();
                         delete this.typingTimeouts[typerId];
-                    }, 3000);
+                    }, 5000);
 
                 } else {
                     const typingIndicator = document.querySelector('.typing-container');
