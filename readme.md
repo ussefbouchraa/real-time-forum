@@ -32,8 +32,8 @@ real-time-forum/
 │   │   ├── post.go
 │   │   ├── post_handler.go
 │   │   └── post_service.go
-│   └── templates/            # HTML template rendering
-│       └── templates.go
+│   └── frontend_renderer/            # HTML template rendering
+│       └── frontend_renderer.go
 ├── r-forum.db                # SQLite database
 ├── readme.md                 # Project documentation
 ├── server/                   # Server entry point
