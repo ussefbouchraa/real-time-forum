@@ -149,7 +149,6 @@ class RealTimeForum {
                 if (data.status === "ok") {
                     const messages = data.data || []
                     const isInitialLoad = this.chatOffsets[this.activeChatUserId] === 0;
-                    
                     if (messages.length === 0) {
                         this.isLoadingMessages = false; // No more messages to load
                         return;
@@ -313,7 +312,7 @@ class RealTimeForum {
                 });
                 this.sendWS(sessionPayload);
             }
-            if (!event.newValue || event.newValue !== this.sessionID) {
+            if (event.key === 'session_id' && (!event.newValue || event.newValue !== this.sessionID && this.sessionID != null)) {                
                 this.handleLogout();
             }
         });
@@ -411,6 +410,7 @@ class RealTimeForum {
         this.isAuthenticated = false;
         this.isLoggingOut = true;
         this.userData = {};
+        this.sessionID = null;
         localStorage.removeItem('session_id');
         if (this.ws) {
             this.ws.close();
