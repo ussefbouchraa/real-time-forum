@@ -16,7 +16,7 @@ class RealTimeForum {
         this.chatOffsets = {}; // Stores message offset for each chat
         this.isLoadingMessages = false; // Flag to prevent multiple loads
         this.userList = [];
-        this.chatScrollHandler = throttle(this.handleChatScroll.bind(this), 200);
+        this.chatScrollHandler = throttle(this.handleChatScroll, 200);
         this.typing = null;
         this.typingTimeouts = {};
         this.init(); // Initialize the application
